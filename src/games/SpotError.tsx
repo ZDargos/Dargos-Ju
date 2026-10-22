@@ -26,7 +26,13 @@ export default function SpotError({ sentence, pool, settings, hints, onResult, o
   const choose = (c: Choice) => {
     if (choice) return;
     setChoice(c);
-    onResult(same(c, answer));
+    const where =
+      c.type === 'word'
+        ? `tapped "${m.tokens[c.index]}"`
+        : c.index >= m.tokens.length
+          ? 'tapped the end'
+          : `tapped the gap before "${m.tokens[c.index]}"`;
+    onResult(same(c, answer), `${m.tokens.join('')} (${where})`);
   };
   const cls = (c: Choice) => {
     if (!choice) return '';

@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { gameById } from '../games/registry';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
+import MatchSummary, { type AnswerRecord } from '../components/MatchSummary';
 
 const empty: ProgressEvent = { round: 0, score: 0, results: [], done: false };
 
@@ -45,6 +46,7 @@ export default function VsMatch() {
   const [index, setIndex] = useState(0);
   const answeredIndex = useRef(-1);
   const roundStart = useRef(Date.now());
+  const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   useEffect(() => {
     roundStart.current = Date.now();
   }, [index]);
@@ -84,10 +86,13 @@ export default function VsMatch() {
   const total = sentences.length;
   const iAmA = match && me === match.player_a;
 
-  const record = (ok: boolean) => {
+  const record = (ok: boolean, answer?: string) => {
     if (answeredIndex.current === index) return; // one answer per round
     answeredIndex.current = index;
-    if (match) recordRound(match.game, 'vs', ok, Date.now() - roundStart.current, id);
+    const ms = Date.now() - roundStart.current;
+    if (match) recordRound(match.game, 'vs', ok, ms, id);
+    const sentence = sentences[index];
+    if (sentence) setAnswers((list) => [...list, { sentence, correct: ok, answer, ms }]);
     const progress = { ...mine, round: mine.round + 1, score: mine.score + (ok ? 1 : 0), results: [...mine.results, ok] };
     setMine(progress);
     live.current?.send(progress);
@@ -167,6 +172,7 @@ export default function VsMatch() {
           <button className="btn primary" onClick={() => navigate('/games')}>Back to games</button>
         </div>
       ) : finished ? (
+        <>
         <div className="card center" style={{ padding: 24 }}>
           <h2 style={{ marginTop: 0 }}>{verdict}</h2>
           {myProgress < total && <p>{names.them} finished with a lead you couldn't catch, so the match ended early.</p>}
@@ -180,11 +186,16 @@ export default function VsMatch() {
             <button className="btn primary" onClick={() => navigate(`/vs/${game.id}`)}>Play again</button>
           </div>
         </div>
+        <MatchSummary answers={answers} lexicon={content.lexicon} />
+        </>
       ) : mine.done ? (
+        <>
         <div className="card center" style={{ padding: 24 }}>
           <p style={{ fontWeight: 600 }}>You scored {mine.score}/{total}.</p>
           <p className="muted small">Waiting for {names.them} to finish…</p>
         </div>
+        <MatchSummary answers={answers} lexicon={content.lexicon} />
+        </>
       ) : current ? (
         <Game
           key={index}

@@ -16,9 +16,9 @@ export default function WordOrder({ sentence, content, settings, hints, onResult
         lexicon={content.lexicon}
         showPinyin={hints}
         allowHint={hints}
-        onChecked={(ok) => {
+        onChecked={(ok, built) => {
           setResult(ok);
-          onResult(ok);
+          onResult(ok, built);
         }}
       />
       {result !== null && <Feedback correct={result} sentence={sentence} rate={settings.speechRate} onNext={onNext} />}

@@ -48,9 +48,9 @@ function Translate({ sentence, pool, content, settings, hints, onResult, onNext 
         lexicon={content.lexicon}
         showPinyin={hints}
         allowHint={hints}
-        onChecked={(ok) => {
+        onChecked={(ok, built) => {
           setResult(ok);
-          onResult(ok);
+          onResult(ok, built);
         }}
       />
       {result !== null && <Feedback correct={result} sentence={sentence} rate={settings.speechRate} onNext={onNext} />}

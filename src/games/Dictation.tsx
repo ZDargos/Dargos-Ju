@@ -32,9 +32,9 @@ export default function Dictation({ sentence, pool, content, settings, hints, on
     // Play once per new sentence.
   }, [sentence.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const finish = (ok: boolean) => {
+  const finish = (ok: boolean, answer: string) => {
     setResult(ok);
-    onResult(ok);
+    onResult(ok, answer);
   };
 
   if (!ttsAvailable()) return <div className="card empty">This device has no text-to-speech voice, so Dictation can't play sentences.</div>;
@@ -75,7 +75,7 @@ export default function Dictation({ sentence, pool, content, settings, hints, on
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (result === null && typed.trim()) finish(normalize(typed) === normalize(sentence.zh));
+            if (result === null && typed.trim()) finish(normalize(typed) === normalize(sentence.zh), typed.trim());
           }}
         >
           <input

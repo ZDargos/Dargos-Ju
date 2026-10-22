@@ -40,7 +40,7 @@ export default function CloseCall({ sentence, pool, settings, hints, onResult, o
             onClick={() => {
               if (picked !== null) return;
               setPicked(i);
-              onResult(o.correct);
+              onResult(o.correct, o.text);
             }}
           >
             {o.text}

@@ -10,7 +10,7 @@ interface Props {
   showPinyin?: boolean;
   allowHint?: boolean;
   /** Called once when the player checks the answer. */
-  onChecked: (correct: boolean) => void;
+  onChecked: (correct: boolean, built: string) => void;
   /** When false, the builder doesn't judge the answer (free building); onChecked gets true. */
   judge?: boolean;
   checkLabel?: string;
@@ -54,7 +54,7 @@ export default function TileBuilder({ target, distractors = [], lexicon, showPin
     const ok = judge ? normalize(text) === answer : true;
     setResult(ok);
     onBuilt?.(text);
-    onChecked(ok);
+    onChecked(ok, placed.map((t) => t.text).join(' '));
   };
 
   return (

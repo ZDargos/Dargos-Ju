@@ -16,7 +16,8 @@ export interface GameProps {
   hints: boolean;
   /** Live match: no hints, and only gradable modes. */
   vs?: boolean;
-  onResult: (correct: boolean) => void;
+  /** `answer` is what the player gave, for the after-match summary. */
+  onResult: (correct: boolean, answer?: string) => void;
   onNext: () => void;
 }
 

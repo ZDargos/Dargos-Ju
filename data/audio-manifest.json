@@ -1643,6 +1643,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "32de54da07e03e42": {
+  "lang": "zh",
+  "text": "这是什么书？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "32e06f7adf141b66": {
   "lang": "zh",
   "text": "你闻到了饭香吗？",
@@ -2963,6 +2969,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "541ca7f1592bbcb2": {
+  "lang": "en",
+  "text": "Do you think this book is good?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
  "5422d79121e36e94": {
   "lang": "en",
   "text": "The horse ate some noodles at noon.",
@@ -3317,6 +3329,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "5fe0226ea8e80c46": {
+  "lang": "en",
+  "text": "What book is this?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
  "5fea038266bf9928": {
   "lang": "zh",
   "text": "现在十点钟。",
@@ -3412,6 +3430,12 @@
   "text": "It's only October, and it's already starting to snow here.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "6366807ef13ccf6a": {
+  "lang": "zh",
+  "text": "这本书讲的是什么？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "6375769952c5bcf4": {
   "lang": "zh",
@@ -5105,6 +5129,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "9aef7ad27e2252b6": {
+  "lang": "en",
+  "text": "Let's learn English together!",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
  "9af3cdd4b8a33294": {
   "lang": "zh",
   "text": "你最好坐车。",
@@ -5278,6 +5308,12 @@
   "text": "这儿的人们不吃面包，他们吃米饭。",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "a035300d6f1b4750": {
+  "lang": "en",
+  "text": "My notebook and books are in my schoolbag.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
  "a0584a575b78313c": {
   "lang": "en",
@@ -6755,6 +6791,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "ce3ef925f638fdf4": {
+  "lang": "zh",
+  "text": "我的本子和书在书包里。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ce42980d898182dc": {
   "lang": "zh",
   "text": "我有三种桌子。",
@@ -7144,6 +7186,12 @@
   "text": "我吃了一个小面包，他吃了一个大面包。",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "da4d81ad4ebcf782": {
+  "lang": "en",
+  "text": "What is this book about?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
  "dab62b828147673c": {
   "lang": "zh",
@@ -7702,6 +7750,12 @@
   "text": "Mom is the best.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "eb12d09ff8e4bf6a": {
+  "lang": "zh",
+  "text": "我们一起学习中文吧！",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "eb36870590e90298": {
   "lang": "zh",

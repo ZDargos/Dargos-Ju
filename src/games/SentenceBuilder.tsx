@@ -22,6 +22,7 @@ function distractorsFor(sentence: Sentence, pool: Sentence[], n: number): string
 
 export default function SentenceBuilder(props: GameProps) {
   const [mode, setMode] = useState<Mode>('translate');
+  if (props.vs) return <Translate key={props.sentence.id} {...props} />;
   return (
     <>
       <div className="segmented" style={{ marginBottom: 14 }}>

@@ -14,6 +14,8 @@ export interface GameProps {
   content: Content;
   settings: Settings;
   hints: boolean;
+  /** Live match: no hints, and only gradable modes. */
+  vs?: boolean;
   onResult: (correct: boolean) => void;
   onNext: () => void;
 }

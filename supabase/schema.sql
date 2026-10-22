@@ -147,3 +147,14 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- Admin RPCs (security definer, each checks private.is_admin()): admin_list_users(),
 -- admin_erase_user_data(target), admin_set_blocked(target, block), admin_delete_user(target, also_block).
 -- Full definitions are in the Supabase migration history.
+
+-- ---------------------------------------------------------------------------------------------
+-- Social features (migrations social_and_matches, challenges_friends_only, find_match_older_than).
+-- profiles(user_id, display_name): display names are readable by every signed-in user; nothing else is.
+-- friendships(requester, addressee, status pending|accepted): only the two people involved can see a row;
+--   only the addressee can accept.
+-- friend_leaderboard(period, tz) and friend_summary(target, tz): security definer; return data only for
+--   yourself and accepted friends. Raw review logs and cards stay private (RLS: own rows only).
+-- matches: live head-to-head games. Public matches are joined via find_match(game, older_than);
+--   challenges (player_b set) require an accepted friendship. Results go through submit_match_result.
+--   Players can only see their own matches. matches and friendships are in the supabase_realtime publication.

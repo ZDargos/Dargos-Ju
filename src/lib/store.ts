@@ -3,13 +3,15 @@
 
 import { useSyncExternalStore } from 'react';
 import { get, set } from 'idb-keyval';
-import { DEFAULT_SETTINGS, type CardRecord, type ReviewLog, type Settings } from '../types';
+import { DEFAULT_SETTINGS, type CardRecord, type GameRound, type ReviewLog, type Settings } from '../types';
 
 export interface State {
   userId: string | null;
   loaded: boolean;
   cards: Record<string, CardRecord>;
   logs: ReviewLog[];
+  rounds: GameRound[];
+  unsyncedRounds: Record<string, true>;
   settings: Settings;
   settingsUpdatedAt: string;
   dirtyCards: Record<string, true>;
@@ -25,6 +27,8 @@ const initial: State = {
   loaded: false,
   cards: {},
   logs: [],
+  rounds: [],
+  unsyncedRounds: {},
   settings: DEFAULT_SETTINGS,
   settingsUpdatedAt: new Date(0).toISOString(),
   dirtyCards: {},

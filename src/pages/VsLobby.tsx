@@ -8,6 +8,7 @@ import { gameById, poolFor } from '../games/registry';
 import NamePrompt from '../components/NamePrompt';
 import { notifyChallenge } from '../lib/push';
 import { IconBack } from '../components/Icons';
+import GameStatsButton from '../components/GameStats';
 
 const WAIT_LIMIT_MS = 2 * 60 * 1000;
 // Friends get a little longer: they may be opening the app from a notification.
@@ -168,6 +169,7 @@ export default function VsLobby() {
           </div>
         </>
       )}
+      <GameStatsButton gameId={game.id} />
     </>
   );
 }

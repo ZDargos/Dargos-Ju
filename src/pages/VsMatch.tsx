@@ -7,6 +7,7 @@ import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
 import { gameById } from '../games/registry';
 import { IconClose } from '../components/Icons';
+import { recordRound } from '../lib/gameStats';
 
 const empty: ProgressEvent = { round: 0, score: 0, results: [], done: false };
 
@@ -43,6 +44,10 @@ export default function VsMatch() {
   // feedback stays up until the player taps Next.
   const [index, setIndex] = useState(0);
   const answeredIndex = useRef(-1);
+  const roundStart = useRef(Date.now());
+  useEffect(() => {
+    roundStart.current = Date.now();
+  }, [index]);
   const [error, setError] = useState('');
   const live = useRef<LiveChannel | null>(null);
   const startedAt = useRef(Date.now());
@@ -82,6 +87,7 @@ export default function VsMatch() {
   const record = (ok: boolean) => {
     if (answeredIndex.current === index) return; // one answer per round
     answeredIndex.current = index;
+    if (match) recordRound(match.game, 'vs', ok, Date.now() - roundStart.current, id);
     const progress = { ...mine, round: mine.round + 1, score: mine.score + (ok ? 1 : 0), results: [...mine.results, ok] };
     setMine(progress);
     live.current?.send(progress);

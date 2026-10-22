@@ -4,6 +4,7 @@ import { updateSettings, useSettings } from '../lib/store';
 import { ROUNDS } from '../lib/match';
 import { GAMES, poolFor } from '../games/registry';
 import LevelPicker from '../components/LevelPicker';
+import { GameStatsOverview } from '../components/GameStats';
 
 export default function Games() {
   const content = useContent();
@@ -52,6 +53,7 @@ export default function Games() {
         })}
       </div>
       {!levels.length && <p className="small muted center" style={{ marginTop: 14 }}>Pick at least one level to play.</p>}
+      {!challengeFriend && <GameStatsOverview />}
     </>
   );
 }

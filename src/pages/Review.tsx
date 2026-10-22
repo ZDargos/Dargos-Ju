@@ -3,9 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getContent, useContent } from '../lib/content';
 import { getState, useStore } from '../lib/store';
 import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_WINDOW_MS, type SessionItem } from '../lib/srs';
-import { wordsOf } from '../lib/segmenter';
 import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { IconClose, IconSpeaker } from '../components/Icons';
+import WordBreakdown from '../components/WordBreakdown';
 import type { Grade } from '../types';
 
 interface QueueItem extends SessionItem {
@@ -99,7 +99,6 @@ export default function Review() {
   }
 
   const reading = current.dir === 'r';
-  const words = wordsOf(sentence.tokens);
   // Every answer moves the bar: answers so far out of answers so far plus answers still queued.
   const answers = tally[1] + tally[2] + tally[3];
   const progress = answers / (answers + queue.length);
@@ -130,14 +129,7 @@ export default function Review() {
         {revealed && (
           <div className="answer">
             {reading ? <div className="answer-en">{sentence.en}</div> : <div className="answer-zh">{sentence.zh}</div>}
-            <div className="words">
-              {words.map((w, i) => (
-                <span key={i} className="word-pill" title={content.lexicon[w]?.en}>
-                  {w}
-                  {content.lexicon[w] && <small>{content.lexicon[w].py}</small>}
-                </span>
-              ))}
-            </div>
+            <WordBreakdown sentence={sentence} lexicon={content.lexicon} />
             {ttsAvailable() && (
               <button
                 className="btn ghost sm"

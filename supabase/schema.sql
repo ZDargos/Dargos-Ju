@@ -165,3 +165,7 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- notification_prefs(user_id, enabled, challenges): master switch plus one boolean column per type.
 -- server_config(key, value): VAPID keys; RLS with no policies, readable only by the service role.
 -- Edge Function supabase/functions/notify-challenge sends the challenge notification.
+
+-- ---------------------------------------------------------------------------------------------
+-- Game stats (migration game_rounds): game_rounds(id, user_id, game, mode solo|vs, correct, ms,
+-- match_id, played_at, synced_at), own rows only. Vs results come from the matches table.

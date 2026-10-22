@@ -61,8 +61,13 @@ export default function TileBuilder({ target, distractors = [], lexicon, showPin
     <div>
       <div className={`answer-line${result === true && judge ? ' ok' : result === false ? ' bad' : ''}`}>
         {placed.length === 0 && <span className="small muted">Tap the words below</span>}
-        {placed.map((t) => (
-          <button key={t.id} className="tile" onClick={() => remove(t)}>
+        {placed.map((t, i) => (
+          <button
+            key={t.id}
+            // After checking, each word shows whether it's in the right spot.
+            className={`tile${result !== null && judge ? (result || t.text === target[i] ? ' ok' : ' bad') : ''}`}
+            onClick={() => remove(t)}
+          >
             {t.text}
           </button>
         ))}

@@ -56,6 +56,18 @@ export interface ReviewLog {
   mode: ReviewMode;
 }
 
+/** One answered game round, for game stats. */
+export interface GameRound {
+  id: string;
+  game: string;
+  mode: 'solo' | 'vs';
+  correct: boolean;
+  /** Time from the sentence appearing to the answer. */
+  ms: number;
+  matchId?: string | null;
+  at: string;
+}
+
 export type GameId = 'word-order' | 'sentence-builder' | 'spot-error' | 'close-call' | 'dictation';
 
 export interface Settings {

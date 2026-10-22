@@ -26,15 +26,17 @@ async function fetchAll<T>(table: string, columns: string, since: string | null)
 }
 
 interface CardRow { card_key: string; card: StoredCard; updated_at: string; synced_at: string }
+interface RoundRow { id: string; game: string; mode: 'solo' | 'vs'; correct: boolean; ms: number; match_id: string | null; played_at: string; synced_at: string }
 interface LogRow { id: string; sentence_id: string; direction: Dir; grade: Grade; mode: ReviewMode; reviewed_at: string; synced_at: string }
 
 /** Downloads changes made on other devices since the last pull (everything on the first pull). */
 export async function pullRemote() {
   const through = getState().pulledThrough;
   const since = through ? new Date(Date.parse(through) - OVERLAP_MS).toISOString() : null;
-  const [cardRows, logRows, settingsRes] = await Promise.all([
+  const [cardRows, logRows, roundRows, settingsRes] = await Promise.all([
     fetchAll<CardRow>('card_states', 'card_key, card, updated_at, synced_at', since),
     fetchAll<LogRow>('review_logs', 'id, sentence_id, direction, grade, mode, reviewed_at, synced_at', since),
+    fetchAll<RoundRow>('game_rounds', 'id, game, mode, correct, ms, match_id, played_at, synced_at', since),
     supabase.from('user_settings').select('settings, updated_at').maybeSingle(),
   ]);
 
@@ -59,6 +61,16 @@ export async function pullRemote() {
     }
     logs.sort((a, b) => a.at.localeCompare(b.at));
 
+    const knownRounds = new Set(s.rounds.map((r) => r.id));
+    const unsyncedRounds = { ...s.unsyncedRounds };
+    const rounds = s.rounds.slice();
+    for (const r of roundRows) {
+      delete unsyncedRounds[r.id];
+      if (knownRounds.has(r.id)) continue;
+      rounds.push({ id: r.id, game: r.game, mode: r.mode, correct: r.correct, ms: r.ms, matchId: r.match_id, at: r.played_at });
+    }
+    rounds.sort((a, b) => a.at.localeCompare(b.at));
+
     let settings = s.settings;
     let settingsUpdatedAt = s.settingsUpdatedAt;
     const remote = settingsRes.data as { settings: Settings; updated_at: string } | null;
@@ -67,8 +79,8 @@ export async function pullRemote() {
       settingsUpdatedAt = remote.updated_at;
     }
     let pulledThrough = s.pulledThrough;
-    for (const r of [...cardRows, ...logRows]) if (!pulledThrough || r.synced_at > pulledThrough) pulledThrough = r.synced_at;
-    return { cards, dirtyCards, logs, unsyncedLogs, settings, settingsUpdatedAt, pulledThrough, lastSyncAt: new Date().toISOString() };
+    for (const r of [...cardRows, ...logRows, ...roundRows]) if (!pulledThrough || r.synced_at > pulledThrough) pulledThrough = r.synced_at;
+    return { cards, dirtyCards, logs, unsyncedLogs, rounds, unsyncedRounds, settings, settingsUpdatedAt, pulledThrough, lastSyncAt: new Date().toISOString() };
   });
 }
 
@@ -108,6 +120,22 @@ export async function pushPending() {
       });
     }
 
+    const pendingRoundIds = new Set(Object.keys(s.unsyncedRounds));
+    const pendingRounds = s.rounds.filter((r) => pendingRoundIds.has(r.id));
+    for (let i = 0; i < pendingRounds.length; i += 500) {
+      const chunk = pendingRounds.slice(i, i + 500);
+      const { error } = await supabase.from('game_rounds').upsert(
+        chunk.map((r) => ({ id: r.id, game: r.game, mode: r.mode, correct: r.correct, ms: r.ms, match_id: r.matchId ?? null, played_at: r.at })),
+        { onConflict: 'id', ignoreDuplicates: true },
+      );
+      if (error) throw error;
+      setState((cur) => {
+        const unsyncedRounds = { ...cur.unsyncedRounds };
+        for (const r of chunk) delete unsyncedRounds[r.id];
+        return { unsyncedRounds };
+      });
+    }
+
     if (s.settingsDirty) {
       const { error } = await supabase
         .from('user_settings')
@@ -135,7 +163,7 @@ export function startBackgroundSync() {
   window.addEventListener('online', onOnline);
   const interval = setInterval(() => {
     const s = getState();
-    if (Object.keys(s.dirtyCards).length || Object.keys(s.unsyncedLogs).length || s.settingsDirty) scheduleSync(0);
+    if (Object.keys(s.dirtyCards).length || Object.keys(s.unsyncedLogs).length || Object.keys(s.unsyncedRounds).length || s.settingsDirty) scheduleSync(0);
   }, 60_000);
   return () => {
     window.removeEventListener('online', onOnline);

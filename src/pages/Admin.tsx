@@ -10,6 +10,7 @@ import { isHanWord, wordsOf } from '../lib/segmenter';
 import SegEditor from '../components/SegEditor';
 import { IconBack } from '../components/Icons';
 import { SignupModeSwitch, UsersPanel } from './AdminUsers';
+import { VoiceAdmin } from './AdminVoices';
 import type { LexEntry, Sentence } from '../types';
 
 function useSegmenter() {
@@ -47,6 +48,7 @@ export default function Admin() {
       <AddSentences />
       <FixSplits />
       <AddedSentences />
+      <VoiceAdmin />
     </>
   );
 }

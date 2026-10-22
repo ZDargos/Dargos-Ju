@@ -22,6 +22,9 @@ import Friends from './pages/Friends';
 import VsLobby from './pages/VsLobby';
 import VsMatch from './pages/VsMatch';
 import ChallengePage from './pages/ChallengePage';
+import Voice from './pages/Voice';
+import RecordingVote from './components/RecordingVote';
+import { loadVoices } from './lib/voices';
 import { msg } from './i18n/msg';
 
 /** Theme, text size and the page language (for screen readers) follow the settings. */
@@ -59,6 +62,15 @@ export default function App() {
   // Wait for the first download so an existing account on a new device isn't asked again.
   const synced = useStore((s) => s.lastSyncAt !== null);
   useEffect(() => startBackgroundSync(), []);
+  // Native-speaker recordings: fetched when signed in and whenever the app comes back to the front.
+  const signedIn = auth.status === 'signed-in';
+  useEffect(() => {
+    if (!signedIn) return;
+    const refresh = () => document.visibilityState === 'visible' && loadVoices().catch(() => undefined);
+    refresh();
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, [signedIn]);
 
   if (auth.status === 'loading') return <div className="center-screen">{t('Loading…')}</div>;
   if (auth.status === 'signed-out') return <Login />;
@@ -82,12 +94,14 @@ export default function App() {
           <Route path="/vs/match/:id" element={<VsMatch />} />
           <Route path="/vs/:game" element={<VsLobby />} />
           <Route path="/challenge/:id" element={<ChallengePage />} />
+          <Route path="/voice" element={<Voice />} />
           <Route path="/settings" element={<SettingsPage isAdmin={auth.isAdmin} email={auth.session?.user.email ?? ''} />} />
           <Route path="/admin" element={auth.isAdmin ? <Admin /> : <Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <NoVoiceBanner />
+      <RecordingVote />
       <UpdatePrompt />
       {auth.session && auth.session.user.id !== 'demo' && <ChallengeListener userId={auth.session.user.id} />}
       {!immersive && (

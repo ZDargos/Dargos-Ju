@@ -43,6 +43,12 @@ a file (single words, sentences added in the admin page) uses the device's speec
 - `data/audio-manifest.json` lists each file's text, voice and source. To replace one with a
   native-speaker recording, overwrite its mp3 and set `"source": "human"`; the generator never
   overwrites human recordings.
+- **Lend your voice** (Study page → `/voice`): native speakers record sentences in their own
+  language. A recording plays instead of the neural audio while it stands; listeners rate it
+  good or bad, and once it has enough votes with enough of them bad (admin page: default 10 votes,
+  51% bad) it is trashed and the sentence needs a voice again. Recordings live in the public
+  `voices` Supabase storage bucket (about 15 KB each, 1 MB cap); trashed files are deleted by the
+  `voice-cleanup` Edge Function. New sentences join the pool automatically.
 
 ## Develop
 

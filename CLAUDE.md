@@ -36,6 +36,9 @@ Before calling any feature done, check it in both modes.
   `audioKey(lang, text)` of the exact text) and falls back to device speech; voice checks: `voiceStatus(lang)`.
   Any new text the app speaks as a whole sentence should be added to `scripts/make-audio.ts`.
   Never overwrite audio whose manifest entry has `"source": "human"`.
+  People's recordings (`lib/voices.ts`, tables `voice_recordings`/`voice_votes`) play before the
+  neural audio while they stand; they're keyed by the same `audioKey`, so a recording only matches
+  the exact text it was made for.
 - Pronunciation display: pinyin in Chinese mode, IPA phonetics in English mode (`components/Pinyin.tsx`).
 - Mark text in each language with `lang="zh-CN"` / `lang="en"` and the `zh` class for Chinese, so
   screen readers and fonts are right.

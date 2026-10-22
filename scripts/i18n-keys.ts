@@ -47,7 +47,7 @@ export function missingKeys(zh: Record<string, string>): string[] {
 
 /** Placeholders like {n} must survive translation. */
 export function placeholderMismatches(zh: Record<string, string>): string[] {
-  const names = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
+  const names = (s: string) => [...new Set([...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].sort().join(',');
   return Object.entries(zh).filter(([k, v]) => names(k) !== names(v)).map(([k]) => k);
 }
 

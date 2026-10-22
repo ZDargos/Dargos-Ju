@@ -1,6 +1,6 @@
 // Speech for the language being learned (Chinese, or English in English-learning mode).
-// Sentences play pre-made neural-voice audio (public/audio, made by scripts/make-audio.ts) when it
-// exists; anything else (single words, sentences added in the app) uses the device's speech:
+// Sentences play a native-speaker recording when one stands (lib/voices.ts), else pre-made
+// neural-voice audio (public/audio, made by scripts/make-audio.ts) when it exists; anything else (single words, sentences added in the app) uses the device's speech:
 // - Android app: a small native plugin (ZhSpeechPlugin.java) that prefers Google's speech engine,
 //   since many phones default to an engine with no Chinese voice.
 // - Web: the browser's speechSynthesis, using a voice for the right language only. Without one,
@@ -12,6 +12,7 @@ import { t } from '../i18n';
 import type { LearnLang } from './learn';
 import { audioKey } from './audioKey';
 import audioIndex from '../generated/audio-index.json';
+import { recordingFor, recordingUrl } from './voices';
 
 const recorded: Record<LearnLang, Set<string>> = { zh: new Set(audioIndex.zh), en: new Set(audioIndex.en) };
 
@@ -160,6 +161,18 @@ let webTimer: ReturnType<typeof setTimeout> | undefined;
 export async function speak(text: string, rate = 0.85, lang: LearnLang = 'zh'): Promise<void> {
   stopAudio();
   if (!native && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  // A standing native-speaker recording comes first; the app then offers a good/bad vote.
+  const human = recordingFor(text, lang);
+  if (human) {
+    try {
+      const url = await recordingUrl(human);
+      window.dispatchEvent(new CustomEvent('dj:played-recording', { detail: human }));
+      return await playFile(url, rate);
+    } catch (e) {
+      if ((e as Error).name === 'NotAllowedError') throw new Error(t('Tap Play to hear the sentence.'));
+      console.warn('Recording failed, using the built-in voice', e);
+    }
+  }
   const file = audioFileFor(text, lang);
   if (file) {
     try {

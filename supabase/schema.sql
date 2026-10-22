@@ -183,3 +183,14 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 --   and accept_match(match_id, my_lang) record it; players on different modes can play each other.
 -- friend_leaderboard / friend_summary count answers in both languages together.
 -- notify-challenge writes the notification in the recipient's interface language.
+
+-- ---------------------------------------------------------------------------------------------
+-- Voice contributions (migration voice_recordings).
+-- voice_recordings(id, user_id, lang, sentence_id, text_key, text, storage_path, mime, duration_ms,
+--   status live|trashed, up_votes, down_votes, file_deleted): one live recording per (lang, text_key).
+--   Signed-in users can read live rows. Inserted only through submit_voice_recording() (file must be
+--   in the caller's folder of the public "voices" bucket; display name required; 300 a day).
+-- voice_votes(recording_id, user_id, good): through vote_voice_recording(); not on your own.
+--   Trashes the recording once votes >= app_config.voice_min_votes and bad share >=
+--   app_config.voice_bad_ratio (admins edit both). admin_trash_recording() removes one directly.
+-- voice_leaderboard(): contributors by live recordings. Edge Function voice-cleanup deletes trashed files.

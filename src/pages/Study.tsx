@@ -7,6 +7,8 @@ import { streak } from '../lib/stats';
 import { langParams, useT } from '../i18n';
 import LevelPicker from '../components/LevelPicker';
 import InstallHint from '../components/InstallHint';
+import { IconMic } from '../components/IconsExtra';
+import { useVoices, voiceProgress } from '../lib/voices';
 import type { Settings } from '../types';
 
 export default function Study() {
@@ -31,6 +33,10 @@ export default function Study() {
   const days = useMemo(() => streak(logs), [logs]);
 
   const canStudy = levels.length > 0 && (counts.due > 0 || newInSession > 0);
+  useVoices();
+  // Most people can lend their voice in the language they aren't learning.
+  const voiceLang = settings.learning === 'zh' ? 'en' : 'zh';
+  const voiced = voiceProgress(content, voiceLang);
 
   return (
     <>
@@ -101,6 +107,16 @@ export default function Study() {
           <p className="small muted center">{t("You've reached today's limit of {n} new cards. You can raise it in Settings.", { n: settings.newPerDay })}</p>
         )}
       </div>
+
+      <Link to="/voice" className="card voice-card">
+        <span className="voice-icon"><IconMic /></span>
+        <span className="grow">
+          <strong>{t('Lend your voice')}</strong>
+          <span className="small muted" style={{ display: 'block' }}>{t('Record sentences in your native language for other learners.')}</span>
+          <span className="progress" style={{ display: 'block', marginTop: 8 }} aria-hidden><span style={{ display: 'block', height: '100%', width: `${voiced.total ? (voiced.done / voiced.total) * 100 : 0}%`, background: 'var(--accent)' }} /></span>
+          <span className="small muted" style={{ display: 'block', marginTop: 4 }}>{t('{done} of {total} {lang} sentences have a real voice', { ...voiced, lang: langParams(voiceLang).target })}</span>
+        </span>
+      </Link>
     </>
   );
 }

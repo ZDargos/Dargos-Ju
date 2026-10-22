@@ -1,1 +1,602 @@
-{}
+{
+ "0195dca49ff319e8": {
+  "lang": "zh",
+  "text": "我才上来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "02a075b603d8c870": {
+  "lang": "en",
+  "text": "I let my son speak.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "036f68558b1cb554": {
+  "lang": "zh",
+  "text": "我早上骂了我的儿子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "03caaa508b092e64": {
+  "lang": "zh",
+  "text": "我找了我的儿子半年了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "049d8b01e3f37e14": {
+  "lang": "zh",
+  "text": "我骂过我的儿子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "0745a08fa10c91fa": {
+  "lang": "en",
+  "text": "Should I come down?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "077f97214ef1d634": {
+  "lang": "zh",
+  "text": "我和儿子过日子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "090ec09727d77594": {
+  "lang": "en",
+  "text": "I came down.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "0a5ee4f5421a7fe0": {
+  "lang": "zh",
+  "text": "三个人来自中国。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "1083af7f4f79e4d8": {
+  "lang": "zh",
+  "text": "我马上上来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "1188dcae6db452ac": {
+  "lang": "en",
+  "text": "My horse is fat.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "11e862641e521da8": {
+  "lang": "zh",
+  "text": "我明白你说的话。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "1633be039d961abc": {
+  "lang": "en",
+  "text": "I understand what you said.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "186b622bb24b79a0": {
+  "lang": "zh",
+  "text": "我才下来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "20a0673a55667c30": {
+  "lang": "zh",
+  "text": "我才来中国。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "21d06ca7e3a79f90": {
+  "lang": "zh",
+  "text": "我明年来中国。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "22ab5dc2e0b1f400": {
+  "lang": "en",
+  "text": "A: Do you have a phone? B: I have one phone.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "23d523d8322eb39c": {
+  "lang": "zh",
+  "text": "我用勺子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "26b44977a4935cd8": {
+  "lang": "zh",
+  "text": "你上来吧。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "28cd03cb88d05ad4": {
+  "lang": "en",
+  "text": "I have scolded my son.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "2a5af2152c473498": {
+  "lang": "en",
+  "text": "I scolded my son this morning.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "2fa7830f88de4bf0": {
+  "lang": "en",
+  "text": "I'm about to come to China.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "330569ce422e0114": {
+  "lang": "zh",
+  "text": "我用本子拍了一下我的儿子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "33c29032fd2e28e0": {
+  "lang": "zh",
+  "text": "他来自中国。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "39a84ae7879605d0": {
+  "lang": "zh",
+  "text": "我马上来中国。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "3a24791aab768e38": {
+  "lang": "en",
+  "text": "A: Do you eat bread in the afternoon? B: I do.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "3c7c4e95df3bd3dc": {
+  "lang": "zh",
+  "text": "我的电话卡了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "3f368737c7858c44": {
+  "lang": "zh",
+  "text": "我的口很干。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "401076f24744ff18": {
+  "lang": "zh",
+  "text": "A：你的手白吗？B：我的手不白。A：你儿子的手白吗？B：我儿子的手很白。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "41cfd2dc2058e3e4": {
+  "lang": "zh",
+  "text": "上来了一个人。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "41d0bd345d2a6ba0": {
+  "lang": "zh",
+  "text": "三个月来，我没有吃过米饭。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "464a196439fa1598": {
+  "lang": "zh",
+  "text": "我用勺子吃面或面包。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "4842bea48ea75060": {
+  "lang": "en",
+  "text": "I gave my son a pat with the notebook.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "487f48977264960c": {
+  "lang": "zh",
+  "text": "我是中国人。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "4d2cb0439591fbf0": {
+  "lang": "en",
+  "text": "He comes from China.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "504d7fa3914100c0": {
+  "lang": "zh",
+  "text": "我的电话很旧。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "5141c84dac7bef2c": {
+  "lang": "zh",
+  "text": "我上来了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "541bd5b2145c0c88": {
+  "lang": "en",
+  "text": "For three months, I have not eaten rice.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "5422d79121e36e94": {
+  "lang": "en",
+  "text": "The horse ate some noodles at noon.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "589695765a312f10": {
+  "lang": "zh",
+  "text": "我身上有一个白点。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "5ccb15daeaf9114c": {
+  "lang": "zh",
+  "text": "我的儿子上午骂了我的马。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "657622a74e3758dc": {
+  "lang": "en",
+  "text": "My name is Bread.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "676400b0af778bdc": {
+  "lang": "en",
+  "text": "I use a spoon to eat noodles or bread.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "71d44cdd7fea0b78": {
+  "lang": "en",
+  "text": "I just came.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "75ca2afab58e03c8": {
+  "lang": "zh",
+  "text": "我叫面包。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "77e8d190a1b88b18": {
+  "lang": "en",
+  "text": "A: Is the entrance messy? B: The entrance is not messy in the morning; in the afternoon it is very messy.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "78aacfb8872246d0": {
+  "lang": "zh",
+  "text": "我马上下来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "7a0a9986632c1588": {
+  "lang": "en",
+  "text": "I don't have a notebook on me.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "7a1896f3a1e4e594": {
+  "lang": "en",
+  "text": "I just came down.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "7c1be0520f06e43c": {
+  "lang": "en",
+  "text": "One person came up.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "7d7ca445d52e4c4e": {
+  "lang": "zh",
+  "text": "你的马胖吗？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "7d7ddce2fa457046": {
+  "lang": "zh",
+  "text": "我下来吗？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "88a30a45edcabf94": {
+  "lang": "en",
+  "text": "I've been looking for my son for half a year.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "893332dfdf8851dc": {
+  "lang": "zh",
+  "text": "我身上没有本子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "8ad29acb90287408": {
+  "lang": "en",
+  "text": "Please come down and look for me.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "8dd8dbf07707bda2": {
+  "lang": "en",
+  "text": "Should I come up?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "90dcf9dc36509b10": {
+  "lang": "zh",
+  "text": "请你下来找我一下。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "94d5da92cd2541d8": {
+  "lang": "zh",
+  "text": "我说话，但是我的儿子不说话。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "94f757fb94401ce8": {
+  "lang": "zh",
+  "text": "A: 你下午吃面包吗？B: 我吃。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "99880acc9fa734e0": {
+  "lang": "en",
+  "text": "My mouth is very dry.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "9a75dd4ff211e6d4": {
+  "lang": "en",
+  "text": "I live with my son.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "9f61cfc438bcbbf0": {
+  "lang": "en",
+  "text": "Three people come from China.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "a0584a575b78313c": {
+  "lang": "en",
+  "text": "Come up.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "a1b8ffb52a1c0354": {
+  "lang": "en",
+  "text": "My phone is very old.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "a29f057c57e540c8": {
+  "lang": "zh",
+  "text": "我让我的儿子说话。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "a2cd037565e31750": {
+  "lang": "en",
+  "text": "A: Are your hands white? B: My hands are not white. A: Are your son's hands white? B: My son's hands are very white.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "a2eda4606f1410fc": {
+  "lang": "zh",
+  "text": "我认识你。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "a8935b5e6c9b85f6": {
+  "lang": "zh",
+  "text": "你认识我吗？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "a97bc94f50c89e78": {
+  "lang": "en",
+  "text": "My phone is lagging.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "b02dcd77728c8128": {
+  "lang": "en",
+  "text": "I will come right away.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "b39ccbadde100bf0": {
+  "lang": "en",
+  "text": "I just came to China.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "b3c2a7d40ebc1b70": {
+  "lang": "zh",
+  "text": "我才来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "b64055bfcec07136": {
+  "lang": "zh",
+  "text": "我上来吗？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "b69a0f1672a7d4bc": {
+  "lang": "zh",
+  "text": "A: 你找电话吗？B: 不，我找勺子。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "b7a2ae02fbc951b8": {
+  "lang": "zh",
+  "text": "A: 入口乱吗？B: 入口早上不乱，下午很乱。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "bf2ed591fb3a62ac": {
+  "lang": "zh",
+  "text": "我的马很吓人。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "c1354293e4f1ffdc": {
+  "lang": "en",
+  "text": "At 10:30 in the morning, I ate one and a half pieces of bread.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "c81bd40464906128": {
+  "lang": "en",
+  "text": "I will come up right away.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "c95fce0d372f2128": {
+  "lang": "en",
+  "text": "I will come down right away.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "ca80e855f92cb140": {
+  "lang": "zh",
+  "text": "A: 你有电话吗？B: 我有一个电话。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "cd8fdacc79226e9c": {
+  "lang": "zh",
+  "text": "我下来了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "cf1172e08f65b1d2": {
+  "lang": "en",
+  "text": "Is your horse fat?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "d14e7ac498e6503c": {
+  "lang": "en",
+  "text": "I came up.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "d1b8784a9adf7a00": {
+  "lang": "en",
+  "text": "I have a white spot on my body.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "d1df3f18ceee6f14": {
+  "lang": "en",
+  "text": "I'll come to China next year.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "d4e7ca151e00507a": {
+  "lang": "en",
+  "text": "Did you write it down?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "d7163b408c249608": {
+  "lang": "en",
+  "text": "I am Chinese.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "d7b5f2f0577a4bdc": {
+  "lang": "zh",
+  "text": "马中午吃了一点面。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "e052476ce6d7019e": {
+  "lang": "zh",
+  "text": "写下来了吗？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "e219461f09fd7ea8": {
+  "lang": "en",
+  "text": "I know you.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "e67fbf800a8b4664": {
+  "lang": "zh",
+  "text": "我的马很胖。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "e84b1395a8d21f98": {
+  "lang": "zh",
+  "text": "早上十点半我吃了一个半面包。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "eb36870590e90298": {
+  "lang": "zh",
+  "text": "我马上来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "f00f5678290dcc3c": {
+  "lang": "en",
+  "text": "I just came up.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "f450f97b6420b498": {
+  "lang": "en",
+  "text": "My son scolded my horse this morning.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "f7d864de2901c614": {
+  "lang": "en",
+  "text": "I use a spoon.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "fc3e5b520d842b58": {
+  "lang": "en",
+  "text": "I talk, but my son does not talk.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "fce8539486dcd214": {
+  "lang": "en",
+  "text": "A: Are you looking for a phone? B: No, I am looking for a spoon.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "fd024953a9bfdf10": {
+  "lang": "en",
+  "text": "My horse is scary.",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "fd15367058b6064e": {
+  "lang": "en",
+  "text": "Do you know me?",
+  "source": "neural",
+  "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ }
+}

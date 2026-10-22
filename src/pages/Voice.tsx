@@ -8,6 +8,7 @@ import { langName, useT } from '../i18n';
 import { IconBack } from '../components/Icons';
 import NamePrompt from '../components/NamePrompt';
 import type { LearnLang } from '../lib/learn';
+import { XP_RULES } from '../lib/xp';
 import type { Sentence } from '../types';
 
 const MAX_MS = 20000;
@@ -85,9 +86,10 @@ export default function Voice() {
 
       <div className="card">
         <p style={{ marginTop: 0 }}><strong>{t('Record sentences in a language you speak natively. Other learners will hear your voice and copy it.')}</strong></p>
-        <p className="small muted" style={{ marginBottom: 0 }}>
+        <p className="small muted" style={{ margin: 0 }}>
           {t("This is not speaking practice for a language you're learning. Only record if you speak the language like a native, so learners hear it said correctly.")}
         </p>
+        <p className="small muted" style={{ margin: '8px 0 0' }}>{t('Each recording earns {n} XP while it stays live.', { n: XP_RULES.voice })}</p>
       </div>
 
       <div className="card stack">

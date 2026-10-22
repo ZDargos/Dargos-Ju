@@ -43,6 +43,17 @@ Before calling any feature done, check it in both modes.
 - Mark text in each language with `lang="zh-CN"` / `lang="en"` and the `zh` class for Chinese, so
   screen readers and fonts are right.
 
+## XP and badges
+
+- XP, levels, daily goal, streak bonus, daily challenges and badges live in `src/lib/xp.ts` and are
+  computed from synced history (logs, rounds, vs results, live voice lines), never stored as
+  counters. A new activity that should earn XP gets a rule there and a line in "How XP works"
+  on the Progress page.
+- Never give more XP, or challenge credit, for a better self-grade: it would reward dishonest
+  grading and break the learner's own review schedule.
+- Anything that can be undone later (like a voice line voted down) must not count toward daily
+  goals, so past streaks never change.
+
 ## Data
 
 - Progress is separate per mode: card keys `sid|dir` (Chinese) and `en:sid|dir` (English);

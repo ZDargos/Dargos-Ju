@@ -150,3 +150,18 @@ export function streakFromDays(days: string[]): number {
   }
   return n;
 }
+
+/** Total XP for a set of players (for level chips). Re-fetches when the set changes. */
+export function useXpOf(userIds: string[]): Record<string, number> {
+  const [xp, setXp] = useState<Record<string, number>>({});
+  const key = [...new Set(userIds)].sort().join(',');
+  useEffect(() => {
+    if (!key) return;
+    supabase
+      .from('profiles')
+      .select('user_id, xp')
+      .in('user_id', key.split(','))
+      .then(({ data }) => setXp(Object.fromEntries((data ?? []).map((p: { user_id: string; xp: number }) => [p.user_id, p.xp]))));
+  }, [key]);
+  return xp;
+}

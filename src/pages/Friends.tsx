@@ -7,6 +7,7 @@ import {
   listFriends,
   removeFriend,
   searchProfiles,
+  useXpOf,
   sendFriendRequest,
   streakFromDays,
   summary,
@@ -20,6 +21,7 @@ import {
 import { supabase } from '../lib/supabase';
 import NamePrompt from '../components/NamePrompt';
 import { IconBack } from '../components/Icons';
+import { LevelChip } from '../components/XpBits';
 import { useT } from '../i18n';
 import { msg } from '../i18n/msg';
 
@@ -55,6 +57,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [renaming, setRenaming] = useState(false);
+  const xpOf = useXpOf([...(board ?? []).map((r) => r.user_id), ...friends.map((f) => f.user_id), ...results.map((p) => p.user_id)]);
 
   const loadFriends = useCallback(() => listFriends().then(setFriends).catch((e) => setError(e.message)), []);
   const loadBoard = useCallback(() => leaderboard(period).then(setBoard).catch((e) => setError(e.message)), [period]);
@@ -154,7 +157,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
                 <div className="spread">
                   <div className="row" style={{ minWidth: 0 }}>
                     <span style={{ width: 22, fontWeight: 700, color: i === 0 ? 'var(--hard)' : 'var(--muted)' }}>{i + 1}</span>
-                    <span style={{ fontWeight: r.is_me ? 700 : 500 }}>{r.display_name}{r.is_me && ` ${t('(you)')}`}</span>
+                    <span style={{ fontWeight: r.is_me ? 700 : 500 }}>{r.display_name}{r.is_me && ` ${t('(you)')}`}</span> <LevelChip xp={xpOf[r.user_id]} />
                   </div>
                   <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{r.answers}</strong>
                 </div>
@@ -174,13 +177,13 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
         <ul className="list">
           {accepted.map((f) => (
             <li key={f.user_id} className="spread">
-              <Link to={`/friends/${f.user_id}`} style={{ fontWeight: 600, textDecoration: 'none' }}>{f.display_name}</Link>
+              <span><Link to={`/friends/${f.user_id}`} style={{ fontWeight: 600, textDecoration: 'none' }}>{f.display_name}</Link> <LevelChip xp={xpOf[f.user_id]} /></span>
               <Link to={`/friends/${f.user_id}`} className="btn sm">{t('Compare')}</Link>
             </li>
           ))}
           {outgoing.map((f) => (
             <li key={f.user_id} className="spread">
-              <span>{f.display_name} <span className="small muted">· request sent</span></span>
+              <span>{f.display_name} <span className="small muted">· {t('request sent')}</span></span>
               <button className="btn ghost sm" onClick={() => act(() => removeFriend(f.user_id), t('Request cancelled.'))}>{t('Cancel')}</button>
             </li>
           ))}
@@ -195,7 +198,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
           <ul className="list" style={{ maxHeight: 360, overflowY: 'auto' }}>
             {results.map((p) => (
               <li key={p.user_id} className="spread">
-                <span>{p.display_name}</span>
+                <span>{p.display_name} <LevelChip xp={xpOf[p.user_id]} /></span>
                 {known.has(p.user_id) ? (
                   <span className="small muted">{friends.find((f) => f.user_id === p.user_id)?.status === 'accepted' ? t('Friends') : t('Pending')}</span>
                 ) : (

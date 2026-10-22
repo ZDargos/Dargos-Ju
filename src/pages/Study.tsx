@@ -3,12 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { updateSettings, useStore } from '../lib/store';
 import { studyCounts } from '../lib/srs';
-import { streak } from '../lib/stats';
 import { langParams, useT } from '../i18n';
 import LevelPicker from '../components/LevelPicker';
 import InstallHint from '../components/InstallHint';
 import { IconMic } from '../components/IconsExtra';
 import { useVoices, voiceProgress } from '../lib/voices';
+import { useXp } from '../lib/useXp';
+import { GoalRing } from '../components/XpBits';
 import type { Settings } from '../types';
 
 export default function Study() {
@@ -16,7 +17,6 @@ export default function Study() {
   const content = useContent();
   const settings = useStore((s) => s.settings);
   const cards = useStore((s) => s.cards);
-  const logs = useStore((s) => s.logs);
   const navigate = useNavigate();
   const names = langParams(settings.learning);
 
@@ -25,15 +25,9 @@ export default function Study() {
   const counts = useMemo(() => studyCounts(content, levels, settings), [content, levels.join(','), settings, cards]);
   const newLeft = Math.max(0, settings.newPerDay - counts.newToday);
   const newInSession = Math.min(newLeft, counts.newAvailable, Math.max(0, settings.sessionSize - counts.due));
-  const todayCount = useMemo(() => {
-    const since = new Date();
-    since.setHours(0, 0, 0, 0);
-    return logs.filter((l) => Date.parse(l.at) >= since.getTime()).length;
-  }, [logs]);
-  const days = useMemo(() => streak(logs), [logs]);
-
   const canStudy = levels.length > 0 && (counts.due > 0 || newInSession > 0);
   useVoices();
+  const xp = useXp();
   // Most people can lend their voice in the language they aren't learning.
   const voiceLang = settings.learning === 'zh' ? 'en' : 'zh';
   const voiced = voiceProgress(content, voiceLang);
@@ -45,10 +39,19 @@ export default function Study() {
           <div className="brand-mark" aria-hidden>句</div>
           <h1>Dargos Ju</h1>
         </div>
-        <div className="small muted" style={{ textAlign: 'right' }}>
-          {t('{n} today', { n: todayCount })}
-          {days > 0 && <> · {t('{n} day streak', { n: days })}</>}
-        </div>
+        <Link
+          to="/progress"
+          className="xp-header"
+          aria-label={t('Level {n}. {xp} of {goal} XP today. {streak} day streak. Open your progress.', { n: xp.level, xp: xp.today.xp, goal: xp.today.goal, streak: xp.streak })}
+        >
+          <span className="xp-header-text">
+            <strong>{t('Lv {n}', { n: xp.level })}</strong>
+            <span className="small muted">🔥 {xp.streak}</span>
+          </span>
+          <GoalRing value={xp.today.xp} goal={xp.today.goal} size={40}>
+            <span className="small" style={{ fontWeight: 700 }}>{xp.today.met ? '✓' : `${Math.floor((xp.today.xp / xp.today.goal) * 100)}%`}</span>
+          </GoalRing>
+        </Link>
       </header>
 
       <Link to="/settings" className="mode-chip" aria-label={t('Learning {target}. Change in Settings.', names)}>

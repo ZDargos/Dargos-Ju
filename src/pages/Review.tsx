@@ -8,6 +8,7 @@ import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { langName, useT } from '../i18n';
 import { IconClose, IconSpeaker } from '../components/Icons';
 import WordBreakdown from '../components/WordBreakdown';
+import { useXp } from '../lib/useXp';
 import { PinyinText, PinyinToggle, usePinyin } from '../components/Pinyin';
 import type { Grade } from '../types';
 
@@ -24,6 +25,8 @@ export default function Review() {
   const navigate = useNavigate();
   const content = useContent();
   const settings = useStore((s) => s.settings);
+  const xp = useXp();
+  const [xpAtStart] = useState(xp.total);
   const pinyin = usePinyin('study');
   // The session keeps the learning mode it started in.
   const [lang] = useState(() => getState().settings.learning);
@@ -88,6 +91,7 @@ export default function Review() {
           {reviewed > 0 ? (
             <>
               <p className="muted">{t('{cards} cards, {answers} answers', { cards: finished.size, answers: reviewed })}</p>
+              <p className="xp-earned">+{Math.max(0, xp.total - xpAtStart)} XP</p>
               <div className="grades" style={{ pointerEvents: 'none' }}>
                 <div className="grade g1">{tally[1]}<span className="iv">{t('Wrong')}</span></div>
                 <div className="grade g2">{tally[2]}<span className="iv">{t('Mostly right')}</span></div>

@@ -194,3 +194,6 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 --   Trashes the recording once votes >= app_config.voice_min_votes and bad share >=
 --   app_config.voice_bad_ratio (admins edit both). admin_trash_recording() removes one directly.
 -- voice_leaderboard(): contributors by live recordings. Edge Function voice-cleanup deletes trashed files.
+
+-- XP (migration profile_xp): profiles.xp holds each player's total XP as reported by their app,
+-- so friends and leaderboards can show levels. XP itself is computed in the app from history.

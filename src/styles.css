@@ -359,3 +359,50 @@ html[data-text-size='xl'] body { zoom: 1.25; }
 @keyframes pulse { 50% { opacity: 0.7; } }
 .vote-banner { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 21; max-width: 640px; margin: 0 auto; box-shadow: var(--shadow); }
 .leaderboard li { padding: 6px 0; }
+
+/* ---------- XP, levels, badges ---------- */
+.level-chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 99px; background: var(--accent-soft, var(--surface-2)); color: var(--accent); vertical-align: 1px; white-space: nowrap; }
+.goal-ring { position: relative; display: inline-grid; place-items: center; flex: none; }
+.goal-ring svg { position: absolute; inset: 0; }
+.goal-ring .track { fill: none; stroke: var(--surface-2); stroke-width: 6; }
+.goal-ring .fill { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
+.goal-ring .fill.done { stroke: var(--right); }
+.goal-ring-label { position: relative; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.xp-header { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+.xp-header-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; font-size: 14px; }
+.level-card { display: flex; gap: 16px; align-items: center; }
+.level-badge { width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, var(--accent), var(--hard)); color: #fff; font-size: 28px; font-weight: 800; display: grid; place-items: center; flex: none; box-shadow: var(--shadow); }
+.level-title { font-size: 20px; font-weight: 700; }
+.streak-line { font-size: 17px; }
+.challenge-list li { padding: 10px 0; }
+.challenge-list li.done .progress > div { background: var(--right); }
+.streak-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; max-width: 300px; }
+.cal-day { aspect-ratio: 1; border-radius: 5px; background: var(--surface-2); display: inline-block; }
+.cal-day.some { background: color-mix(in srgb, var(--accent) 35%, var(--surface-2)); }
+.cal-day.met { background: var(--accent); }
+.cal-day.today { outline: 2px solid var(--text); outline-offset: 1px; }
+.cal-day.legend { width: 12px; height: 12px; vertical-align: -1px; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.badge-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; text-align: center; }
+.badge-icon { font-size: 30px; line-height: 1.2; }
+.badge-tile.tier-0 .badge-icon { filter: grayscale(1); opacity: 0.45; }
+.badge-name { font-weight: 700; margin-top: 4px; }
+.badge-tier { font-weight: 700; color: var(--muted); }
+.badge-tile.tier-1 .badge-tier { color: #b87333; }
+.badge-tile.tier-2 .badge-tier { color: #9aa4ad; }
+.badge-tile.tier-3 .badge-tier { color: #d4a017; }
+.badge-tile.tier-4 .badge-tier { color: #5bc0eb; }
+.badge-tile.maxed { border-color: #d4a017; }
+.badge-desc { margin-top: 4px; }
+.mastery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; text-align: center; }
+.mastery-tile { display: flex; flex-direction: column; align-items: center; }
+.mastery-tile.mastered .goal-ring .fill { stroke: #d4a017; }
+.how-xp summary { cursor: pointer; }
+.how-xp ul { margin: 10px 0 0; padding-left: 18px; }
+.how-xp li + li { margin-top: 6px; }
+.xp-earned { font-size: 22px; font-weight: 800; color: var(--accent); margin: 4px 0 8px; }
+.progress-link { display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; }
+.xp-toasts { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 12px; right: 12px; z-index: 30; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.xp-toast { pointer-events: auto; display: flex; gap: 12px; align-items: center; max-width: 420px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); animation: toast-in 0.35s ease; cursor: pointer; }
+.xp-toast-icon { font-size: 28px; }
+@keyframes toast-in { from { transform: translateY(-12px); opacity: 0; } }

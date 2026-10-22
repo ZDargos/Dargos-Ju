@@ -23,6 +23,8 @@ import VsLobby from './pages/VsLobby';
 import VsMatch from './pages/VsMatch';
 import ChallengePage from './pages/ChallengePage';
 import Voice from './pages/Voice';
+import Progress from './pages/Progress';
+import { XpWatcher } from './components/XpBits';
 import RecordingVote from './components/RecordingVote';
 import { loadVoices } from './lib/voices';
 import { msg } from './i18n/msg';
@@ -95,6 +97,7 @@ export default function App() {
           <Route path="/vs/:game" element={<VsLobby />} />
           <Route path="/challenge/:id" element={<ChallengePage />} />
           <Route path="/voice" element={<Voice />} />
+          <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<SettingsPage isAdmin={auth.isAdmin} email={auth.session?.user.email ?? ''} />} />
           <Route path="/admin" element={auth.isAdmin ? <Admin /> : <Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -102,6 +105,7 @@ export default function App() {
       </main>
       <NoVoiceBanner />
       <RecordingVote />
+      <XpWatcher />
       <UpdatePrompt />
       {auth.session && auth.session.user.id !== 'demo' && <ChallengeListener userId={auth.session.user.id} />}
       {!immersive && (

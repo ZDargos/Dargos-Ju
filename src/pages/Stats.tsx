@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useContent } from '../lib/content';
 import { useStore } from '../lib/store';
@@ -77,6 +78,10 @@ export default function Stats() {
         <h1>{t('Stats')}</h1>
         <span className="small muted">{t('Learning {target}', names)}</span>
       </header>
+      <Link to="/progress" className="card progress-link">
+        <span>🏆 <strong>{t('Your progress')}</strong></span>
+        <span className="small muted">{t('Level, streak, challenges and badges')} ›</span>
+      </Link>
 
       <div className="stat-grid">
         <div className="stat"><div className="value">{started}</div><div className="label">{t('of {n} cards started', { n: totalCards })}</div></div>

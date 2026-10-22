@@ -9,6 +9,7 @@ import { opsFor, project, tilesFor, wordsFor } from './learn';
 import { cleanEnglish, normalizeEnglish, tokenizeEnglish } from './english';
 import { DEFAULT_SETTINGS } from '../types';
 import { drawSentence } from './deck';
+import { BADGES, XP_RULES, badgeStatus, challengesFor, computeXp, dayKey, levelFor, xpForLevel } from './xp';
 
 describe('csv', () => {
   it('parses quoted fields, BOM and header', () => {
@@ -207,5 +208,62 @@ describe('game sentence deck', () => {
     for (let i = 0; i < 10; i++) drawSentence('dictation', 'zh', pool);
     const other = Array.from({ length: 10 }, () => drawSentence('dictation', 'en', pool)!.id);
     expect(new Set(other).size).toBe(10);
+  });
+});
+
+describe('XP', () => {
+  const day = (n: number, h = 12) => new Date(2026, 0, 1 + n, h).toISOString();
+  const cards = (n: number, d: number, mode: 'new' | 'review' | 'extra' = 'review') =>
+    Array.from({ length: n }, (_, i) => ({ id: `${d}-${mode}-${i}`, sid: 's', dir: 'r' as const, grade: 3 as const, at: new Date(Date.parse(day(d)) + i * 5000).toISOString(), mode }));
+  const now = Date.parse(day(9, 20));
+
+  it('gives the same XP for every grade and ignores answers tapped through', () => {
+    const logs = cards(5, 9).map((l, i) => ({ ...l, grade: ((i % 3) + 1) as 1 | 2 | 3 }));
+    const quick = [{ ...logs[0], id: 'q', at: new Date(Date.parse(logs[0].at) + 500).toISOString() }];
+    const s = computeXp({ logs: [...logs, ...quick], rounds: [], vs: [], liveVoices: 0, goalHistory: [], now });
+    const plain = Math.round(5 * XP_RULES.card);
+    expect(s.today.xp - s.today.challengesDone * XP_RULES.challenge - (s.today.challengesDone === 3 ? XP_RULES.sweep : 0)).toBe(plain);
+  });
+
+  it('grows the streak bonus to +60% by day 7 and resets after a missed day', () => {
+    const logs = [0, 1, 2, 3, 4, 5, 6, 7].flatMap((d) => cards(6, d));
+    const s = computeXp({ logs, rounds: [], vs: [], liveVoices: 0, goalHistory: [], now: Date.parse(day(7, 20)) });
+    expect(s.days.map((d) => d.multiplier)).toEqual([1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.6]);
+    expect(s.streak).toBe(8);
+    const gap = [0, 1, 2, 4].flatMap((d) => cards(6, d));
+    const g = computeXp({ logs: gap, rounds: [], vs: [], liveVoices: 0, goalHistory: [], now: Date.parse(day(4, 20)) });
+    expect(g.days.at(-1)!.multiplier).toBe(1);
+    expect(g.bestStreak).toBe(3);
+  });
+
+  it('keeps past days on the goal they had', () => {
+    const logs = [0, 1].flatMap((d) => cards(6, d));
+    const history = [{ from: dayKey(day(1)), xp: 300 }];
+    const s = computeXp({ logs, rounds: [], vs: [], liveVoices: 0, goalHistory: history, now: Date.parse(day(1, 20)) });
+    expect(s.days[0].met).toBe(true);
+    expect(s.days[1].goal).toBe(300);
+  });
+
+  it('counts voice lines in total XP but not toward daily goals', () => {
+    const s = computeXp({ logs: [], rounds: [], vs: [], liveVoices: 3, goalHistory: [], now });
+    expect(s.total).toBe(30);
+    expect(s.today.xp).toBe(0);
+  });
+
+  it('levels and badges follow XP', () => {
+    expect(levelFor(0)).toBe(1);
+    expect(levelFor(xpForLevel(5))).toBe(5);
+    expect(levelFor(xpForLevel(5) - 1)).toBe(4);
+    const s = computeXp({ logs: cards(120, 9), rounds: [], vs: [], liveVoices: 0, goalHistory: [], now });
+    expect(badgeStatus(BADGES.find((b) => b.id === 'cards')!, s).tier).toBe(1);
+  });
+
+  it('daily challenges are the same for everyone on a day and never use self-grades', () => {
+    expect(challengesFor('2026-10-22')).toEqual(challengesFor('2026-10-22'));
+    for (let d = 1; d <= 28; d++) {
+      const cs = challengesFor(`2026-02-${String(d).padStart(2, '0')}`);
+      expect(cs).toHaveLength(3);
+      expect(new Set(cs.map((c) => c.kind)).size).toBe(3);
+    }
   });
 });

@@ -50,6 +50,14 @@ a file (single words, sentences added in the admin page) uses the device's speec
   `voices` Supabase storage bucket (about 15 KB each, 1 MB cap); trashed files are deleted by the
   `voice-cleanup` Edge Function. New sentences join the pool automatically.
 
+## XP and progress
+
+Reviews, games, vs matches and voice lines earn XP (`src/lib/xp.ts`). A streak day means the
+daily goal was reached; the streak bonus grows 10% a day up to +60% on day 7 and resets after a
+missed day. Three daily challenges, levels with titles, nine badge families and per-level mastery
+appear on the Progress page (`/progress`). Each player's total XP is saved on their profile so
+friends see their level.
+
 ## Develop
 
 ```bash

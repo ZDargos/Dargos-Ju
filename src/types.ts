@@ -109,6 +109,8 @@ export interface Settings {
   textSize: 'normal' | 'large' | 'xl';
   /** Set once the user has picked a learning mode (new accounts are asked first). */
   onboarded?: boolean;
+  /** Daily XP goal changes (lib/xp.ts); each applies from its day on, so past days keep their goal. */
+  goalHistory?: { from: string; xp: number }[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {

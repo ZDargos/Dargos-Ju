@@ -9,10 +9,15 @@ const PAGE = 1000;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let pushing = false;
 
-async function fetchAll<T>(table: string, columns: string, order: string): Promise<T[]> {
+// Re-download a small overlap so rows committed slightly out of order are never missed.
+const OVERLAP_MS = 2 * 60 * 1000;
+
+async function fetchAll<T>(table: string, columns: string, since: string | null): Promise<T[]> {
   const rows: T[] = [];
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase.from(table).select(columns).order(order).range(from, from + PAGE - 1);
+    let q = supabase.from(table).select(columns).order('synced_at').range(from, from + PAGE - 1);
+    if (since) q = q.gt('synced_at', since);
+    const { data, error } = await q;
     if (error) throw error;
     rows.push(...((data ?? []) as T[]));
     if (!data || data.length < PAGE) break;
@@ -20,13 +25,16 @@ async function fetchAll<T>(table: string, columns: string, order: string): Promi
   return rows;
 }
 
-interface CardRow { card_key: string; card: StoredCard; updated_at: string }
-interface LogRow { id: string; sentence_id: string; direction: Dir; grade: Grade; mode: ReviewMode; reviewed_at: string }
+interface CardRow { card_key: string; card: StoredCard; updated_at: string; synced_at: string }
+interface LogRow { id: string; sentence_id: string; direction: Dir; grade: Grade; mode: ReviewMode; reviewed_at: string; synced_at: string }
 
+/** Downloads changes made on other devices since the last pull (everything on the first pull). */
 export async function pullRemote() {
+  const through = getState().pulledThrough;
+  const since = through ? new Date(Date.parse(through) - OVERLAP_MS).toISOString() : null;
   const [cardRows, logRows, settingsRes] = await Promise.all([
-    fetchAll<CardRow>('card_states', 'card_key, card, updated_at', 'card_key'),
-    fetchAll<LogRow>('review_logs', 'id, sentence_id, direction, grade, mode, reviewed_at', 'reviewed_at'),
+    fetchAll<CardRow>('card_states', 'card_key, card, updated_at, synced_at', since),
+    fetchAll<LogRow>('review_logs', 'id, sentence_id, direction, grade, mode, reviewed_at, synced_at', since),
     supabase.from('user_settings').select('settings, updated_at').maybeSingle(),
   ]);
 
@@ -58,7 +66,9 @@ export async function pullRemote() {
       settings = { ...s.settings, ...remote.settings, hints: { ...s.settings.hints, ...remote.settings.hints } };
       settingsUpdatedAt = remote.updated_at;
     }
-    return { cards, dirtyCards, logs, unsyncedLogs, settings, settingsUpdatedAt, lastSyncAt: new Date().toISOString() };
+    let pulledThrough = s.pulledThrough;
+    for (const r of [...cardRows, ...logRows]) if (!pulledThrough || r.synced_at > pulledThrough) pulledThrough = r.synced_at;
+    return { cards, dirtyCards, logs, unsyncedLogs, settings, settingsUpdatedAt, pulledThrough, lastSyncAt: new Date().toISOString() };
   });
 }
 

@@ -16,6 +16,8 @@ export interface State {
   unsyncedLogs: Record<string, true>;
   settingsDirty: boolean;
   lastSyncAt: string | null;
+  /** Server time up to which remote changes have been downloaded. */
+  pulledThrough: string | null;
 }
 
 const initial: State = {
@@ -29,6 +31,7 @@ const initial: State = {
   unsyncedLogs: {},
   settingsDirty: false,
   lastSyncAt: null,
+  pulledThrough: null,
 };
 
 let state: State = initial;

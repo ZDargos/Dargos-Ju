@@ -1,5 +1,11 @@
-/** Card direction: reading (Chinese → English) or producing (English → Chinese). */
+/**
+ * Card direction, from the learner's side: reading = see the language being learned and translate
+ * it; producing = see your own language and produce the one being learned.
+ */
 export type Dir = 'r' | 'p';
+
+/** 'zh' = learning Chinese (from English), 'en' = learning English (from Chinese). */
+export type LearnLang = 'zh' | 'en';
 
 export interface Sentence {
   id: string;
@@ -8,6 +14,10 @@ export interface Sentence {
   en: string;
   /** Word split saved at import time, including punctuation and Latin tokens. */
   tokens: string[];
+  /** Proofread English used in English-learning mode (data/english-corrections.json or auto-cleaned). */
+  enClean: string;
+  /** Tokens of `enClean`. */
+  enTokens: string[];
   custom?: boolean;
 }
 
@@ -17,6 +27,10 @@ export interface Level {
   count: number;
 }
 
+/**
+ * A word's pronunciation and short meaning. Chinese words: pinyin and English meaning. English
+ * words (English mode): IPA and Chinese meaning. The field names date from the Chinese-only version.
+ */
 export interface LexEntry {
   py: string;
   en: string;
@@ -54,6 +68,8 @@ export interface ReviewLog {
   grade: Grade;
   at: string;
   mode: ReviewMode;
+  /** Missing on older logs, which are all Chinese-learning. */
+  lang?: LearnLang;
 }
 
 /** One answered game round, for game stats. */
@@ -66,6 +82,7 @@ export interface GameRound {
   ms: number;
   matchId?: string | null;
   at: string;
+  lang?: LearnLang;
 }
 
 export type GameId = 'word-order' | 'sentence-builder' | 'spot-error' | 'close-call' | 'dictation';
@@ -83,8 +100,15 @@ export interface Settings {
   hints: Record<GameId, boolean>;
   /** Longest sentence (in word tiles) used by tile games. */
   gameMaxTiles: number;
-  /** Pinyin switch per section ('study', a game id, 'stats'). */
+  /** Pinyin (or phonetics in English mode) switch per section ('study', a game id, 'stats'). */
   pinyin: Record<string, boolean>;
+  /** Which language is being learned. */
+  learning: LearnLang;
+  /** App language: 'auto' follows the learning mode (Chinese interface when learning English). */
+  uiLang: 'auto' | 'zh' | 'en';
+  textSize: 'normal' | 'large' | 'xl';
+  /** Set once the user has picked a learning mode (new accounts are asked first). */
+  onboarded?: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -105,4 +129,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   gameMaxTiles: 12,
   pinyin: {},
+  learning: 'zh',
+  uiLang: 'auto',
+  textSize: 'normal',
 };

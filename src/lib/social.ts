@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
+import { t } from '../i18n';
 
 export const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
@@ -27,7 +28,7 @@ export async function saveDisplayName(name: string): Promise<void> {
   const me = await currentUserId();
   const display_name = name.trim();
   const { error } = await supabase.from('profiles').upsert({ user_id: me, display_name });
-  if (error) throw new Error(error.code === '23505' ? 'That name is taken. Try another.' : error.message);
+  if (error) throw new Error(error.code === '23505' ? t('That name is taken. Try another.') : error.message);
 }
 
 /** Your profile, loaded once per mount. `null` while loading, `false` if you haven't picked a name. */
@@ -72,7 +73,7 @@ export async function listFriends(): Promise<Friend[]> {
   }
   return rows.map((r) => {
     const other = r.requester === me ? r.addressee : r.requester;
-    return { user_id: other, display_name: names.get(other) ?? 'Player', status: r.status, outgoing: r.requester === me };
+    return { user_id: other, display_name: names.get(other) ?? t('Player'), status: r.status, outgoing: r.requester === me };
   });
 }
 

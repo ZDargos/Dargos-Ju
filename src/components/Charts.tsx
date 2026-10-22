@@ -1,31 +1,35 @@
 import { useState } from 'react';
 import type { Bucket } from '../lib/stats';
+import { t, useT } from '../i18n';
+import { msg } from '../i18n/msg';
 
 export const BUCKETS: { key: Bucket; label: string; color: string }[] = [
-  { key: 'new', label: 'Not started', color: 'var(--b-new)' },
-  { key: 'learning', label: 'Learning', color: 'var(--b-learning)' },
-  { key: 'young', label: 'Getting there', color: 'var(--b-young)' },
-  { key: 'mature', label: 'Known (3+ weeks)', color: 'var(--b-mature)' },
+  { key: 'new', label: msg('Not started'), color: 'var(--b-new)' },
+  { key: 'learning', label: msg('Learning'), color: 'var(--b-learning)' },
+  { key: 'young', label: msg('Getting there'), color: 'var(--b-young)' },
+  { key: 'mature', label: msg('Known (3+ weeks)'), color: 'var(--b-mature)' },
 ];
 
 export function StackedBar({ counts, label }: { counts: Record<Bucket, number>; label: string }) {
+  useT();
   const total = BUCKETS.reduce((n, b) => n + counts[b.key], 0) || 1;
   return (
-    <div className="stacked" role="img" aria-label={`${label}: ${BUCKETS.map((b) => `${counts[b.key]} ${b.label}`).join(', ')}`}>
+    <div className="stacked" role="img" aria-label={`${label}: ${BUCKETS.map((b) => `${counts[b.key]} ${t(b.label)}`).join(', ')}`}>
       {BUCKETS.filter((b) => counts[b.key] > 0).map((b) => (
-        <div key={b.key} style={{ flex: counts[b.key] / total, background: b.color }} title={`${b.label}: ${counts[b.key]}`} />
+        <div key={b.key} style={{ flex: counts[b.key] / total, background: b.color }} title={`${t(b.label)}: ${counts[b.key]}`} />
       ))}
     </div>
   );
 }
 
 export function BucketLegend({ counts }: { counts?: Record<Bucket, number> }) {
+  useT();
   return (
     <div className="legend">
       {BUCKETS.map((b) => (
         <span key={b.key}>
           <i style={{ background: b.color }} />
-          {b.label}
+          {t(b.label)}
           {counts && <strong style={{ color: 'var(--text)', marginLeft: 4 }}>{counts[b.key]}</strong>}
         </span>
       ))}
@@ -58,7 +62,7 @@ export function BarChart({ data, height = 120, showValues = false, xLabels }: { 
           ' '
         )}
       </div>
-      <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" width="100%" height={height} onMouseLeave={() => setActive(null)} role="img" aria-label="Bar chart">
+      <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" width="100%" height={height} onMouseLeave={() => setActive(null)} role="img" aria-label={data.map((d) => `${d.label}: ${d.value}`).join(', ')}>
         <line x1="0" x2="100" y1={top + plotH} y2={top + plotH} stroke="var(--border)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         {data.map((d, i) => {
           const h = d.value ? Math.max(2, (d.value / max) * plotH) : 0;

@@ -1,15 +1,21 @@
 // Progress statistics and word/character difficulty.
 //
-// Word difficulty comes from the review history: every time a sentence is graded, each Chinese
-// word in it shares the result (Wrong = 1 miss, Mostly right = 0.4, Right = 0). Recent reviews
+// All stats are per learning language: callers pass the mode, and logs/cards from the other
+// mode are ignored.
+//
+// Word difficulty comes from the review history: every time a sentence is graded, each word of
+// the language being learned (Chinese words, or English dictionary forms) shares the result (Wrong = 1 miss, Mostly right = 0.4, Right = 0). Recent reviews
 // count more (30-day half-life), and a Bayesian prior keeps rarely seen words from topping the
 // list on one bad answer. Characters roll up from the words they appear in.
 
 import { State } from 'ts-fsrs';
-import { cardKey, weakness } from './srs';
-import { isHanWord } from './segmenter';
+import { cardKey, logLang, parseKey, weakness } from './srs';
+import { wordsFor } from './learn';
 import type { Content } from './content';
-import type { CardRecord, Dir, Grade, ReviewLog, Sentence, Settings } from '../types';
+import type { CardRecord, Dir, Grade, LearnLang, ReviewLog, Sentence, Settings } from '../types';
+
+/** Only the logs of one learning language. */
+export const logsFor = (logs: ReviewLog[], lang: LearnLang) => logs.filter((l) => logLang(l) === lang);
 
 const DAY = 86_400_000;
 const MISS: Record<Grade, number> = { 1: 1, 2: 0.4, 3: 0 };
@@ -34,13 +40,13 @@ export interface LevelProgress {
 
 const emptyBuckets = (): Record<Bucket, number> => ({ new: 0, learning: 0, young: 0, mature: 0 });
 
-export function levelProgress(content: Content, cards: Record<string, CardRecord>): LevelProgress[] {
+export function levelProgress(content: Content, cards: Record<string, CardRecord>, lang: LearnLang): LevelProgress[] {
   const map = new Map<number, LevelProgress>();
   for (const l of content.levels) map.set(l.level, { level: l.level, name: l.name, total: 0, counts: { r: emptyBuckets(), p: emptyBuckets() } });
   for (const s of content.sentences) {
     const lp = map.get(s.level)!;
     lp.total++;
-    for (const dir of ['r', 'p'] as Dir[]) lp.counts[dir][bucketOf(cards[cardKey(s.id, dir)])]++;
+    for (const dir of ['r', 'p'] as Dir[]) lp.counts[dir][bucketOf(cards[cardKey(s.id, dir, lang)])]++;
   }
   return [...map.values()];
 }
@@ -94,13 +100,14 @@ export function retentionRate(logs: ReviewLog[], days = 30): { rate: number | nu
   return { rate: reviews.filter((l) => l.grade >= 2).length / reviews.length, n: reviews.length };
 }
 
-export function dueForecast(content: Content, cards: Record<string, CardRecord>, days = 7): number[] {
+export function dueForecast(content: Content, cards: Record<string, CardRecord>, lang: LearnLang, days = 7): number[] {
   const out = new Array(days).fill(0);
   const end = new Date();
   end.setHours(23, 59, 59, 999);
   const ids = new Set(content.sentences.map((s) => s.id));
   for (const [key, rec] of Object.entries(cards)) {
-    if (rec.card.state === State.New || !ids.has(key.slice(0, key.lastIndexOf('|')))) continue;
+    const k = parseKey(key);
+    if (rec.card.state === State.New || k.lang !== lang || !ids.has(k.sid)) continue;
     const due = Date.parse(rec.card.due);
     const idx = due <= end.getTime() ? 0 : Math.ceil((due - end.getTime()) / DAY);
     if (idx < days) out[idx]++;
@@ -116,12 +123,12 @@ export interface HardSentence {
   reps: number;
 }
 
-export function hardestSentences(content: Content, cards: Record<string, CardRecord>, logs: ReviewLog[], settings: Settings, dir: Dir, limit = 10): HardSentence[] {
+export function hardestSentences(content: Content, cards: Record<string, CardRecord>, logs: ReviewLog[], settings: Settings, dir: Dir, lang: LearnLang, limit = 10): HardSentence[] {
   const misses = new Map<string, number>();
-  for (const l of logs) if (l.dir === dir && l.grade === 1) misses.set(l.sid, (misses.get(l.sid) ?? 0) + 1);
+  for (const l of logs) if (l.dir === dir && l.grade === 1 && logLang(l) === lang) misses.set(l.sid, (misses.get(l.sid) ?? 0) + 1);
   const out: HardSentence[] = [];
   for (const s of content.sentences) {
-    const rec = cards[cardKey(s.id, dir)];
+    const rec = cards[cardKey(s.id, dir, lang)];
     if (!rec || rec.card.state === State.New || rec.card.reps < 2) continue;
     out.push({ sentence: s, dir, score: weakness(rec, settings), misses: misses.get(s.id) ?? 0, reps: rec.card.reps });
   }
@@ -142,7 +149,8 @@ export interface TermDifficulty {
   chars: Record<Dir, TermStat[]>;
 }
 
-export function termDifficulty(content: Content, logs: ReviewLog[]): TermDifficulty {
+/** Characters are only tracked when learning Chinese. */
+export function termDifficulty(content: Content, logs: ReviewLog[], lang: LearnLang): TermDifficulty {
   const now = Date.now();
   type Acc = { w: number; miss: number; n: number; rawMiss: number };
   const acc = {
@@ -154,8 +162,8 @@ export function termDifficulty(content: Content, logs: ReviewLog[]): TermDifficu
   const termsOf = (s: Sentence) => {
     let t = termsCache.get(s.id);
     if (!t) {
-      const words = [...new Set(s.tokens.filter(isHanWord))];
-      const chars = [...new Set(words.join(''))];
+      const words = [...new Set(wordsFor(s, lang, content))];
+      const chars = lang === 'zh' ? [...new Set(words.join(''))] : [];
       t = { words, chars };
       termsCache.set(s.id, t);
     }
@@ -172,7 +180,7 @@ export function termDifficulty(content: Content, logs: ReviewLog[]): TermDifficu
 
   for (const l of logs) {
     const s = content.byId.get(l.sid);
-    if (!s) continue;
+    if (!s || logLang(l) !== lang) continue;
     const decay = Math.pow(0.5, (now - Date.parse(l.at)) / DAY / HALF_LIFE_DAYS);
     const miss = MISS[l.grade];
     totals[l.dir].w += decay;
@@ -199,8 +207,8 @@ export function termDifficulty(content: Content, logs: ReviewLog[]): TermDifficu
   };
 }
 
-export function overallCounts(content: Content, cards: Record<string, CardRecord>) {
+export function overallCounts(content: Content, cards: Record<string, CardRecord>, lang: LearnLang) {
   const counts = { r: emptyBuckets(), p: emptyBuckets() };
-  for (const s of content.sentences) for (const dir of ['r', 'p'] as Dir[]) counts[dir][bucketOf(cards[cardKey(s.id, dir)])]++;
+  for (const s of content.sentences) for (const dir of ['r', 'p'] as Dir[]) counts[dir][bucketOf(cards[cardKey(s.id, dir, lang)])]++;
   return counts;
 }

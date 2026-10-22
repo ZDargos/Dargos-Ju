@@ -36,3 +36,25 @@ export function loadSegmenter(): Promise<BrowserSegmenter> {
   loading.catch(() => (loading = null));
   return loading;
 }
+
+let englishLite: Promise<Record<string, [string, string, string]>> | null = null;
+
+/**
+ * Phonetics and short Chinese meanings for the English words of sentences added in the admin page
+ * (English-learning mode). Loads the compact ECDICT list on first use.
+ */
+export async function englishLexFor(tokens: string[]): Promise<Record<string, LexEntry>> {
+  englishLite ??= fetch('./dict/ecdict-lite.json').then((r) => {
+    if (!r.ok) throw new Error('Could not load the English dictionary');
+    return r.json();
+  });
+  englishLite.catch(() => (englishLite = null));
+  const dict = await englishLite;
+  const out: Record<string, LexEntry> = {};
+  for (const tok of tokens) {
+    const w = tok.toLowerCase();
+    const e = dict[w] ?? dict[w.replace(/'s$/, '')];
+    if (e) out[w] = { py: e[0], en: e[1] };
+  }
+  return out;
+}

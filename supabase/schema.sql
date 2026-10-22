@@ -173,3 +173,13 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- matches.progress_a/b and live_a/b track live progress; report_match_progress() and
 -- submit_match_result() end a match early once the leader has finished and the other player
 -- can no longer catch up (migration match_early_finish).
+
+-- ---------------------------------------------------------------------------------------------
+-- English-learning mode (migrations learning_language, custom_sentences_english, cross_mode_matches).
+-- review_logs.lang and game_rounds.lang: 'zh' (learning Chinese, the default) or 'en' (learning
+--   English). card_states keys are "sid|dir" for Chinese and "en:sid|dir" for English.
+-- custom_sentences.en_clean (playable English) and en_lex (word -> {py: IPA, en: Chinese gloss}).
+-- matches.lang_a / lang_b: the language each player answers in. find_match(game, older_than, my_lang)
+--   and accept_match(match_id, my_lang) record it; players on different modes can play each other.
+-- friend_leaderboard / friend_summary count answers in both languages together.
+-- notify-challenge writes the notification in the recipient's interface language.

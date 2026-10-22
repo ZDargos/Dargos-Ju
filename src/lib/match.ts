@@ -6,6 +6,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { shuffle } from './srs';
 import { gameById, poolFor } from '../games/registry';
+import { project, tilesFor, type LearnLang } from './learn';
 import type { Content } from './content';
 import type { Settings } from '../types';
 
@@ -27,26 +28,66 @@ export interface Match {
   started_at: string | null;
   progress_a: number;
   progress_b: number;
+  /** Each player's learning language; players in different modes can play each other. */
+  lang_a: LearnLang;
+  lang_b: LearnLang | null;
 }
 
+/** Sentences that suit the game in both languages, so an opponent in either mode can play them. */
 export function pickSentences(gameId: string, content: Content, settings: Settings): string[] {
   const game = gameById(gameId);
   if (!game) return [];
-  return shuffle(poolFor(game, content, settings)).slice(0, ROUNDS).map((s) => s.id);
+  const english = new Set(poolFor(game, content, settings, 'en').map((s) => s.id));
+  const both = poolFor(game, content, settings, 'zh').filter((s) => english.has(s.id));
+  const pool = both.length >= ROUNDS ? both : poolFor(game, content, settings, settings.learning);
+  return shuffle(pool).slice(0, ROUNDS).map((s) => s.id);
 }
+
+/** Word tiles a player had to handle across the match, in their language (for the tiebreak). */
+function wordsHandled(m: Match, lang: LearnLang, content: Content): number {
+  let n = 0;
+  for (const id of m.sentence_ids) {
+    const s = content.byId.get(id);
+    if (s) n += tilesFor(project(s, lang), content).length;
+  }
+  return Math.max(1, n);
+}
+
+/**
+ * Who won a finished match: more correct answers wins. On a tie the faster player wins; when the
+ * players were learning different languages, speed is compared per word, since English sentences
+ * usually have more word tiles than Chinese ones.
+ */
+export function decideWinner(m: Match, content: Content): 'a' | 'b' | 'tie' {
+  const sa = m.score_a ?? 0;
+  const sb = m.score_b ?? 0;
+  if (sa !== sb) return sa > sb ? 'a' : 'b';
+  const la = m.lang_a ?? 'zh';
+  const lb = m.lang_b ?? la;
+  let ta = m.time_a ?? 0;
+  let tb = m.time_b ?? 0;
+  if (la !== lb) {
+    ta /= wordsHandled(m, la, content);
+    tb /= wordsHandled(m, lb, content);
+  }
+  if (ta === tb) return 'tie';
+  return ta < tb ? 'a' : 'b';
+}
+
+export const isMixedMatch = (m: Match) => !!m.lang_b && m.lang_a !== m.lang_b;
 
 const asMatch = (data: unknown): Match | null => (data && (data as Match).id ? (data as Match) : null);
 
-export async function findMatch(game: string, olderThan?: string): Promise<Match | null> {
-  const { data, error } = await supabase.rpc('find_match', { game_id: game, older_than: olderThan ?? null });
+export async function findMatch(game: string, lang: LearnLang, olderThan?: string): Promise<Match | null> {
+  const { data, error } = await supabase.rpc('find_match', { game_id: game, older_than: olderThan ?? null, my_lang: lang });
   if (error) throw error;
   return asMatch(data);
 }
 
-export async function createMatch(game: string, sentenceIds: string[], opponent?: string): Promise<Match> {
+export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string): Promise<Match> {
   const { data, error } = await supabase
     .from('matches')
-    .insert({ game, sentence_ids: sentenceIds, is_public: !opponent, player_b: opponent ?? null })
+    .insert({ game, sentence_ids: sentenceIds, is_public: !opponent, player_b: opponent ?? null, lang, lang_a: lang })
     .select()
     .single();
   if (error) throw error;
@@ -58,8 +99,8 @@ export async function getMatch(id: string): Promise<Match | null> {
   return asMatch(data);
 }
 
-export async function acceptMatch(id: string): Promise<Match> {
-  const { data, error } = await supabase.rpc('accept_match', { match_id: id });
+export async function acceptMatch(id: string, lang: LearnLang): Promise<Match> {
+  const { data, error } = await supabase.rpc('accept_match', { match_id: id, my_lang: lang });
   if (error) throw error;
   return data as Match;
 }

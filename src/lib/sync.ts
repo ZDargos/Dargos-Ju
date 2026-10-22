@@ -3,7 +3,7 @@
 
 import { supabase } from './supabase';
 import { getState, setState } from './store';
-import type { CardRecord, Dir, Grade, ReviewMode, Settings, StoredCard } from '../types';
+import type { CardRecord, Dir, Grade, LearnLang, ReviewMode, Settings, StoredCard } from '../types';
 
 const PAGE = 1000;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -26,8 +26,8 @@ async function fetchAll<T>(table: string, columns: string, since: string | null)
 }
 
 interface CardRow { card_key: string; card: StoredCard; updated_at: string; synced_at: string }
-interface RoundRow { id: string; game: string; mode: 'solo' | 'vs'; correct: boolean; ms: number; match_id: string | null; played_at: string; synced_at: string }
-interface LogRow { id: string; sentence_id: string; direction: Dir; grade: Grade; mode: ReviewMode; reviewed_at: string; synced_at: string }
+interface RoundRow { id: string; game: string; mode: 'solo' | 'vs'; correct: boolean; ms: number; match_id: string | null; played_at: string; synced_at: string; lang: LearnLang }
+interface LogRow { id: string; sentence_id: string; direction: Dir; grade: Grade; mode: ReviewMode; reviewed_at: string; synced_at: string; lang: LearnLang }
 
 /** Downloads changes made on other devices since the last pull (everything on the first pull). */
 export async function pullRemote() {
@@ -35,8 +35,8 @@ export async function pullRemote() {
   const since = through ? new Date(Date.parse(through) - OVERLAP_MS).toISOString() : null;
   const [cardRows, logRows, roundRows, settingsRes] = await Promise.all([
     fetchAll<CardRow>('card_states', 'card_key, card, updated_at, synced_at', since),
-    fetchAll<LogRow>('review_logs', 'id, sentence_id, direction, grade, mode, reviewed_at, synced_at', since),
-    fetchAll<RoundRow>('game_rounds', 'id, game, mode, correct, ms, match_id, played_at, synced_at', since),
+    fetchAll<LogRow>('review_logs', 'id, sentence_id, direction, grade, mode, reviewed_at, synced_at, lang', since),
+    fetchAll<RoundRow>('game_rounds', 'id, game, mode, correct, ms, match_id, played_at, synced_at, lang', since),
     supabase.from('user_settings').select('settings, updated_at').maybeSingle(),
   ]);
 
@@ -57,7 +57,7 @@ export async function pullRemote() {
     for (const r of logRows) {
       delete unsyncedLogs[r.id];
       if (known.has(r.id)) continue;
-      logs.push({ id: r.id, sid: r.sentence_id, dir: r.direction, grade: r.grade, mode: r.mode, at: r.reviewed_at });
+      logs.push({ id: r.id, sid: r.sentence_id, dir: r.direction, grade: r.grade, mode: r.mode, at: r.reviewed_at, lang: r.lang });
     }
     logs.sort((a, b) => a.at.localeCompare(b.at));
 
@@ -67,7 +67,7 @@ export async function pullRemote() {
     for (const r of roundRows) {
       delete unsyncedRounds[r.id];
       if (knownRounds.has(r.id)) continue;
-      rounds.push({ id: r.id, game: r.game, mode: r.mode, correct: r.correct, ms: r.ms, matchId: r.match_id, at: r.played_at });
+      rounds.push({ id: r.id, game: r.game, mode: r.mode, correct: r.correct, ms: r.ms, matchId: r.match_id, at: r.played_at, lang: r.lang });
     }
     rounds.sort((a, b) => a.at.localeCompare(b.at));
 
@@ -109,7 +109,7 @@ export async function pushPending() {
     for (let i = 0; i < pendingLogs.length; i += 500) {
       const chunk = pendingLogs.slice(i, i + 500);
       const { error } = await supabase.from('review_logs').upsert(
-        chunk.map((l) => ({ id: l.id, sentence_id: l.sid, direction: l.dir, grade: l.grade, mode: l.mode, reviewed_at: l.at })),
+        chunk.map((l) => ({ id: l.id, sentence_id: l.sid, direction: l.dir, grade: l.grade, mode: l.mode, reviewed_at: l.at, lang: l.lang ?? 'zh' })),
         { onConflict: 'id', ignoreDuplicates: true },
       );
       if (error) throw error;
@@ -125,7 +125,7 @@ export async function pushPending() {
     for (let i = 0; i < pendingRounds.length; i += 500) {
       const chunk = pendingRounds.slice(i, i + 500);
       const { error } = await supabase.from('game_rounds').upsert(
-        chunk.map((r) => ({ id: r.id, game: r.game, mode: r.mode, correct: r.correct, ms: r.ms, match_id: r.matchId ?? null, played_at: r.at })),
+        chunk.map((r) => ({ id: r.id, game: r.game, mode: r.mode, correct: r.correct, ms: r.ms, match_id: r.matchId ?? null, played_at: r.at, lang: r.lang ?? 'zh' })),
         { onConflict: 'id', ignoreDuplicates: true },
       );
       if (error) throw error;

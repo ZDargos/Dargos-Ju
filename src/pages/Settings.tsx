@@ -5,10 +5,11 @@ import { signOut } from '../lib/auth';
 import { pullRemote, pushPending } from '../lib/sync';
 import { speak, ttsAvailable } from '../lib/tts';
 import { GAMES } from '../games/registry';
+import { langParams, useT } from '../i18n';
 import { IconShield } from '../components/Icons';
 import { VoiceStatusPanel } from '../components/VoiceCheck';
 import NotificationSettings from '../components/NotificationSettings';
-import type { Settings } from '../types';
+import type { LearnLang, Settings } from '../types';
 
 function NumberField({ label, help, value, min, max, step = 1, onChange }: { label: string; help?: string; value: number; min: number; max: number; step?: number; onChange: (n: number) => void }) {
   return (
@@ -22,6 +23,7 @@ function NumberField({ label, help, value, min, max, step = 1, onChange }: { lab
         style={{ width: 84, textAlign: 'center' }}
         type="number"
         inputMode="numeric"
+        aria-label={label}
         min={min}
         max={max}
         step={step}
@@ -44,34 +46,98 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   );
 }
 
+function Choice<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
+  return (
+    <div className="segmented" role="group" aria-label={label} style={{ minWidth: 200 }}>
+      {options.map(([v, text]) => (
+        <button key={v} className={value === v ? 'on' : ''} aria-pressed={value === v} onClick={() => onChange(v)}>
+          {text}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Test sentence for the speech speed control, in the language being learned. */
+const SAMPLE: Record<LearnLang, string> = { zh: '我们一起学习中文吧！', en: "Let's learn English together!" };
+
 export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; email: string }) {
+  const t = useT();
   const settings = useStore((s) => s.settings);
-  const pending = useStore((s) => Object.keys(s.dirtyCards).length + Object.keys(s.unsyncedLogs).length);
+  const pending = useStore((s) => Object.keys(s.dirtyCards).length + Object.keys(s.unsyncedLogs).length + Object.keys(s.unsyncedRounds).length);
   const lastSyncAt = useStore((s) => s.lastSyncAt);
   const [syncMsg, setSyncMsg] = useState('');
+  const [modeMsg, setModeMsg] = useState('');
+  const names = langParams(settings.learning);
 
   const syncNow = async () => {
-    setSyncMsg('Syncing…');
+    setSyncMsg(t('Syncing…'));
     try {
       await pushPending();
       await pullRemote();
-      setSyncMsg('Up to date');
+      setSyncMsg(t('Up to date'));
     } catch (e) {
-      setSyncMsg(`Sync failed: ${(e as Error).message}`);
+      setSyncMsg(t('Sync failed: {error}', { error: (e as Error).message }));
     }
+  };
+
+  const switchMode = (learning: LearnLang) => {
+    if (learning === settings.learning) return;
+    updateSettings({ learning });
+    // Shown in the new interface language, which follows the mode unless chosen in "App language".
+    setModeMsg(learning === 'en' ? t('Now learning English. Your Chinese progress is kept.') : t('Now learning Chinese. Your English progress is kept.'));
   };
 
   return (
     <>
-      <header className="topbar"><h1>Settings</h1></header>
+      <header className="topbar"><h1>{t('Settings')}</h1></header>
 
-      <div className="section-title">Study</div>
+      {/* Always in both languages, so anyone can find the way back to a language they read. */}
+      <div className="section-title">
+        <span lang="zh-CN">语言</span> · <span lang="en">Language</span>
+      </div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
-        <NumberField label="Cards per session" value={settings.sessionSize} min={5} max={200} onChange={(sessionSize) => updateSettings({ sessionSize })} />
-        <NumberField label="New cards per day" help="Across all levels" value={settings.newPerDay} min={0} max={200} onChange={(newPerDay) => updateSettings({ newPerDay })} />
+        <div className="toggle-row wrap-row">
+          <div>
+            <div style={{ fontWeight: 600 }}>{t("I'm learning")}</div>
+            <div className="small muted">{t('Each language keeps its own progress, stats and game history.')}</div>
+          </div>
+          <Choice<LearnLang>
+            label={t("I'm learning")}
+            value={settings.learning}
+            options={[
+              ['zh', '中文 Chinese'],
+              ['en', '英语 English'],
+            ]}
+            onChange={switchMode}
+          />
+        </div>
+        {modeMsg && <div className="banner" role="status" style={{ margin: '4px 0 8px' }}>{modeMsg}</div>}
+        <div className="toggle-row wrap-row">
+          <div>
+            <div style={{ fontWeight: 600 }}>{t('App language')}</div>
+            <div className="small muted">{t('Auto shows the app in Chinese when you learn English, and in English when you learn Chinese.')}</div>
+          </div>
+          <Choice<Settings['uiLang']>
+            label={t('App language')}
+            value={settings.uiLang}
+            options={[
+              ['auto', t('Auto')],
+              ['zh', '中文'],
+              ['en', 'English'],
+            ]}
+            onChange={(uiLang) => updateSettings({ uiLang })}
+          />
+        </div>
+      </div>
+
+      <div className="section-title">{t('Study')}</div>
+      <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
+        <NumberField label={t('Cards per session')} value={settings.sessionSize} min={5} max={200} onChange={(sessionSize) => updateSettings({ sessionSize })} />
+        <NumberField label={t('New cards per day')} help={t('Across all levels')} value={settings.newPerDay} min={0} max={200} onChange={(newPerDay) => updateSettings({ newPerDay })} />
         <NumberField
-          label="Target recall"
-          help="Higher means more frequent reviews (FSRS)"
+          label={t('Target recall')}
+          help={t('Higher means more frequent reviews (FSRS)')}
           value={Math.round(settings.retention * 100)}
           min={75}
           max={97}
@@ -79,81 +145,107 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
         />
       </div>
 
-      <div className="section-title">Games</div>
+      <div className="section-title">{t('Games')}</div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
         {GAMES.filter((g) => g.hint).map((g) => (
           <div key={g.id} className="toggle-row">
             <div>
-              <div style={{ fontWeight: 600 }}>{g.title} hints</div>
-              <div className="small muted">{g.hint}</div>
+              <div style={{ fontWeight: 600 }}>{t('{game} hints', { game: t(g.title) })}</div>
+              <div className="small muted">{t(g.hint!, names)}</div>
             </div>
             <Switch
-              label={`${g.title} hints`}
+              label={t('{game} hints', { game: t(g.title) })}
               checked={settings.hints[g.id as keyof Settings['hints']]}
               onChange={(v) => updateSettings({ hints: { ...settings.hints, [g.id]: v } })}
             />
           </div>
         ))}
-        <NumberField label="Longest sentence in tile games" help="Word tiles" value={settings.gameMaxTiles} min={4} max={40} onChange={(gameMaxTiles) => updateSettings({ gameMaxTiles })} />
+        <NumberField label={t('Longest sentence in tile games')} help={t('Word tiles')} value={settings.gameMaxTiles} min={4} max={40} onChange={(gameMaxTiles) => updateSettings({ gameMaxTiles })} />
       </div>
 
-      <div className="section-title">Audio & display</div>
+      <div className="section-title">{t('Audio & display')}</div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
         <div className="toggle-row">
           <VoiceStatusPanel />
         </div>
         <div className="toggle-row">
           <div>
-            <div style={{ fontWeight: 600 }}>Speech speed</div>
+            <div style={{ fontWeight: 600 }}>{t('Speech speed')}</div>
             <div className="small muted">{settings.speechRate.toFixed(2)}×</div>
           </div>
           <div className="row">
-            <input type="range" min={0.5} max={1.3} step={0.05} value={settings.speechRate} onChange={(e) => updateSettings({ speechRate: Number(e.target.value) })} />
+            <input
+              type="range"
+              aria-label={t('Speech speed')}
+              min={0.5}
+              max={1.3}
+              step={0.05}
+              value={settings.speechRate}
+              onChange={(e) => updateSettings({ speechRate: Number(e.target.value) })}
+            />
             {ttsAvailable() && (
-              <button className="btn sm" onClick={() => speak('我们一起学习中文吧！', settings.speechRate).catch((e) => alert((e as Error).message))}>Test</button>
+              <button className="btn sm" onClick={() => speak(SAMPLE[settings.learning], settings.speechRate, settings.learning).catch((e) => alert((e as Error).message))}>
+                {t('Test')}
+              </button>
             )}
           </div>
         </div>
-        <div className="toggle-row">
-          <div style={{ fontWeight: 600 }}>Theme</div>
-          <div className="segmented" style={{ width: 220 }}>
-            {(['system', 'light', 'dark'] as const).map((t) => (
-              <button key={t} className={settings.theme === t ? 'on' : ''} onClick={() => updateSettings({ theme: t })}>
-                {t[0].toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
+        <div className="toggle-row wrap-row">
+          <div style={{ fontWeight: 600 }}>{t('Text size')}</div>
+          <Choice<Settings['textSize']>
+            label={t('Text size')}
+            value={settings.textSize}
+            options={[
+              ['normal', t('Normal')],
+              ['large', t('Large')],
+              ['xl', t('Extra large')],
+            ]}
+            onChange={(textSize) => updateSettings({ textSize })}
+          />
+        </div>
+        <div className="toggle-row wrap-row">
+          <div style={{ fontWeight: 600 }}>{t('Theme')}</div>
+          <Choice<Settings['theme']>
+            label={t('Theme')}
+            value={settings.theme}
+            options={[
+              ['system', t('System')],
+              ['light', t('Light')],
+              ['dark', t('Dark')],
+            ]}
+            onChange={(theme) => updateSettings({ theme })}
+          />
         </div>
       </div>
 
-      <div className="section-title">Notifications</div>
+      <div className="section-title">{t('Notifications')}</div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
         <NotificationSettings />
       </div>
 
-      <div className="section-title">Account</div>
+      <div className="section-title">{t('Account')}</div>
       <div className="card">
         <div className="spread">
           <div>
             <div style={{ fontWeight: 600 }}>{email}</div>
             <div className="small muted">
-              {pending ? `${pending} changes waiting to sync` : 'All progress synced'}
-              {lastSyncAt && ` · last sync ${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+              {pending ? t('{n} changes waiting to sync', { n: pending }) : t('All progress synced')}
+              {lastSyncAt && ` · ${t('last sync {time}', { time: new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}`}
             </div>
-            {syncMsg && <div className="small muted">{syncMsg}</div>}
+            {syncMsg && <div className="small muted" role="status">{syncMsg}</div>}
           </div>
-          <button className="btn sm" onClick={syncNow}>Sync now</button>
+          <button className="btn sm" onClick={syncNow}>{t('Sync now')}</button>
         </div>
         <div className="row wrap" style={{ marginTop: 14 }}>
           {isAdmin && (
-            <Link className="btn sm" to="/admin"><IconShield /> Admin</Link>
+            <Link className="btn sm" to="/admin"><IconShield /> {t('Admin')}</Link>
           )}
-          <button className="btn sm" onClick={() => signOut()}>Sign out</button>
+          <button className="btn sm" onClick={() => signOut()}>{t('Sign out')}</button>
         </div>
       </div>
 
       <p className="small muted center" style={{ marginTop: 24 }}>
-        Dargos Ju · scheduling by FSRS · dictionary data from CC-CEDICT (CC BY-SA 4.0)
+        {t('Dargos Ju · scheduling by FSRS · dictionaries: CC-CEDICT (CC BY-SA 4.0) and ECDICT (MIT)')}
       </p>
     </>
   );

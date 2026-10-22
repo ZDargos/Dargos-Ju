@@ -1,3 +1,4 @@
+import { levelName, useT } from '../i18n';
 import type { Level } from '../types';
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function LevelPicker({ levels, selected, onChange }: Props) {
+  const t = useT();
   const set = new Set(selected);
   const all = levels.length > 0 && levels.every((l) => set.has(l.level));
   const toggle = (level: number) => {
@@ -18,15 +20,21 @@ export default function LevelPicker({ levels, selected, onChange }: Props) {
   return (
     <div>
       <div className="spread" style={{ marginBottom: 10 }}>
-        <span className="small muted">{selected.length ? `${selected.length} of ${levels.length} levels` : 'Pick one or more levels'}</span>
+        <span className="small muted">{selected.length ? t('{n} of {total} levels', { n: selected.length, total: levels.length }) : t('Pick one or more levels')}</span>
         <button className="btn ghost sm" onClick={() => onChange(all ? [] : levels.map((l) => l.level))}>
-          {all ? 'Clear' : 'Select all'}
+          {all ? t('Clear') : t('Select all')}
         </button>
       </div>
-      <div className="chips">
+      <div className="chips" role="group" aria-label={t('Levels')}>
         {levels.map((l) => (
-          <button key={l.level} className={`chip${set.has(l.level) ? ' on' : ''}`} onClick={() => toggle(l.level)} aria-pressed={set.has(l.level)}>
-            {l.name}
+          <button
+            key={l.level}
+            className={`chip${set.has(l.level) ? ' on' : ''}`}
+            onClick={() => toggle(l.level)}
+            aria-pressed={set.has(l.level)}
+            aria-label={t('{level}, {n} sentences', { level: levelName(l.level), n: l.count })}
+          >
+            {levelName(l.level)}
             <span className="count">{l.count}</span>
           </button>
         ))}

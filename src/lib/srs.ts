@@ -5,14 +5,21 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type FSRS } from 'ts-fsrs';
 import { getState, setState } from './store';
 import { scheduleSync } from './sync';
+import { t } from '../i18n';
 import type { Content } from './content';
-import type { CardRecord, Dir, Grade, ReviewLog, ReviewMode, Sentence, Settings, StoredCard } from '../types';
+import type { CardRecord, Dir, Grade, LearnLang, ReviewLog, ReviewMode, Sentence, Settings, StoredCard } from '../types';
 
-export const cardKey = (sid: string, dir: Dir) => `${sid}|${dir}`;
+/** Card ids: "<sentence>|r" when learning Chinese, "en:<sentence>|r" when learning English. */
+export const cardKey = (sid: string, dir: Dir, lang: LearnLang = 'zh') => `${lang === 'en' ? 'en:' : ''}${sid}|${dir}`;
 export const parseKey = (key: string) => {
-  const i = key.lastIndexOf('|');
-  return { sid: key.slice(0, i), dir: key.slice(i + 1) as Dir };
+  const lang: LearnLang = key.startsWith('en:') ? 'en' : 'zh';
+  const k = lang === 'en' ? key.slice(3) : key;
+  const i = k.lastIndexOf('|');
+  return { sid: k.slice(0, i), dir: k.slice(i + 1) as Dir, lang };
 };
+
+/** Logs from before English mode existed have no lang and are Chinese-learning. */
+export const logLang = (l: { lang?: LearnLang }): LearnLang => l.lang ?? 'zh';
 
 let scheduler: { retention: number; f: FSRS } | undefined;
 function getScheduler(retention: number): FSRS {
@@ -60,7 +67,7 @@ export function retrievability(card: StoredCard, now = new Date(), retention = 0
 
 /** Preview of the next interval for each grade, for the grade buttons. */
 export function previewIntervals(sid: string, dir: Dir, settings: Settings, now = new Date()): Record<Grade, string> {
-  const rec = getState().cards[cardKey(sid, dir)];
+  const rec = getState().cards[cardKey(sid, dir, settings.learning)];
   const card = rec?.card ?? toStored(createEmptyCard(now));
   const preview = getScheduler(settings.retention).repeat(card, now);
   const out = {} as Record<Grade, string>;
@@ -70,13 +77,13 @@ export function previewIntervals(sid: string, dir: Dir, settings: Settings, now 
 
 export function formatInterval(ms: number): string {
   const min = ms / 60000;
-  if (min < 60) return `${Math.max(1, Math.round(min))}m`;
+  if (min < 60) return t('{n}m', { n: Math.max(1, Math.round(min)) });
   const h = min / 60;
-  if (h < 24) return `${Math.round(h)}h`;
+  if (h < 24) return t('{n}h', { n: Math.round(h) });
   const d = h / 24;
-  if (d < 30) return `${Math.round(d)}d`;
-  if (d < 365) return `${Math.round(d / 30)}mo`;
-  return `${(d / 365).toFixed(1)}y`;
+  if (d < 30) return t('{n}d', { n: Math.round(d) });
+  if (d < 365) return t('{n}mo', { n: Math.round(d / 30) });
+  return t('{n}y', { n: (d / 365).toFixed(1) });
 }
 
 const uuid = () =>
@@ -88,15 +95,15 @@ const uuid = () =>
       });
 
 /** Records a self-graded answer and reschedules the card. Returns the new due date. */
-export function gradeCard(sid: string, dir: Dir, grade: Grade, extra: boolean): Date {
+export function gradeCard(sid: string, dir: Dir, grade: Grade, extra: boolean, lang: LearnLang = getState().settings.learning): Date {
   const now = new Date();
   const s = getState();
-  const key = cardKey(sid, dir);
+  const key = cardKey(sid, dir, lang);
   const prev = s.cards[key];
   const mode: ReviewMode = extra ? 'extra' : isNewCard(prev) ? 'new' : 'review';
   const card = prev?.card ?? toStored(createEmptyCard(now));
   const next = getScheduler(s.settings.retention).next(card, now, GRADE_TO_RATING[grade]).card;
-  const log: ReviewLog = { id: uuid(), sid, dir, grade, at: now.toISOString(), mode };
+  const log: ReviewLog = { id: uuid(), sid, dir, grade, at: now.toISOString(), mode, lang };
   setState((cur) => ({
     cards: { ...cur.cards, [key]: { card: toStored(next), updatedAt: now.toISOString() } },
     dirtyCards: { ...cur.dirtyCards, [key]: true },
@@ -130,9 +137,9 @@ const startOfToday = () => {
   return d;
 };
 
-export function newIntroducedToday(): number {
+export function newIntroducedToday(lang: LearnLang = getState().settings.learning): number {
   const since = startOfToday().toISOString();
-  return getState().logs.filter((l) => l.mode === 'new' && l.at >= since).length;
+  return getState().logs.filter((l) => l.mode === 'new' && l.at >= since && logLang(l) === lang).length;
 }
 
 function allowedDirs(settings: Settings): Dir[] {
@@ -166,10 +173,10 @@ function collect(content: Content, levels: number[], settings: Settings, now: Da
     let best: { item: SessionItem; r: number } | undefined;
     let newDir: Dir | undefined;
     for (const dir of dirs) {
-      const rec = cards[cardKey(s.id, dir)];
+      const rec = cards[cardKey(s.id, dir, settings.learning)];
       if (isNewCard(rec)) {
         // In "both" mode the producing card is introduced only after the sentence has been read once.
-        const readRec = cards[cardKey(s.id, 'r')];
+        const readRec = cards[cardKey(s.id, 'r', settings.learning)];
         if (dir === 'p' && settings.directions === 'both' && isNewCard(readRec)) continue;
         if (!newDir) newDir = dir;
         continue;
@@ -188,7 +195,7 @@ function collect(content: Content, levels: number[], settings: Settings, now: Da
 
 export function studyCounts(content: Content, levels: number[], settings: Settings): StudyCounts {
   const c = collect(content, levels, settings, new Date());
-  return { due: c.due.length, newAvailable: c.fresh.length, newToday: newIntroducedToday(), seen: c.seen.length };
+  return { due: c.due.length, newAvailable: c.fresh.length, newToday: newIntroducedToday(settings.learning), seen: c.seen.length };
 }
 
 /** Builds a study session: due cards first (weakest first if there are too many), plus new cards, shuffled. */
@@ -202,7 +209,7 @@ export function buildSession(content: Content, levels: number[], settings: Setti
     .sort((a, b) => a.key - b.key)
     .slice(0, size)
     .map((d) => d.item);
-  const newBudget = Math.max(0, Math.min(settings.newPerDay - newIntroducedToday(), size - dueSorted.length));
+  const newBudget = Math.max(0, Math.min(settings.newPerDay - newIntroducedToday(settings.learning), size - dueSorted.length));
   // New cards: lower levels first, random order within a level.
   const newPicked = shuffle(fresh)
     .sort((a, b) => content.byId.get(a.sid)!.level - content.byId.get(b.sid)!.level)

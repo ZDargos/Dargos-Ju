@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { acceptMatch, cancelMatch, getMatch, type Match } from '../lib/match';
+import { acceptMatch, cancelMatch, getMatch, ROUNDS, type Match } from '../lib/match';
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
+import { getState } from '../lib/store';
 import { gameById } from '../games/registry';
+import { useT } from '../i18n';
 
 /** Opened from a challenge notification: accept or decline. */
 export default function ChallengePage() {
+  const t = useT();
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const [match, setMatch] = useState<Match | null | undefined>(undefined);
-  const [from, setFrom] = useState('A friend');
+  const [from, setFrom] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -24,29 +27,34 @@ export default function ChallengePage() {
     })().catch(() => setMatch(null));
   }, [id]);
 
-  if (match === undefined) return <div className="center-screen">Loading challenge…</div>;
+  if (match === undefined) return <div className="center-screen">{t('Loading challenge…')}</div>;
   const game = match ? gameById(match.game) : undefined;
   const open = match && match.status === 'waiting';
+  const name = from || t('A friend');
 
   return (
     <div className="center-screen">
       <div className="card center" style={{ width: '100%', maxWidth: 420, padding: 24 }}>
         {game && <div className="game-icon" style={{ margin: '0 auto 12px' }}>{game.icon}</div>}
         {!match ? (
-          <p>This challenge couldn't be found.</p>
+          <p>{t("This challenge couldn't be found.")}</p>
         ) : open ? (
           <>
-            <h2 style={{ marginTop: 0 }}>{from} challenged you!</h2>
-            <p className="muted">{game?.title ?? 'A game'} · 8 rounds, same sentences for both of you.</p>
+            <h2 style={{ marginTop: 0 }}>{t('{name} challenged you!', { name })}</h2>
+            <p className="muted">
+              {game ? t(game.title) : t('A game')} · {t('{n} rounds, same sentences for both of you.', { n: ROUNDS })}
+            </p>
             <div className="row" style={{ justifyContent: 'center', marginTop: 16 }}>
-              <button className="btn" disabled={busy} onClick={async () => { await cancelMatch(id); navigate('/games'); }}>Decline</button>
+              <button className="btn" disabled={busy} onClick={async () => { await cancelMatch(id); navigate('/games'); }}>
+                {t('Decline')}
+              </button>
               <button
                 className="btn accent"
                 disabled={busy}
                 onClick={async () => {
                   setBusy(true);
                   try {
-                    await acceptMatch(id);
+                    await acceptMatch(id, getState().settings.learning);
                     navigate(`/vs/match/${id}`, { replace: true });
                   } catch (e) {
                     setError((e as Error).message);
@@ -54,20 +62,20 @@ export default function ChallengePage() {
                   }
                 }}
               >
-                Accept
+                {t('Accept')}
               </button>
             </div>
           </>
         ) : match.status === 'active' ? (
           <>
-            <p>This match has already started.</p>
-            <button className="btn primary" onClick={() => navigate(`/vs/match/${id}`, { replace: true })}>Rejoin</button>
+            <p>{t('This match has already started.')}</p>
+            <button className="btn primary" onClick={() => navigate(`/vs/match/${id}`, { replace: true })}>{t('Rejoin')}</button>
           </>
         ) : (
-          <p>This challenge has expired. Challenges last a few minutes; you can challenge {from} back from the Friends tab.</p>
+          <p>{t('This challenge has expired. Challenges last a few minutes; you can challenge {name} back from the Friends tab.', { name })}</p>
         )}
         {error && <div className="error">{error}</div>}
-        {!open && <button className="btn" style={{ marginTop: 12 }} onClick={() => navigate('/games')}>Back to games</button>}
+        {!open && <button className="btn" style={{ marginTop: 12 }} onClick={() => navigate('/games')}>{t('Back to games')}</button>}
       </div>
     </div>
   );

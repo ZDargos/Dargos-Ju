@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { parseSentenceCsv, sentenceId } from '../src/lib/csv.ts';
 import { createRequire } from 'node:module';
 import { fullEntries, parseCedict, segment, wordsOf, type DictEntry } from '../src/lib/segmenter.ts';
+import { cleanEnglish, isEnglishWord, properNouns, tokenizeEnglish } from '../src/lib/english.ts';
+import { fullEntry, lemmaOf, normalizeIpa, shortGloss, type EcdictEntry, type EnFullEntry } from '../src/lib/englishDict.ts';
 
 const jieba = createRequire(import.meta.url)('jieba-wasm/node') as { cut(text: string, hmm: boolean): string[] };
 const cut = (text: string) => jieba.cut(text, true);
@@ -28,7 +30,11 @@ const cache: Record<string, string[]> = existsSync(cachePath) ? JSON.parse(readF
 let newlySegmented = 0;
 
 const levels: { level: number; name: string; count: number }[] = [];
-const sentences: { id: string; level: number; zh: string; en: string; tokens: string[] }[] = [];
+const sentences: { id: string; level: number; zh: string; en: string; tokens: string[]; enClean: string; enTokens: string[] }[] = [];
+
+// English-learning mode uses proofread English (data/english-corrections.json, keyed by the Chinese
+// sentence); anything not corrected there is cleaned automatically.
+const corrections: Record<string, string> = JSON.parse(readFileSync(join(root, 'data', 'english-corrections.json'), 'utf8'));
 
 const files = readdirSync(sentencesDir).filter((f) => f.toLowerCase().endsWith('.csv'));
 for (const file of files) {
@@ -50,7 +56,8 @@ for (const file of files) {
       cache[zh] = tokens;
       newlySegmented++;
     }
-    sentences.push({ id, level, zh, en, tokens });
+    const enClean = corrections[zh] ?? cleanEnglish(en);
+    sentences.push({ id, level, zh, en, tokens, enClean, enTokens: tokenizeEnglish(enClean) });
   }
   levels.push({ level, name: `Level ${level}`, count: seen.size });
 }
@@ -69,8 +76,31 @@ for (const s of sentences) {
   }
 }
 
+// English words: phonetics and a short Chinese meaning (ECDICT), plus each word's dictionary form.
+const ecdict: Record<string, EcdictEntry> = JSON.parse(gunzipSync(readFileSync(join(root, 'data', 'dict', 'ecdict-subset.json.gz'))).toString('utf8'));
+const enLexicon: Record<string, DictEntry> = {};
+const enLemma: Record<string, string> = {};
+const enFull: Record<string, EnFullEntry> = {};
+for (const s of sentences) {
+  for (const t of s.enTokens) {
+    if (!isEnglishWord(t)) continue;
+    const w = t.toLowerCase();
+    if (enLexicon[w] || enLemma[w]) continue;
+    const lemma = lemmaOf(w, ecdict);
+    if (lemma !== w) enLemma[w] = lemma;
+    const e = ecdict[w] ?? ecdict[lemma];
+    if (e) enLexicon[w] = { py: normalizeIpa(e.ipa || ecdict[lemma]?.ipa || ''), en: shortGloss(e.zh) || shortGloss(ecdict[lemma]?.zh ?? []) };
+    for (const key of new Set([w, lemma])) {
+      const f = fullEntry(key, ecdict);
+      if (f) enFull[key] = f;
+    }
+  }
+}
+const enProper = [...properNouns(sentences.map((s) => s.enTokens))];
+
 mkdirSync(dirname(outPath), { recursive: true });
-writeFileSync(outPath, JSON.stringify({ levels, sentences, lexicon }));
+writeFileSync(outPath, JSON.stringify({ levels, sentences, lexicon, enLexicon, enLemma, enProper }));
+writeFileSync(join(dirname(outPath), 'en-dictionary.json'), JSON.stringify(enFull));
 
 // Full dictionary entries (all readings and meanings) for the tap-a-word panel; loaded on demand.
 const preferred = Object.fromEntries(Object.entries(lexicon).map(([w, e]) => [w, e.py]));
@@ -89,7 +119,12 @@ const lite: Record<string, [string, string]> = {};
 for (const [w, e] of dict) if (w.length <= 4) lite[w] = [e.py, e.en.slice(0, 60)];
 writeFileSync(dictOutPath, JSON.stringify(lite));
 
+// Compact English dictionary for English sentences added in the admin page.
+const enLite: Record<string, [string, string, string]> = {};
+for (const [w, e] of Object.entries(ecdict)) enLite[w] = [normalizeIpa(e.ipa), shortGloss(e.zh), lemmaOf(w, ecdict)];
+writeFileSync(join(dirname(dictOutPath), 'ecdict-lite.json'), JSON.stringify(enLite));
+
 console.log(
   `Sentences: ${sentences.length} in ${levels.length} levels (${levels.map((l) => l.level).join(', ')}); ` +
-    `${newlySegmented} newly segmented; lexicon ${Object.keys(lexicon).length} entries.`,
+    `${newlySegmented} newly segmented; lexicon ${Object.keys(lexicon).length} entries; English words ${Object.keys(enLexicon).length}.`,
 );

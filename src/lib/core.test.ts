@@ -4,7 +4,9 @@ import { getContent } from './content';
 import { setState, getState } from './store';
 import { buildExtraPractice, buildSession, cardKey, gradeCard } from './srs';
 import { termDifficulty } from './stats';
-import { mutate, normalize } from '../games/common';
+import { mutate, vocabOf } from '../games/common';
+import { opsFor, project, tilesFor, wordsFor } from './learn';
+import { cleanEnglish, normalizeEnglish, tokenizeEnglish } from './english';
 import { DEFAULT_SETTINGS } from '../types';
 
 describe('csv', () => {
@@ -65,7 +67,7 @@ describe('sessions', () => {
     const others = content.sentences.filter((s) => !s.zh.includes('门')).slice(0, 20);
     for (const s of target) gradeCard(s.id, 'r', 1, false);
     for (const s of others) gradeCard(s.id, 'r', 3, false);
-    const d = termDifficulty(content, getState().logs);
+    const d = termDifficulty(content, getState().logs, 'zh');
     const top = d.words.r.filter((t) => t.seen >= 3)[0];
     expect(top.term).toBe('门口');
     expect(d.chars.r.filter((t) => t.seen >= 3).slice(0, 2).map((t) => t.term)).toContain('门');
@@ -75,10 +77,99 @@ describe('sessions', () => {
 describe('game mutations', () => {
   it('always produce a sentence that differs from the original', () => {
     const content = getContent();
-    const vocab = [...new Set(content.sentences.flatMap((s) => s.tokens))];
-    for (const s of content.sentences.slice(0, 200)) {
-      const m = mutate(s.tokens, vocab);
-      if (m) expect(normalize(m.tokens.join(''))).not.toBe(normalize(s.zh));
+    for (const lang of ['zh', 'en'] as const) {
+      const ops = opsFor(lang);
+      const sentences = content.sentences.map((s) => project(s, lang));
+      const vocab = vocabOf(sentences.map((s) => s.tokens), ops);
+      for (const s of sentences.slice(0, 200)) {
+        const m = mutate(s.tokens, vocab, ops);
+        if (m) expect(ops.normalize(ops.join(m.tokens))).not.toBe(ops.normalize(s.target));
+      }
     }
+  });
+});
+
+describe('English mode', () => {
+  const content = getContent();
+  beforeEach(() => {
+    setState({ userId: null, cards: {}, logs: [], dirtyCards: {}, unsyncedLogs: {}, settings: { ...DEFAULT_SETTINGS, sessionSize: 30, newPerDay: 30 } });
+  });
+
+  it('cleans translation notes into playable English', () => {
+    expect(cleanEnglish('My name is Bread (literally: steamed bun)')).toBe('My name is Bread.');
+    expect(cleanEnglish('It is midday/noon.')).toBe('It is midday.');
+    expect(cleanEnglish('Hello , friend !!')).toBe('Hello, friend!');
+  });
+
+  it('tokenizes words, contractions and numbers', () => {
+    expect(tokenizeEnglish("Don't take the A380 at 3:30.")).toEqual(["Don't", 'take', 'the', 'A380', 'at', '3:30', '.']);
+  });
+
+  it('compares answers ignoring case, punctuation and contractions', () => {
+    expect(normalizeEnglish("Don't go!")).toBe(normalizeEnglish('do not go'));
+    expect(normalizeEnglish("I'm here.")).toBe(normalizeEnglish('i am here'));
+    expect(normalizeEnglish('I am here')).not.toBe(normalizeEnglish('I was here'));
+  });
+
+  it('every sentence has playable English with tiles and dictionary words', () => {
+    let withGloss = 0;
+    let words = 0;
+    for (const s of content.sentences) {
+      const ls = project(s, 'en');
+      expect(ls.target.length).toBeGreaterThan(0);
+      expect(ls.native).toBe(s.zh);
+      expect(tilesFor(ls, content).length).toBeGreaterThan(0);
+      for (const w of ls.tokens.filter(opsFor('en').isWord)) {
+        words++;
+        if (content.enLexicon[w.toLowerCase()]) withGloss++;
+      }
+    }
+    // Nearly every English word has phonetics and a Chinese meaning.
+    expect(withGloss / words).toBeGreaterThan(0.97);
+  });
+
+  it('tiles start lowercase so the capital letter does not give away the first word', () => {
+    const s = content.sentences.find((x) => /^The /.test(x.enClean))!;
+    expect(tilesFor(project(s, 'en'), content)[0]).toBe('the');
+  });
+
+  it('keeps English progress separate from Chinese progress', () => {
+    const sid = content.sentences[0].id;
+    gradeCard(sid, 'r', 3, false, 'en');
+    expect(getState().cards[cardKey(sid, 'r', 'en')]).toBeDefined();
+    expect(getState().cards[cardKey(sid, 'r')]).toBeUndefined();
+    expect(getState().logs.at(-1)?.lang).toBe('en');
+    // English sessions only count English cards.
+    const levels = content.levels.map((l) => l.level);
+    const session = buildSession(content, levels, { ...getState().settings, learning: 'en' });
+    expect(session.some((i) => i.sid === sid && i.kind !== 'new')).toBe(false);
+  });
+
+  it('treats dialogue labels like "A:" as labels, not words or tiles', () => {
+    const s = content.sentences.find((x) => x.enClean.startsWith('A: '))!;
+    for (const lang of ['zh', 'en'] as const) {
+      const ls = project(s, lang);
+      const ops = opsFor(lang);
+      expect(ls.tokens[0]).toMatch(/^A[:：]$/);
+      expect(tilesFor(ls, content)).not.toContain('A');
+      expect(ops.normalize(ops.join(tilesFor(ls, content)))).toBe(ops.normalize(ls.target));
+    }
+  });
+
+  it('mistakes keep English capitals at the start of the sentence', () => {
+    const ops = opsFor('en');
+    const tokens = ['What', 'opinions', 'does', 'his', 'son', 'have', '?'];
+    for (let n = 0; n < 50; n++) {
+      const m = mutate(tokens, ['what', 'opinions', 'son'], ops, ['swap', 'missing', 'replace', 'extra']);
+      if (!m) continue;
+      const first = m.tokens.find(ops.isWord)!;
+      expect(first[0]).toBe(first[0].toUpperCase());
+      expect(m.tokens.slice(m.tokens.indexOf(first) + 1)).not.toContain('What');
+    }
+  });
+
+  it('tracks English words by dictionary form', () => {
+    const s = content.sentences.find((x) => /went/.test(x.enClean));
+    if (s) expect(wordsFor(s, 'en', content)).toContain('go');
   });
 });

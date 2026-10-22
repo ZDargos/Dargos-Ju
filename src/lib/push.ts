@@ -4,11 +4,12 @@
 import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 import { VAPID_PUBLIC_KEY } from '../config';
+import { msg } from '../i18n/msg';
 
 export type PushState = 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on';
 
 /** Notification types. Add new ones here and as a boolean column in notification_prefs. */
-export const NOTIFICATION_TYPES = [{ key: 'challenges', label: 'Challenges', help: 'When a friend challenges you to a game' }] as const;
+export const NOTIFICATION_TYPES = [{ key: 'challenges', label: msg('Challenges'), help: msg('When a friend challenges you to a game') }] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]['key'];
 export type NotificationPrefs = { enabled: boolean } & Record<NotificationType, boolean>;
 

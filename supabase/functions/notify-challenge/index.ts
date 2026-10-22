@@ -12,13 +12,20 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const GAME_TITLES: Record<string, string> = {
-  'word-order': 'Word order',
-  'sentence-builder': 'Sentence builder',
-  'spot-error': 'Spot the error',
-  'close-call': 'Close call',
-  dictation: 'Dictation',
+// Game names in the recipient's interface language (keep in sync with src/i18n/zh.ts).
+const GAME_TITLES: Record<string, { en: string; zh: string }> = {
+  'word-order': { en: 'Word order', zh: '词序' },
+  'sentence-builder': { en: 'Sentence builder', zh: '造句' },
+  'spot-error': { en: 'Spot the error', zh: '找错误' },
+  'close-call': { en: 'Close call', zh: '辨一辨' },
+  dictation: { en: 'Dictation', zh: '听写' },
 };
+
+/** The recipient's interface language: their choice, else Chinese when they learn English. */
+function uiLang(settings: { uiLang?: string; learning?: string } | null | undefined): 'en' | 'zh' {
+  if (settings?.uiLang === 'en' || settings?.uiLang === 'zh') return settings.uiLang;
+  return settings?.learning === 'en' ? 'zh' : 'en';
+}
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -44,17 +51,19 @@ Deno.serve(async (req) => {
     const { data: prefs } = await admin.from('notification_prefs').select('enabled, challenges').eq('user_id', recipient).maybeSingle();
     if (prefs && (!prefs.enabled || !prefs.challenges)) return json({ sent: 0, reason: 'muted' });
 
-    const [{ data: profile }, { data: subs }, { data: config }] = await Promise.all([
+    const [{ data: profile }, { data: subs }, { data: config }, { data: recipientSettings }] = await Promise.all([
       admin.from('profiles').select('display_name').eq('user_id', auth.user.id).maybeSingle(),
       admin.from('push_subscriptions').select('*').eq('user_id', recipient),
       admin.from('server_config').select('key, value'),
+      admin.from('user_settings').select('settings').eq('user_id', recipient).maybeSingle(),
     ]);
     const cfg = Object.fromEntries((config ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
-    const from = profile?.display_name ?? 'A friend';
-    const game = GAME_TITLES[match.game] ?? 'a game';
+    const lang = uiLang(recipientSettings?.settings);
+    const from = profile?.display_name ?? (lang === 'zh' ? '一位好友' : 'A friend');
+    const game = GAME_TITLES[match.game]?.[lang] ?? (lang === 'zh' ? '一个游戏' : 'a game');
     const message = {
-      title: `${from} challenged you!`,
-      body: `Tap to play ${game} against ${from}.`,
+      title: lang === 'zh' ? `${from}向你发起了挑战！` : `${from} challenged you!`,
+      body: lang === 'zh' ? `点一下，和${from}玩${game}。` : `Tap to play ${game} against ${from}.`,
       url: `#/challenge/${match.id}`,
       tag: `challenge-${match.id}`,
     };

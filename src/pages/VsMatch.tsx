@@ -2,10 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { useSettings } from '../lib/store';
-import { cancelMatch, getMatch, joinLive, reportProgress, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
+import {
+  cancelMatch,
+  decideWinner,
+  getMatch,
+  isMixedMatch,
+  joinLive,
+  reportProgress,
+  submitResult,
+  watchMyMatches,
+  type LiveChannel,
+  type Match,
+  type ProgressEvent,
+} from '../lib/match';
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
 import { gameById } from '../games/registry';
+import { LearnContext, project, type LearnLang } from '../lib/learn';
+import { langName, useT } from '../i18n';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
 import MatchSummary, { type AnswerRecord } from '../components/MatchSummary';
@@ -14,7 +28,7 @@ const empty: ProgressEvent = { round: 0, score: 0, results: [], done: false };
 
 function Dots({ results, total }: { results: boolean[]; total: number }) {
   return (
-    <div className="row" style={{ gap: 4 }}>
+    <div className="row" style={{ gap: 4 }} aria-hidden>
       {Array.from({ length: total }, (_, i) => (
         <span
           key={i}
@@ -31,13 +45,14 @@ function Dots({ results, total }: { results: boolean[]; total: number }) {
 }
 
 export default function VsMatch() {
+  const t = useT();
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const content = useContent();
   const settings = useSettings();
   const [me, setMe] = useState<string | null>(null);
   const [match, setMatch] = useState<Match | null>(null);
-  const [names, setNames] = useState<{ me: string; them: string }>({ me: 'You', them: 'Opponent' });
+  const [names, setNames] = useState<{ me: string; them: string }>({ me: '', them: '' });
   const [mine, setMine] = useState<ProgressEvent>(empty);
   const [theirs, setTheirs] = useState<ProgressEvent>(empty);
   const [online, setOnline] = useState(true);
@@ -59,13 +74,13 @@ export default function VsMatch() {
     (async () => {
       const uid = await currentUserId();
       const m = await getMatch(id);
-      if (!uid || !m) return setError('Match not found.');
+      if (!uid || !m) return setError(t('Match not found.'));
       setMe(uid);
       setMatch(m);
       const opponent = m.player_a === uid ? m.player_b : m.player_a;
       const { data } = await supabase.from('profiles').select('user_id, display_name').in('user_id', [uid, opponent ?? uid]);
       const name = (u: string | null) => data?.find((p) => p.user_id === u)?.display_name;
-      setNames({ me: name(uid) ?? 'You', them: name(opponent) ?? 'Opponent' });
+      setNames({ me: name(uid) ?? t('You'), them: name(opponent) ?? t('Opponent') });
       live.current = joinLive(id, uid, { onProgress: setTheirs, onPresence: setOnline });
       unwatch = watchMyMatches(uid, (row) => row.id === id && setMatch(row));
       startedAt.current = Date.now();
@@ -74,23 +89,30 @@ export default function VsMatch() {
       unwatch();
       live.current?.close();
     };
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const iAmA = !!match && me === match.player_a;
+  // Each player answers in the language they're learning, even when the opponent learns the other one.
+  const myLang: LearnLang = (match ? (iAmA ? match.lang_a : match.lang_b) : null) ?? settings.learning;
+  const theirLang: LearnLang | null = match ? (iAmA ? match.lang_b : match.lang_a) : null;
   const game = match ? gameById(match.game) : undefined;
-  const sentences = useMemo(() => (match ? match.sentence_ids.map((s) => content.byId.get(s)).filter((s) => !!s) : []), [match, content]);
+  const sentences = useMemo(
+    () => (match ? match.sentence_ids.map((s) => content.byId.get(s)).filter((s) => !!s).map((s) => project(s, myLang)) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [match?.id, content, myLang],
+  );
   const pool = useMemo(() => {
     const levels = new Set(sentences.map((s) => s.level));
-    return content.sentences.filter((s) => levels.has(s.level));
-  }, [sentences, content]);
+    return content.sentences.filter((s) => levels.has(s.level)).map((s) => project(s, myLang));
+  }, [sentences, content, myLang]);
 
   const total = sentences.length;
-  const iAmA = match && me === match.player_a;
 
   const record = (ok: boolean, answer?: string) => {
     if (answeredIndex.current === index) return; // one answer per round
     answeredIndex.current = index;
     const ms = Date.now() - roundStart.current;
-    if (match) recordRound(match.game, 'vs', ok, ms, id);
+    if (match) recordRound(match.game, 'vs', ok, ms, id, myLang);
     const sentence = sentences[index];
     if (sentence) setAnswers((list) => [...list, { sentence, correct: ok, answer, ms }]);
     const progress = { ...mine, round: mine.round + 1, score: mine.score + (ok ? 1 : 0), results: [...mine.results, ok] };
@@ -118,14 +140,19 @@ export default function VsMatch() {
   };
 
   const leave = async () => {
-    if (match && match.status !== 'finished' && !mine.done && confirm('Leave the match? It counts as a forfeit.')) {
+    if (match && match.status !== 'finished' && !mine.done && confirm(t('Leave the match? It counts as a forfeit.'))) {
       await cancelMatch(id);
       navigate('/games');
     } else if (!match || match.status === 'finished' || mine.done) navigate('/games');
   };
 
-  if (error) return <div className="card empty">{error} <button className="btn sm" onClick={() => navigate('/games')}>Back</button></div>;
-  if (!match || !game?.component || !me) return <div className="center-screen">Joining match…</div>;
+  if (error)
+    return (
+      <div className="card empty">
+        {error} <button className="btn sm" onClick={() => navigate('/games')}>{t('Back')}</button>
+      </div>
+    );
+  if (!match || !game?.component || !me) return <div className="center-screen">{t('Joining match…')}</div>;
 
   const myFinal = iAmA ? match.score_a : match.score_b;
   const theirFinal = iAmA ? match.score_b : match.score_a;
@@ -137,82 +164,83 @@ export default function VsMatch() {
   const cancelled = match.status === 'cancelled';
   const Game = game.component;
   const current = sentences[index];
+  const mixed = isMixedMatch(match);
 
   let verdict = '';
   if (finished && myFinal !== null && theirFinal !== null) {
-    verdict = myFinal > theirFinal || (myFinal === theirFinal && (myTime ?? 0) < (theirTime ?? 0)) ? 'You win! 🎉' : myFinal === theirFinal && myTime === theirTime ? "It's a tie" : `${names.them} wins`;
+    const w = decideWinner(match, content);
+    verdict = w === 'tie' ? t("It's a tie") : (w === 'a') === iAmA ? `${t('You win!')} 🎉` : t('{name} wins', { name: names.them });
   }
+  const secs = (ms: number | null) => t('{s}s', { s: ((ms ?? 0) / 1000).toFixed(1) });
 
   return (
-    <>
+    <LearnContext.Provider value={myLang}>
       <div className="review-top">
-        <button className="icon-btn" onClick={leave} aria-label="Leave match"><IconClose /></button>
-        <strong className="grow">{game.title} · Vs</strong>
+        <button className="icon-btn" onClick={leave} aria-label={t('Leave match')}>
+          <IconClose />
+        </button>
+        <strong className="grow">{t(game.title)} · {t('Vs')}</strong>
       </div>
 
       <div className="card" style={{ marginBottom: 14, padding: 12 }}>
         <div className="spread small" style={{ marginBottom: 6 }}>
           <strong>{names.me}</strong>
-          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{mine.score} pts · {Math.min(mine.round, total)}/{total}</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{t('{score} pts · {done}/{total}', { score: mine.score, done: Math.min(mine.round, total), total })}</span>
         </div>
         <Dots results={mine.results} total={total} />
         <div className="spread small" style={{ margin: '10px 0 6px' }}>
           <strong>
             {names.them}
-            {!online && !theirs.done && <span className="muted" style={{ fontWeight: 400 }}> · offline</span>}
+            {mixed && theirLang && <span className="muted" style={{ fontWeight: 400 }}> · {t('learning {lang}', { lang: langName(theirLang) })}</span>}
+            {!online && !theirs.done && <span className="muted" style={{ fontWeight: 400 }}> · {t('offline')}</span>}
           </strong>
-          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{theirs.score} pts · {Math.min(theirs.round, total)}/{total}{theirs.done && ' ✓'}</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {t('{score} pts · {done}/{total}', { score: theirs.score, done: Math.min(theirs.round, total), total })}
+            {theirs.done && ' ✓'}
+          </span>
         </div>
         <Dots results={theirs.results} total={total} />
       </div>
 
       {cancelled ? (
         <div className="card center">
-          <p>{mine.done ? 'Your opponent left the match.' : 'This match was cancelled.'}</p>
-          <button className="btn primary" onClick={() => navigate('/games')}>Back to games</button>
+          <p>{mine.done ? t('Your opponent left the match.') : t('This match was cancelled.')}</p>
+          <button className="btn primary" onClick={() => navigate('/games')}>{t('Back to games')}</button>
         </div>
       ) : finished ? (
         <>
-        <div className="card center" style={{ padding: 24 }}>
-          <h2 style={{ marginTop: 0 }}>{verdict}</h2>
-          {myProgress < total && <p>{names.them} finished with a lead you couldn't catch, so the match ended early.</p>}
-          {theirProgress < total && <p>{names.them} couldn't catch up anymore, so the match ended early.</p>}
-          <p className="muted">
-            {names.me}: {myFinal} {myProgress < total ? `(${myProgress}/${total} answered)` : `in ${((myTime ?? 0) / 1000).toFixed(1)}s`} · {names.them}: {theirFinal}{' '}
-            {theirProgress < total ? `(${theirProgress}/${total} answered)` : `in ${((theirTime ?? 0) / 1000).toFixed(1)}s`}
-          </p>
-          <div className="row" style={{ justifyContent: 'center' }}>
-            <button className="btn" onClick={() => navigate('/games')}>Done</button>
-            <button className="btn primary" onClick={() => navigate(`/vs/${game.id}`)}>Play again</button>
+          <div className="card center" style={{ padding: 24 }} role="status">
+            <h2 style={{ marginTop: 0 }}>{verdict}</h2>
+            {myProgress < total && <p>{t("{name} finished with a lead you couldn't catch, so the match ended early.", { name: names.them })}</p>}
+            {theirProgress < total && <p>{t("{name} couldn't catch up anymore, so the match ended early.", { name: names.them })}</p>}
+            {mixed && myFinal === theirFinal && <p className="small muted">{t('Tied on points: in mixed-language matches the faster player per word wins.')}</p>}
+            <p className="muted">
+              {names.me}: {myFinal} {myProgress < total ? t('({done}/{total} answered)', { done: myProgress, total }) : t('in {time}', { time: secs(myTime) })} · {names.them}: {theirFinal}{' '}
+              {theirProgress < total ? t('({done}/{total} answered)', { done: theirProgress, total }) : t('in {time}', { time: secs(theirTime) })}
+            </p>
+            <div className="row" style={{ justifyContent: 'center' }}>
+              <button className="btn" onClick={() => navigate('/games')}>{t('Done')}</button>
+              <button className="btn primary" onClick={() => navigate(`/vs/${game.id}`)}>{t('Play again')}</button>
+            </div>
           </div>
-        </div>
-        <MatchSummary answers={answers} lexicon={content.lexicon} />
+          <MatchSummary answers={answers} />
         </>
       ) : mine.done ? (
         <>
-        <div className="card center" style={{ padding: 24 }}>
-          <p style={{ fontWeight: 600 }}>You scored {mine.score}/{total}.</p>
-          <p className="muted small">Waiting for {names.them} to finish…</p>
-        </div>
-        <MatchSummary answers={answers} lexicon={content.lexicon} />
+          <div className="card center" style={{ padding: 24 }}>
+            <p style={{ fontWeight: 600 }}>{t('You scored {score}/{total}.', { score: mine.score, total })}</p>
+            <p className="muted small">{t('Waiting for {name} to finish…', { name: names.them })}</p>
+          </div>
+          <MatchSummary answers={answers} />
         </>
       ) : current ? (
-        <Game
-          key={index}
-          sentence={current}
-          pool={pool}
-          content={content}
-          settings={settings}
-          hints={false}
-          vs
-          onResult={record}
-          onNext={next}
-        />
+        <Game key={index} sentence={current} pool={pool} content={content} settings={settings} hints={false} vs onResult={record} onNext={next} />
       ) : (
         <div className="card empty">
-          This match's sentences aren't on your device yet. Try reopening the app. <button className="btn sm" onClick={() => navigate('/games')}>Back</button>
+          {t("This match's sentences aren't on your device yet. Try reopening the app.")}{' '}
+          <button className="btn sm" onClick={() => navigate('/games')}>{t('Back')}</button>
         </div>
       )}
-    </>
+    </LearnContext.Provider>
   );
 }

@@ -18,9 +18,9 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Mandarin text-to-speech. Prefers Google's speech engine when it is installed, because many
- * phones (Samsung especially) default to an engine without a Chinese voice, which speaks
- * Chinese text as silence.
+ * Text-to-speech in Mandarin or English (English-learning mode). Prefers Google's speech engine
+ * when it is installed, because many phones (Samsung especially) default to an engine without a
+ * Chinese voice, which speaks Chinese text as silence.
  */
 @CapacitorPlugin(name = "ZhSpeech")
 public class ZhSpeechPlugin extends Plugin implements TextToSpeech.OnInitListener {
@@ -82,6 +82,8 @@ public class ZhSpeechPlugin extends Plugin implements TextToSpeech.OnInitListene
         int availability = ready ? tts.isLanguageAvailable(Locale.SIMPLIFIED_CHINESE) : TextToSpeech.LANG_NOT_SUPPORTED;
         o.put("chinese", availability >= TextToSpeech.LANG_AVAILABLE);
         o.put("missingData", availability == TextToSpeech.LANG_MISSING_DATA);
+        int en = ready ? tts.isLanguageAvailable(Locale.US) : TextToSpeech.LANG_NOT_SUPPORTED;
+        o.put("english", en >= TextToSpeech.LANG_AVAILABLE);
         return o;
     }
 
@@ -99,9 +101,10 @@ public class ZhSpeechPlugin extends Plugin implements TextToSpeech.OnInitListene
             call.reject("Speech engine is still starting");
             return;
         }
-        int lang = tts.setLanguage(Locale.SIMPLIFIED_CHINESE);
+        boolean english = "en".equals(call.getString("lang", "zh"));
+        int lang = tts.setLanguage(english ? Locale.US : Locale.SIMPLIFIED_CHINESE);
         if (lang == TextToSpeech.LANG_MISSING_DATA || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
-            call.reject("NO_CHINESE_VOICE");
+            call.reject(english ? "NO_ENGLISH_VOICE" : "NO_CHINESE_VOICE");
             return;
         }
         tts.setSpeechRate(rate);

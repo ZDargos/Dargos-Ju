@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { builtInSentenceIds, getRemote, refreshRemoteContent, useContent } from '../lib/content';
-import { loadSegmenter, type BrowserSegmenter } from '../lib/browserSegmenter';
+import { englishLexFor, loadSegmenter, type BrowserSegmenter } from '../lib/browserSegmenter';
+import { cleanEnglish, isEnglishWord, tokenizeEnglish } from '../lib/english';
+import { levelName, t, useT } from '../i18n';
 import { parseSentenceCsv, sentenceId, type SentencePair } from '../lib/csv';
 import { isHanWord, wordsOf } from '../lib/segmenter';
 import SegEditor from '../components/SegEditor';
@@ -30,12 +32,13 @@ function useSegmenter() {
 }
 
 export default function Admin() {
+  useT();
   return (
     <>
       <header className="topbar">
         <div className="row">
-          <Link to="/settings" className="icon-btn" aria-label="Back"><IconBack /></Link>
-          <h1>Admin</h1>
+          <Link to="/settings" className="icon-btn" aria-label={t('Back')}><IconBack /></Link>
+          <h1>{t('Admin')}</h1>
         </div>
       </header>
       <SignupModeSwitch />
@@ -51,6 +54,7 @@ export default function Admin() {
 // ---------- Invites ----------
 
 function Invites() {
+  useT();
   const [invites, setInvites] = useState<{ email: string; invited_at: string }[]>([]);
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -69,14 +73,14 @@ function Invites() {
     if (!e) return;
     setError('');
     const { error } = await supabase.from('invites').insert({ email: e });
-    if (error) setError(error.code === '23505' ? 'Already invited.' : error.message);
+    if (error) setError(error.code === '23505' ? t('Already invited.') : error.message);
     else {
       setEmail('');
       load();
     }
   };
   const remove = async (e: string) => {
-    if (!confirm(`Remove the invite for ${e}? Existing accounts are not deleted.`)) return;
+    if (!confirm(t('Remove the invite for {email}? Existing accounts are not deleted.', { email: e }))) return;
     const { error } = await supabase.from('invites').delete().eq('email', e);
     if (error) setError(error.message);
     else load();
@@ -84,12 +88,12 @@ function Invites() {
 
   return (
     <>
-      <div className="section-title">Invites</div>
+      <div className="section-title">{t('Invites')}</div>
       <div className="card">
-        <p className="small muted" style={{ marginTop: 0 }}>Only invited emails can create an account. Tell them to open the app and choose Create account.</p>
+        <p className="small muted" style={{ marginTop: 0 }}>{t('Only invited emails can create an account. Tell them to open the app and choose Create account.')}</p>
         <form className="row" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <input className="input grow" type="email" placeholder="friend@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <button className="btn primary" disabled={!email.trim()}>Invite</button>
+          <button className="btn primary" disabled={!email.trim()}>{t('Invite')}</button>
         </form>
         {error && <div className="error">{error}</div>}
         {invites.length > 0 && (
@@ -97,7 +101,7 @@ function Invites() {
             {invites.map((i) => (
               <li key={i.email} className="spread">
                 <span>{i.email}</span>
-                <button className="btn ghost sm" onClick={() => remove(i.email)}>Remove</button>
+                <button className="btn ghost sm" onClick={() => remove(i.email)}>{t('Remove')}</button>
               </li>
             ))}
           </ul>
@@ -112,9 +116,12 @@ function Invites() {
 interface Draft extends SentencePair {
   tokens: string[];
   duplicate: boolean;
+  /** The English used in English-learning mode (notes and alternatives removed). */
+  enClean: string;
 }
 
 function AddSentences() {
+  useT();
   const content = useContent();
   const { load, error: segError } = useSegmenter();
   const maxLevel = Math.max(0, ...content.levels.map((l) => l.level));
@@ -142,16 +149,16 @@ function AddSentences() {
     setMessage('');
     const pairs = source === 'csv' ? parseSentenceCsv(csvText) : zh.trim() && en.trim() ? [{ zh: zh.trim(), en: en.trim() }] : [];
     if (!pairs.length) {
-      setMessage(source === 'csv' ? 'No rows found. The file needs Chinese,English columns.' : 'Enter both the Chinese and the English.');
+      setMessage(source === 'csv' ? t('No rows found. The file needs Chinese,English columns.') : t('Enter both the Chinese and the English.'));
       return;
     }
     setBusy(true);
     try {
       const seg = await load();
       const existing = new Set(content.sentences.filter((s) => s.level === level).map((s) => s.zh));
-      setDrafts(pairs.map((p) => ({ ...p, tokens: seg.segment(p.zh), duplicate: existing.has(p.zh) })));
+      setDrafts(pairs.map((p) => ({ ...p, tokens: seg.segment(p.zh), duplicate: existing.has(p.zh), enClean: cleanEnglish(p.en) })));
     } catch (e) {
-      setMessage(`Could not split the sentences into words: ${(e as Error).message}`);
+      setMessage(t('Could not split the sentences into words: {error}', { error: (e as Error).message }));
     } finally {
       setBusy(false);
     }
@@ -164,27 +171,30 @@ function AddSentences() {
     try {
       const seg = await load();
       const { data: user } = await supabase.auth.getUser();
-      const rows = drafts
-        .filter((d) => !d.duplicate)
-        .map((d) => ({
-          id: sentenceId(level, d.zh),
-          level,
-          zh: d.zh,
-          en: d.en,
-          tokens: d.tokens,
-          lex: seg.lexFor(d.tokens.filter(isHanWord)),
-          created_by: user.user?.id,
-        }));
+      const keep = drafts.filter((d) => !d.duplicate);
+      const enWords = (d: Draft) => tokenizeEnglish(d.enClean).filter(isEnglishWord).map((w) => w.toLowerCase());
+      const enLex = await englishLexFor(keep.flatMap(enWords));
+      const rows = keep.map((d) => ({
+        id: sentenceId(level, d.zh),
+        level,
+        zh: d.zh,
+        en: d.en,
+        tokens: d.tokens,
+        lex: seg.lexFor(d.tokens.filter(isHanWord)),
+        en_clean: d.enClean,
+        en_lex: Object.fromEntries(enWords(d).filter((w) => enLex[w]).map((w) => [w, enLex[w]])),
+        created_by: user.user?.id,
+      }));
       const { error } = await supabase.from('custom_sentences').upsert(rows, { onConflict: 'id' });
       if (error) throw error;
       await refreshRemoteContent();
-      setMessage(`Saved ${rows.length} sentences to Level ${level}. Everyone sees them the next time they open the app.`);
+      setMessage(t('Saved {n} sentences to {level}. Everyone sees them the next time they open the app.', { n: rows.length, level: levelName(level) }));
       setDrafts(null);
       setCsvText('');
       setZh('');
       setEn('');
     } catch (e) {
-      setMessage(`Save failed: ${(e as Error).message}`);
+      setMessage(t('Save failed: {error}', { error: (e as Error).message }));
     } finally {
       setBusy(false);
     }
@@ -198,71 +208,72 @@ function AddSentences() {
 
   return (
     <>
-      <div className="section-title">Add sentences</div>
+      <div className="section-title">{t('Add sentences')}</div>
       <div className="card">
         <div className="field">
-          <label>Level</label>
+          <label>{t('Level')}</label>
           <div className="segmented" style={{ marginBottom: 8 }}>
-            <button className={levelMode === 'new' ? 'on' : ''} onClick={() => setLevelMode('new')}>New level</button>
-            <button className={levelMode === 'existing' ? 'on' : ''} onClick={() => setLevelMode('existing')}>Existing level</button>
+            <button className={levelMode === 'new' ? 'on' : ''} onClick={() => setLevelMode('new')}>{t('New level')}</button>
+            <button className={levelMode === 'existing' ? 'on' : ''} onClick={() => setLevelMode('existing')}>{t('Existing level')}</button>
           </div>
           {levelMode === 'new' ? (
-            <input className="input" type="number" min={1} value={newLevel} onChange={(e) => setNewLevel(Number(e.target.value))} />
+            <input className="input" type="number" aria-label={t('New level')} min={1} value={newLevel} onChange={(e) => setNewLevel(Number(e.target.value))} />
           ) : (
-            <select className="input" value={existingLevel} onChange={(e) => setExistingLevel(Number(e.target.value))}>
+            <select className="input" aria-label={t('Existing level')} value={existingLevel} onChange={(e) => setExistingLevel(Number(e.target.value))}>
               {content.levels.map((l) => (
-                <option key={l.level} value={l.level}>{l.name} ({l.count})</option>
+                <option key={l.level} value={l.level}>{levelName(l.level)} ({l.count})</option>
               ))}
             </select>
           )}
-          {levelMode === 'new' && levelExists && <div className="small muted">Level {level} already exists; sentences will be added to it.</div>}
+          {levelMode === 'new' && levelExists && <div className="small muted">{t('{level} already exists; sentences will be added to it.', { level: levelName(level) })}</div>}
         </div>
 
         <div className="segmented" style={{ marginBottom: 12 }}>
-          <button className={source === 'csv' ? 'on' : ''} onClick={() => setSource('csv')}>CSV file</button>
-          <button className={source === 'single' ? 'on' : ''} onClick={() => setSource('single')}>One sentence</button>
+          <button className={source === 'csv' ? 'on' : ''} onClick={() => setSource('csv')}>{t('CSV file')}</button>
+          <button className={source === 'single' ? 'on' : ''} onClick={() => setSource('single')}>{t('One sentence')}</button>
         </div>
 
         {source === 'csv' ? (
           <>
             <input type="file" accept=".csv,text/csv" onChange={(e) => e.target.files?.[0] && readFile(e.target.files[0])} />
-            <textarea className="input zh" rows={5} style={{ marginTop: 8 }} placeholder={'Chinese,English\n我是中国人。,I am Chinese.'} value={csvText} onChange={(e) => setCsvText(e.target.value)} />
+            <textarea className="input zh" aria-label={t('CSV text')} rows={5} style={{ marginTop: 8 }} placeholder={'Chinese,English\n我是中国人。,I am Chinese.'} value={csvText} onChange={(e) => setCsvText(e.target.value)} />
           </>
         ) : (
           <>
-            <div className="field"><label>Chinese</label><input className="input zh" value={zh} onChange={(e) => setZh(e.target.value)} /></div>
-            <div className="field"><label>English</label><input className="input" value={en} onChange={(e) => setEn(e.target.value)} /></div>
+            <div className="field"><label htmlFor="add-zh">{t('Chinese')}</label><input id="add-zh" className="input zh" lang="zh-CN" value={zh} onChange={(e) => setZh(e.target.value)} /></div>
+            <div className="field"><label htmlFor="add-en">{t('English')}</label><input id="add-en" className="input" lang="en" value={en} onChange={(e) => setEn(e.target.value)} /></div>
           </>
         )}
         <button className="btn block" style={{ marginTop: 10 }} disabled={busy} onClick={preview}>
-          {busy && !drafts ? 'Splitting into words…' : 'Preview word splits'}
+          {busy && !drafts ? t('Splitting into words…') : t('Preview word splits')}
         </button>
         {segError && <div className="error">{segError}</div>}
 
         {drafts && (
           <>
-            <p className="small muted">Tap a sentence to fix its word splits before saving. Lines mark word boundaries.</p>
+            <p className="small muted">{t('Tap a sentence to fix its word splits before saving. Lines mark word boundaries.')}</p>
             <ul className="list">
               {drafts.map((d, i) => (
                 <li key={i} style={{ opacity: d.duplicate ? 0.5 : 1 }}>
                   {editing === i ? (
                     <>
                       <SegEditor tokens={d.tokens} onChange={(tokens) => setDrafts(drafts.map((x, j) => (j === i ? { ...x, tokens } : x)))} />
-                      <button className="btn sm" style={{ marginTop: 6 }} onClick={() => setEditing(null)}>Done</button>
+                      <button className="btn sm" style={{ marginTop: 6 }} onClick={() => setEditing(null)}>{t('Done')}</button>
                     </>
                   ) : (
                     <div onClick={() => setEditing(i)} style={{ cursor: 'pointer' }}>
                       <div className="zh" style={{ fontSize: 18 }}>{d.tokens.join(' · ')}</div>
-                      <div className="small muted">{d.en}{d.duplicate && ' · already in this level, skipped'}</div>
+                      <div className="small muted">{d.en}{d.duplicate && ` · ${t('already in this level, skipped')}`}</div>
+                      {d.enClean !== d.en && <div className="small muted">{t('English mode uses: {text}', { text: d.enClean })}</div>}
                     </div>
                   )}
                 </li>
               ))}
             </ul>
             <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn grow" onClick={() => setDrafts(null)}>Cancel</button>
+              <button className="btn grow" onClick={() => setDrafts(null)}>{t('Cancel')}</button>
               <button className="btn primary grow" disabled={busy || drafts.every((d) => d.duplicate)} onClick={save}>
-                Save {drafts.filter((d) => !d.duplicate).length} to Level {level}
+                {t('Save {n} to {level}', { n: drafts.filter((d) => !d.duplicate).length, level: levelName(level) })}
               </button>
             </div>
           </>
@@ -276,6 +287,7 @@ function AddSentences() {
 // ---------- Fix word splits ----------
 
 function FixSplits() {
+  useT();
   const content = useContent();
   const { load } = useSegmenter();
   const [query, setQuery] = useState('');
@@ -306,9 +318,9 @@ function FixSplits() {
         : await supabase.from('segment_overrides').upsert({ sentence_id: selected.id, tokens, lex, updated_at: new Date().toISOString(), updated_by: user.user?.id });
       if (error) throw error;
       await refreshRemoteContent();
-      setMessage('Saved.');
+      setMessage(t('Saved.'));
     } catch (e) {
-      setMessage(`Save failed: ${(e as Error).message}`);
+      setMessage(t('Save failed: {error}', { error: (e as Error).message }));
     } finally {
       setBusy(false);
     }
@@ -320,33 +332,33 @@ function FixSplits() {
     if (error) return setMessage(error.message);
     await refreshRemoteContent();
     setSelected(null);
-    setMessage('Restored the original split.');
+    setMessage(t('Restored the original split.'));
   };
 
   return (
     <>
-      <div className="section-title">Fix word splits</div>
+      <div className="section-title">{t('Fix word splits')}</div>
       <div className="card">
-        <input className="input zh" placeholder="Search Chinese or English" value={query} onChange={(e) => { setQuery(e.target.value); setSelected(null); setMessage(''); }} />
+        <input className="input zh" placeholder={t('Search Chinese or English')} aria-label={t('Search Chinese or English')} value={query} onChange={(e) => { setQuery(e.target.value); setSelected(null); setMessage(''); }} />
         {!selected && results.length > 0 && (
           <ul className="list" style={{ marginTop: 6 }}>
             {results.map((s) => (
               <li key={s.id} style={{ cursor: 'pointer' }} onClick={() => { setSelected(s); setTokens(s.tokens); }}>
                 <div className="zh">{s.tokens.join(' · ')}</div>
-                <div className="small muted">L{s.level} · {s.en}</div>
+                <div className="small muted">{levelName(s.level)} · {s.en}</div>
               </li>
             ))}
           </ul>
         )}
         {selected && (
           <div style={{ marginTop: 12 }}>
-            <p className="small muted" style={{ marginTop: 0 }}>Tap between characters to split or join words.</p>
+            <p className="small muted" style={{ marginTop: 0 }}>{t('Tap between characters to split or join words.')}</p>
             <SegEditor tokens={tokens} onChange={setTokens} />
             <div className="small muted" style={{ marginTop: 8 }}>{selected.en}</div>
             <div className="row wrap" style={{ marginTop: 12 }}>
-              <button className="btn sm" onClick={() => setSelected(null)}>Cancel</button>
-              {hasOverride && <button className="btn sm" onClick={reset}>Restore original</button>}
-              <button className="btn primary sm" disabled={busy} onClick={save}>Save split</button>
+              <button className="btn sm" onClick={() => setSelected(null)}>{t('Cancel')}</button>
+              {hasOverride && <button className="btn sm" onClick={reset}>{t('Restore original')}</button>}
+              <button className="btn primary sm" disabled={busy} onClick={save}>{t('Save split')}</button>
             </div>
           </div>
         )}
@@ -359,6 +371,7 @@ function FixSplits() {
 // ---------- Added sentences ----------
 
 function AddedSentences() {
+  useT();
   const content = useContent();
   const custom = content.sentences.filter((s) => s.custom && !builtInSentenceIds.has(s.id));
   const [error, setError] = useState('');
@@ -367,7 +380,7 @@ function AddedSentences() {
   for (const s of custom) byLevel.set(s.level, [...(byLevel.get(s.level) ?? []), s]);
 
   const remove = async (s: Sentence) => {
-    if (!confirm(`Delete "${s.zh}"? Everyone's progress on it stops showing.`)) return;
+    if (!confirm(t('Delete "{sentence}"? Everyone\'s progress on it stops showing.', { sentence: s.zh }))) return;
     const { error } = await supabase.from('custom_sentences').delete().eq('id', s.id);
     if (error) return setError(error.message);
     await refreshRemoteContent();
@@ -375,12 +388,12 @@ function AddedSentences() {
 
   return (
     <>
-      <div className="section-title">Sentences added in the app</div>
+      <div className="section-title">{t('Sentences added in the app')}</div>
       <div className="card">
         {error && <div className="error">{error}</div>}
         {[...byLevel.entries()].sort((a, b) => a[0] - b[0]).map(([level, list]) => (
           <details key={level} style={{ marginBottom: 8 }}>
-            <summary>Level {level} · {list.length}</summary>
+            <summary>{levelName(level)} · {list.length}</summary>
             <ul className="list">
               {list.map((s) => (
                 <li key={s.id} className="spread">
@@ -388,7 +401,7 @@ function AddedSentences() {
                     <div className="zh">{s.zh}</div>
                     <div className="small muted">{s.en}</div>
                   </div>
-                  <button className="btn ghost sm" onClick={() => remove(s)}>Delete</button>
+                  <button className="btn ghost sm" onClick={() => remove(s)}>{t('Delete')}</button>
                 </li>
               ))}
             </ul>

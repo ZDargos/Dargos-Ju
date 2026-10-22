@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { useT } from '../i18n';
 
 const KEY = 'dj:install-hint-dismissed';
 
@@ -13,6 +14,7 @@ function isIosSafariTab(): boolean {
 
 /** Tells iPhone and iPad users in Safari how to add the app to their home screen. */
 export default function InstallHint() {
+  const t = useT();
   const [hidden, setHidden] = useState(() => {
     try {
       return localStorage.getItem(KEY) === '1' || !isIosSafariTab();
@@ -33,12 +35,12 @@ export default function InstallHint() {
     <div className="banner" style={{ background: 'var(--surface-2)' }}>
       <div className="spread" style={{ alignItems: 'flex-start' }}>
         <div>
-          <strong>Install on your iPhone</strong>
+          <strong>{t('Install on your iPhone')}</strong>
           <div className="small" style={{ marginTop: 2 }}>
-            Tap the Share button <span aria-hidden>⎋</span> in Safari, then <strong>Add to Home Screen</strong>. It opens full screen and works offline.
+            {t('Tap the Share button in Safari, then Add to Home Screen. It opens full screen and works offline.')}
           </div>
         </div>
-        <button className="btn ghost sm" onClick={dismiss} aria-label="Dismiss">✕</button>
+        <button className="btn ghost sm" onClick={dismiss} aria-label={t('Dismiss')}>✕</button>
       </div>
     </div>
   );

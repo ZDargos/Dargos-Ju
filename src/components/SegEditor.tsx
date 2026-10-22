@@ -1,12 +1,13 @@
 import { Fragment } from 'react';
+import { t } from '../i18n';
 
 /** Tap between characters to split or join words. Tokens joined must equal the text without spaces. */
 export default function SegEditor({ tokens, onChange }: { tokens: string[]; onChange: (tokens: string[]) => void }) {
   const chars = Array.from(tokens.join(''));
   const cuts = new Set<number>();
   let pos = 0;
-  for (const t of tokens.slice(0, -1)) {
-    pos += Array.from(t).length;
+  for (const tok of tokens.slice(0, -1)) {
+    pos += Array.from(tok).length;
     cuts.add(pos);
   }
   const toggle = (i: number) => {
@@ -26,7 +27,7 @@ export default function SegEditor({ tokens, onChange }: { tokens: string[]; onCh
     onChange(out);
   };
   return (
-    <div className="seg-editor" aria-label="Word splits">
+    <div className="seg-editor" aria-label={t('Word splits')}>
       {chars.map((c, i) => (
         <Fragment key={i}>
           {i > 0 && <button type="button" className={`seg-cut${cuts.has(i) ? ' on' : ''}`} aria-label={`${cuts.has(i) ? 'Join' : 'Split'} before ${c}`} onClick={() => toggle(i)} />}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { SUPABASE_URL } from '../config';
+import { t } from '../i18n';
 import { clearUser, loadUser } from './store';
 import { pullRemote, pushPending } from './sync';
 import { loadRemoteContent } from './content';
@@ -79,12 +80,12 @@ export function useAuth(): AuthState {
 }
 
 export function friendlyAuthError(message: string): string {
-  if (/BLOCKED/i.test(message)) return 'This email has been blocked.';
-  if (/INVITE_ONLY|Database error saving new user/i.test(message)) return "This email hasn't been invited yet. Ask the admin to add it.";
-  if (/banned/i.test(message)) return 'This account has been blocked.';
-  if (/Invalid login credentials/i.test(message)) return 'Wrong email or password.';
-  if (/Email not confirmed/i.test(message)) return 'Please confirm your email first, using the link we sent you.';
-  if (/Password should be/i.test(message)) return 'Password must be at least 6 characters.';
+  if (/BLOCKED/i.test(message)) return t('This email has been blocked.');
+  if (/INVITE_ONLY|Database error saving new user/i.test(message)) return t("This email hasn't been invited yet. Ask the admin to add it.");
+  if (/banned/i.test(message)) return t('This account has been blocked.');
+  if (/Invalid login credentials/i.test(message)) return t('Wrong email or password.');
+  if (/Email not confirmed/i.test(message)) return t('Please confirm your email first, using the link we sent you.');
+  if (/Password should be/i.test(message)) return t('Password must be at least 6 characters.');
   return message;
 }
 

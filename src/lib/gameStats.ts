@@ -6,7 +6,10 @@ import { setState } from './store';
 import { scheduleSync } from './sync';
 import { supabase } from './supabase';
 import { currentUserId } from './social';
-import type { GameRound } from '../types';
+import { decideWinner, type Match } from './match';
+import { getContent } from './content';
+import { t } from '../i18n';
+import type { GameRound, LearnLang } from '../types';
 
 const uuid = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -16,7 +19,7 @@ const uuid = () =>
         return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
       });
 
-export function recordRound(game: string, mode: 'solo' | 'vs', correct: boolean, ms: number, matchId?: string) {
+export function recordRound(game: string, mode: 'solo' | 'vs', correct: boolean, ms: number, matchId: string | undefined, lang: LearnLang) {
   const round: GameRound = {
     id: uuid(),
     game,
@@ -25,6 +28,7 @@ export function recordRound(game: string, mode: 'solo' | 'vs', correct: boolean,
     ms: Math.max(0, Math.round(ms)),
     matchId: matchId ?? null,
     at: new Date().toISOString(),
+    lang,
   };
   setState((s) => ({ rounds: [...s.rounds, round], unsyncedRounds: { ...s.unsyncedRounds, [round.id]: true } }));
   scheduleSync();
@@ -69,6 +73,8 @@ export interface MatchRecord {
   outcome: 'win' | 'loss' | 'tie';
   rounds: number;
   at: string;
+  /** The language I answered in. */
+  myLang: LearnLang;
 }
 
 /** Your finished vs matches, newest first. */
@@ -77,7 +83,7 @@ export async function fetchMatchHistory(): Promise<MatchRecord[]> {
   if (!me) return [];
   const { data, error } = await supabase
     .from('matches')
-    .select('id, game, player_a, player_b, score_a, score_b, time_a, time_b, sentence_ids, finished_at')
+    .select('*')
     .eq('status', 'finished')
     .order('finished_at', { ascending: false })
     .limit(500);
@@ -96,13 +102,13 @@ export async function fetchMatchHistory(): Promise<MatchRecord[]> {
     const myMs = (a ? m.time_a : m.time_b) ?? 0;
     const theirMs = (a ? m.time_b : m.time_a) ?? 0;
     const opponentId = (a ? m.player_b : m.player_a) as string;
-    const outcome: MatchRecord['outcome'] =
-      myScore > theirScore || (myScore === theirScore && myMs < theirMs) ? 'win' : myScore === theirScore && myMs === theirMs ? 'tie' : 'loss';
+    const winner = decideWinner(m as Match, getContent());
+    const outcome: MatchRecord['outcome'] = winner === 'tie' ? 'tie' : (winner === 'a') === a ? 'win' : 'loss';
     return {
       id: m.id,
       game: m.game,
       opponentId,
-      opponent: names.get(opponentId) ?? 'Player',
+      opponent: names.get(opponentId) ?? t('Player'),
       myScore,
       theirScore,
       myMs,
@@ -110,6 +116,7 @@ export async function fetchMatchHistory(): Promise<MatchRecord[]> {
       outcome,
       rounds: m.sentence_ids?.length ?? 8,
       at: m.finished_at,
+      myLang: ((a ? m.lang_a : m.lang_b) ?? 'zh') as LearnLang,
     };
   });
 }
@@ -158,5 +165,13 @@ export function byOpponent(matches: MatchRecord[]): OpponentRecord[] {
 }
 
 export const seconds = (ms: number | null) =>
-  ms === null ? '–' : ms < 60_000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
+  ms === null
+    ? '–'
+    : ms < 60_000
+      ? t('{s}s', { s: (ms / 1000).toFixed(1) })
+      : t('{m}m {s}s', { m: Math.floor(ms / 60000), s: Math.round((ms % 60000) / 1000) });
 export const pct = (x: number | null) => (x === null ? '–' : `${Math.round(x * 100)}%`);
+
+/** Rounds and matches of one learning mode (older rounds without a mode are Chinese-learning). */
+export const roundsFor = (rounds: GameRound[], lang: LearnLang) => rounds.filter((r) => (r.lang ?? 'zh') === lang);
+export const matchesFor = (matches: MatchRecord[], lang: LearnLang) => matches.filter((m) => m.myLang === lang);

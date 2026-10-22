@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { useT } from '../i18n';
 
 const scriptOf = (html: string) => /assets\/index-[\w-]+\.js/.exec(html)?.[0] ?? null;
 
@@ -8,6 +9,7 @@ const scriptOf = (html: string) => /assets\/index-[\w-]+\.js/.exec(html)?.[0] ??
  * installed iPhone app is resumed from the background) and offers a one-tap reload.
  */
 export default function UpdatePrompt() {
+  const t = useT();
   const [available, setAvailable] = useState(false);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export default function UpdatePrompt() {
   return (
     <div className="banner" style={{ position: 'fixed', left: 12, right: 12, top: 'calc(env(safe-area-inset-top) + 12px)', zIndex: 25, maxWidth: 640, margin: '0 auto', boxShadow: 'var(--shadow)' }}>
       <div className="spread">
-        <span>A new version of Dargos Ju is ready.</span>
-        <button className="btn primary sm" onClick={() => location.reload()}>Update</button>
+        <span>{t('A new version of Dargos Ju is ready.')}</span>
+        <button className="btn primary sm" onClick={() => location.reload()}>{t('Update')}</button>
       </div>
     </div>
   );

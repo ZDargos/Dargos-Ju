@@ -20,21 +20,24 @@ import {
 import { supabase } from '../lib/supabase';
 import NamePrompt from '../components/NamePrompt';
 import { IconBack } from '../components/Icons';
+import { useT } from '../i18n';
+import { msg } from '../i18n/msg';
 
 const PERIODS: [Period, string][] = [
-  ['day', 'Today'],
-  ['week', 'This week'],
-  ['all', 'All time'],
-];
+  ['day', msg('Today')],
+  ['week', msg('This week')],
+  ['all', msg('All time')],
+]; // labels are translated where shown
 
 export default function Friends() {
+  const t = useT();
   const { id } = useParams();
   const { profile, reload } = useMyProfile();
-  if (profile === null) return <div className="center-screen">Loading…</div>;
+  if (profile === null) return <div className="center-screen">{t('Loading…')}</div>;
   if (profile === false)
     return (
       <>
-        <header className="topbar"><h1>Friends</h1></header>
+        <header className="topbar"><h1>{t('Friends')}</h1></header>
         <NamePrompt onSaved={reload} />
       </>
     );
@@ -42,6 +45,7 @@ export default function Friends() {
 }
 
 function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => void }) {
+  const t = useT();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>('week');
   const [board, setBoard] = useState<LeaderRow[] | null>(null);
@@ -79,8 +83,8 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
   }, [loadFriends, loadBoard]);
 
   useEffect(() => {
-    const t = setTimeout(() => searchProfiles(query).then(setResults).catch(() => setResults([])), 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => searchProfiles(query).then(setResults).catch(() => setResults([])), 250);
+    return () => clearTimeout(timer);
   }, [query]);
 
   const act = async (fn: () => Promise<unknown>, done: string) => {
@@ -104,7 +108,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
   return (
     <>
       <header className="topbar">
-        <h1>Friends</h1>
+        <h1>{t('Friends')}</h1>
         <button className="btn ghost sm" onClick={() => setRenaming((r) => !r)}>{myName}</button>
       </header>
       {renaming && <NamePrompt initial={myName} onSaved={() => { setRenaming(false); onRenamed(); loadBoard(); }} />}
@@ -113,15 +117,15 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
 
       {incoming.length > 0 && (
         <>
-          <div className="section-title">Friend requests</div>
+          <div className="section-title">{t('Friend requests')}</div>
           <div className="card">
             <ul className="list">
               {incoming.map((f) => (
                 <li key={f.user_id} className="spread">
                   <strong>{f.display_name}</strong>
                   <div className="row">
-                    <button className="btn ghost sm" onClick={() => act(() => removeFriend(f.user_id), 'Request declined.')}>Decline</button>
-                    <button className="btn primary sm" onClick={() => act(() => acceptFriend(f.user_id), `You and ${f.display_name} are now friends.`)}>Accept</button>
+                    <button className="btn ghost sm" onClick={() => act(() => removeFriend(f.user_id), t('Request declined.'))}>{t('Decline')}</button>
+                    <button className="btn primary sm" onClick={() => act(() => acceptFriend(f.user_id), t('You and {name} are now friends.', { name: f.display_name }))}>{t('Accept')}</button>
                   </div>
                 </li>
               ))}
@@ -130,15 +134,15 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
         </>
       )}
 
-      <div className="section-title">Leaderboard · sentences answered</div>
+      <div className="section-title">{t('Leaderboard · sentences answered')}</div>
       <div className="card">
         <div className="segmented" style={{ marginBottom: 12 }}>
           {PERIODS.map(([p, label]) => (
-            <button key={p} className={period === p ? 'on' : ''} onClick={() => setPeriod(p)}>{label}</button>
+            <button key={p} className={period === p ? 'on' : ''} aria-pressed={period === p} onClick={() => setPeriod(p)}>{t(label)}</button>
           ))}
         </div>
         {!board ? (
-          <div className="small muted">Loading…</div>
+          <div className="small muted">{t('Loading…')}</div>
         ) : (
           <ol className="list" style={{ paddingLeft: 0 }}>
             {board.map((r, i) => (
@@ -150,7 +154,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
                 <div className="spread">
                   <div className="row" style={{ minWidth: 0 }}>
                     <span style={{ width: 22, fontWeight: 700, color: i === 0 ? 'var(--hard)' : 'var(--muted)' }}>{i + 1}</span>
-                    <span style={{ fontWeight: r.is_me ? 700 : 500 }}>{r.display_name}{r.is_me && ' (you)'}</span>
+                    <span style={{ fontWeight: r.is_me ? 700 : 500 }}>{r.display_name}{r.is_me && ` ${t('(you)')}`}</span>
                   </div>
                   <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{r.answers}</strong>
                 </div>
@@ -161,50 +165,50 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
             ))}
           </ol>
         )}
-        {board && board.length === 1 && <p className="small muted" style={{ marginBottom: 0 }}>Add friends below to compete with them.</p>}
+        {board && board.length === 1 && <p className="small muted" style={{ marginBottom: 0 }}>{t('Add friends below to compete with them.')}</p>}
       </div>
 
-      <div className="section-title">Friends · {accepted.length}</div>
+      <div className="section-title">{t('Friends')} · {accepted.length}</div>
       <div className="card">
-        {accepted.length === 0 && <p className="small muted" style={{ marginTop: 0 }}>No friends yet.</p>}
+        {accepted.length === 0 && <p className="small muted" style={{ marginTop: 0 }}>{t('No friends yet.')}</p>}
         <ul className="list">
           {accepted.map((f) => (
             <li key={f.user_id} className="spread">
               <Link to={`/friends/${f.user_id}`} style={{ fontWeight: 600, textDecoration: 'none' }}>{f.display_name}</Link>
-              <Link to={`/friends/${f.user_id}`} className="btn sm">Compare</Link>
+              <Link to={`/friends/${f.user_id}`} className="btn sm">{t('Compare')}</Link>
             </li>
           ))}
           {outgoing.map((f) => (
             <li key={f.user_id} className="spread">
               <span>{f.display_name} <span className="small muted">· request sent</span></span>
-              <button className="btn ghost sm" onClick={() => act(() => removeFriend(f.user_id), 'Request cancelled.')}>Cancel</button>
+              <button className="btn ghost sm" onClick={() => act(() => removeFriend(f.user_id), t('Request cancelled.'))}>{t('Cancel')}</button>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="section-title">Find players</div>
+      <div className="section-title">{t('Find players')}</div>
       <div className="card">
-        <input id="friend-search" className="input" aria-label="Search players" placeholder="Search by display name" value={query} onChange={(e) => setQuery(e.target.value)} />
-        {results.length === 0 && <p className="small muted" style={{ marginBottom: 0 }}>{query.trim() ? 'No players match that name.' : 'No other players yet.'}</p>}
+        <input id="friend-search" className="input" aria-label={t('Search players')} placeholder={t('Search by display name')} value={query} onChange={(e) => setQuery(e.target.value)} />
+        {results.length === 0 && <p className="small muted" style={{ marginBottom: 0 }}>{query.trim() ? t('No players match that name.') : t('No other players yet.')}</p>}
         {results.length > 0 && (
           <ul className="list" style={{ maxHeight: 360, overflowY: 'auto' }}>
             {results.map((p) => (
               <li key={p.user_id} className="spread">
                 <span>{p.display_name}</span>
                 {known.has(p.user_id) ? (
-                  <span className="small muted">{friends.find((f) => f.user_id === p.user_id)?.status === 'accepted' ? 'Friends' : 'Pending'}</span>
+                  <span className="small muted">{friends.find((f) => f.user_id === p.user_id)?.status === 'accepted' ? t('Friends') : t('Pending')}</span>
                 ) : (
                   <button
                     className="btn primary sm"
                     onClick={() =>
                       act(async () => {
                         const r = await sendFriendRequest(p.user_id);
-                        setMessage(r === 'accepted' ? `You and ${p.display_name} are now friends.` : `Request sent to ${p.display_name}.`);
+                        setMessage(r === 'accepted' ? t('You and {name} are now friends.', { name: p.display_name }) : t('Request sent to {name}.', { name: p.display_name }));
                       }, '')
                     }
                   >
-                    Add
+                    {t('Add')}
                   </button>
                 )}
               </li>
@@ -217,6 +221,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
 }
 
 function Compare({ friendId }: { friendId: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const [me, setMe] = useState<Summary | null>(null);
   const [them, setThem] = useState<Summary | null>(null);
@@ -234,29 +239,29 @@ function Compare({ friendId }: { friendId: string }) {
         ]);
         setMe(a);
         setThem(b);
-        setName(p.data?.display_name ?? 'Friend');
+        setName(p.data?.display_name ?? t('Friend'));
       } catch (e) {
-        setError((e as Error).message === 'Not friends' ? "You can only see the progress of friends who accepted your request." : (e as Error).message);
+        setError((e as Error).message === 'Not friends' ? t('You can only see the progress of friends who accepted your request.') : (e as Error).message);
       }
     })();
   }, [friendId]);
 
   const rows: [string, (s: Summary) => number | string][] = [
-    ['Answered today', (s) => s.answers_day],
-    ['Answered this week', (s) => s.answers_week],
-    ['Answered all time', (s) => s.answers_total],
-    ['Day streak', (s) => streakFromDays(s.active_days)],
-    ['Cards started', (s) => s.cards_started],
-    ['Cards known well', (s) => s.cards_known],
-    ['Recall, last 30 days', (s) => (s.right_rate_30d === null ? '–' : `${Math.round(s.right_rate_30d * 100)}%`)],
+    [t('Answered today'), (s) => s.answers_day],
+    [t('Answered this week'), (s) => s.answers_week],
+    [t('Answered all time'), (s) => s.answers_total],
+    [t('Day streak'), (s) => streakFromDays(s.active_days)],
+    [t('Cards started'), (s) => s.cards_started],
+    [t('Cards known well'), (s) => s.cards_known],
+    [t('Recall, last 30 days'), (s) => (s.right_rate_30d === null ? '–' : `${Math.round(s.right_rate_30d * 100)}%`)],
   ];
 
   return (
     <>
       <header className="topbar">
         <div className="row">
-          <button className="icon-btn" onClick={() => navigate('/friends')} aria-label="Back"><IconBack /></button>
-          <h1>You vs {name || '…'}</h1>
+          <button className="icon-btn" onClick={() => navigate('/friends')} aria-label={t('Back')}><IconBack /></button>
+          <h1>{t('You vs {name}', { name: name || '…' })}</h1>
         </div>
       </header>
       {error && <div className="card empty">{error}</div>}
@@ -266,7 +271,7 @@ function Compare({ friendId }: { friendId: string }) {
             <thead>
               <tr>
                 <th></th>
-                <th style={{ textAlign: 'right' }}>You</th>
+                <th style={{ textAlign: 'right' }}>{t('You')}</th>
                 <th style={{ textAlign: 'right' }}>{name}</th>
               </tr>
             </thead>
@@ -286,22 +291,22 @@ function Compare({ friendId }: { friendId: string }) {
             </tbody>
           </table>
           <p className="small muted" style={{ marginBottom: 0 }}>
-            {name} last studied {them.last_review_at ? new Date(them.last_review_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'never'}.
+            {t('{name} last studied {when}.', { name, when: them.last_review_at ? new Date(them.last_review_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : t('never') })}
           </p>
         </div>
       )}
       {me && them && (
         <div className="stack" style={{ marginTop: 12 }}>
-          <Link className="btn block" to={`/games?challenge=${friendId}`}>Challenge {name} to a game</Link>
+          <Link className="btn block" to={`/games?challenge=${friendId}`}>{t('Challenge {name} to a game', { name })}</Link>
           <button
             className="btn ghost block"
             onClick={async () => {
-              if (!confirm(`Remove ${name} from your friends?`)) return;
+              if (!confirm(t('Remove {name} from your friends?', { name }))) return;
               await removeFriend(friendId);
               navigate('/friends');
             }}
           >
-            Remove friend
+            {t('Remove friend')}
           </button>
         </div>
       )}

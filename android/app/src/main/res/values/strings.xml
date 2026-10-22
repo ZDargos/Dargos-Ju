@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dargos Ju</string>
+    <string name="title_activity_main">Dargos Ju</string>
+    <string name="package_name">com.dargos.ju</string>
+    <string name="custom_url_scheme">com.dargos.ju</string>
+</resources>

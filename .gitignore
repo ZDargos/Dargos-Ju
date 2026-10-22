@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.vite/
+# generated at build time
+src/generated/
+public/dict/
+# Android build outputs (the android/ project itself is committed)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/app/src/main/assets/public/
+android/capacitor-cordova-android-plugins/build/
+.claude/
+*.tsbuildinfo

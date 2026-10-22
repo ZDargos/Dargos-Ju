@@ -61,7 +61,9 @@ export function useAuth(): AuthState {
 }
 
 export function friendlyAuthError(message: string): string {
+  if (/BLOCKED/i.test(message)) return 'This email has been blocked.';
   if (/INVITE_ONLY|Database error saving new user/i.test(message)) return "This email hasn't been invited yet. Ask the admin to add it.";
+  if (/banned/i.test(message)) return 'This account has been blocked.';
   if (/Invalid login credentials/i.test(message)) return 'Wrong email or password.';
   if (/Email not confirmed/i.test(message)) return 'Please confirm your email first, using the link we sent you.';
   if (/Password should be/i.test(message)) return 'Password must be at least 6 characters.';

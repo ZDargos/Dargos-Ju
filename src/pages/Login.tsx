@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { friendlyAuthError } from '../lib/auth';
+import { fetchSignupMode, type SignupMode } from './AdminUsers';
 
 export default function Login() {
   const [mode, setMode] = useState<'in' | 'up'>('in');
@@ -9,6 +10,10 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [signupMode, setSignupMode] = useState<SignupMode>('invite');
+  useEffect(() => {
+    fetchSignupMode().then(setSignupMode).catch(() => undefined);
+  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -52,7 +57,7 @@ export default function Login() {
             <label htmlFor="pw">Password</label>
             <input id="pw" className="input" type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          {mode === 'up' && <p className="small muted" style={{ marginTop: 0 }}>Sign-ups are invite-only. Use the email address you were invited with.</p>}
+          {mode === 'up' && signupMode === 'invite' && <p className="small muted" style={{ marginTop: 0 }}>Sign-ups are invite-only. Use the email address you were invited with.</p>}
           <button className="btn primary block" disabled={busy}>{busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : 'Create account'}</button>
           {error && <div className="error">{error}</div>}
           {notice && <div className="banner" style={{ marginTop: 12, marginBottom: 0 }}>{notice}</div>}

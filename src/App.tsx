@@ -12,6 +12,7 @@ import GameScreen from './pages/GameScreen';
 import Stats from './pages/Stats';
 import SettingsPage from './pages/Settings';
 import Admin from './pages/Admin';
+import { NoVoiceBanner } from './components/VoiceCheck';
 
 function useTheme() {
   const { theme } = useSettings();
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <NoVoiceBanner />
       {!immersive && (
         <nav className="tabbar">
           <div className="tabbar-inner">

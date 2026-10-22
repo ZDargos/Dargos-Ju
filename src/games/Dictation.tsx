@@ -24,7 +24,7 @@ export default function Dictation({ sentence, pool, content, settings, hints, on
 
   const play = (rate = settings.speechRate) => {
     setSpeechError('');
-    speak(sentence.zh, rate).catch((e) => setSpeechError(`Couldn't play audio: ${(e as Error).message}`));
+    speak(sentence.zh, rate).catch((e) => setSpeechError((e as Error).message));
   };
   useEffect(() => {
     const t = setTimeout(() => play(), 300);

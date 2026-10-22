@@ -7,6 +7,7 @@ import { parseSentenceCsv, sentenceId, type SentencePair } from '../lib/csv';
 import { isHanWord, wordsOf } from '../lib/segmenter';
 import SegEditor from '../components/SegEditor';
 import { IconBack } from '../components/Icons';
+import { SignupModeSwitch, UsersPanel } from './AdminUsers';
 import type { LexEntry, Sentence } from '../types';
 
 function useSegmenter() {
@@ -37,6 +38,8 @@ export default function Admin() {
           <h1>Admin</h1>
         </div>
       </header>
+      <SignupModeSwitch />
+      <UsersPanel />
       <Invites />
       <AddSentences />
       <FixSplits />

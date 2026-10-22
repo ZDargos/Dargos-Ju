@@ -125,3 +125,25 @@ revoke all on function private.is_admin() from public, anon;
 grant execute on function private.is_admin() to authenticated;
 revoke all on function private.check_invite() from public, anon, authenticated;
 revoke all on function private.bootstrap_admin() from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------------------------
+-- Sign-up mode switch, email blocklist and admin user management (migration admin_user_management).
+
+create table public.app_config (key text primary key, value jsonb not null, updated_at timestamptz not null default now());
+insert into public.app_config (key, value) values ('signup_mode', '"invite"');   -- or '"open"'
+alter table public.app_config enable row level security;
+create policy "read signup mode" on public.app_config for select to anon, authenticated using (key = 'signup_mode');
+create policy "admins read config" on public.app_config for select to authenticated using ((select private.is_admin()));
+create policy "admins update config" on public.app_config for update to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+create table public.blocked_emails (email text primary key, blocked_at timestamptz not null default now(), blocked_by uuid references auth.users on delete set null);
+alter table public.blocked_emails enable row level security;
+create policy "admins manage blocklist" on public.blocked_emails for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+-- check_invite() now: blocked emails are always refused; the first account is allowed (becomes admin);
+-- signup_mode 'open' allows anyone; otherwise the email must be on the invite list.
+-- Admin RPCs (security definer, each checks private.is_admin()): admin_list_users(),
+-- admin_erase_user_data(target), admin_set_blocked(target, block), admin_delete_user(target, also_block).
+-- Full definitions are in the Supabase migration history.

@@ -4,7 +4,7 @@ import { getContent, useContent } from '../lib/content';
 import { getState, useStore } from '../lib/store';
 import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_WINDOW_MS, type SessionItem } from '../lib/srs';
 import { wordsOf } from '../lib/segmenter';
-import { speak, ttsAvailable } from '../lib/tts';
+import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { IconClose, IconSpeaker } from '../components/Icons';
 import type { Grade } from '../types';
 
@@ -143,7 +143,7 @@ export default function Review() {
                 style={{ marginTop: 10 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  speak(sentence.zh, settings.speechRate).catch(() => undefined);
+                  speak(sentence.zh, settings.speechRate).catch(reportSpeechError);
                 }}
               >
                 <IconSpeaker /> Listen

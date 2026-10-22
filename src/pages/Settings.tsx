@@ -6,6 +6,7 @@ import { pullRemote, pushPending } from '../lib/sync';
 import { speak, ttsAvailable } from '../lib/tts';
 import { GAMES } from '../games/registry';
 import { IconShield } from '../components/Icons';
+import { VoiceStatusPanel } from '../components/VoiceCheck';
 import type { Settings } from '../types';
 
 function NumberField({ label, help, value, min, max, step = 1, onChange }: { label: string; help?: string; value: number; min: number; max: number; step?: number; onChange: (n: number) => void }) {
@@ -98,6 +99,9 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
       <div className="section-title">Audio & display</div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
         <div className="toggle-row">
+          <VoiceStatusPanel />
+        </div>
+        <div className="toggle-row">
           <div>
             <div style={{ fontWeight: 600 }}>Speech speed</div>
             <div className="small muted">{settings.speechRate.toFixed(2)}×</div>
@@ -105,7 +109,7 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
           <div className="row">
             <input type="range" min={0.5} max={1.3} step={0.05} value={settings.speechRate} onChange={(e) => updateSettings({ speechRate: Number(e.target.value) })} />
             {ttsAvailable() && (
-              <button className="btn sm" onClick={() => speak('我们一起学习中文吧！', settings.speechRate).catch((e) => alert(e.message))}>Test</button>
+              <button className="btn sm" onClick={() => speak('我们一起学习中文吧！', settings.speechRate).catch((e) => alert((e as Error).message))}>Test</button>
             )}
           </div>
         </div>

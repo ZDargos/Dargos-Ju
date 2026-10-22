@@ -3,7 +3,7 @@ import type { GameProps } from './registry';
 import { pick, tilesOf } from './common';
 import { isHanWord } from '../lib/segmenter';
 import { shuffle } from '../lib/srs';
-import { speak, ttsAvailable } from '../lib/tts';
+import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { IconSpeaker } from '../components/Icons';
 import TileBuilder from './TileBuilder';
 import Feedback from './Feedback';
@@ -81,7 +81,7 @@ function Free({ sentence, pool, content, settings, hints, onResult, onNext }: Ga
             <div className="small muted">Your sentence</div>
             <div className="zh" style={{ fontSize: 22 }}>{built}</div>
             {ttsAvailable() && (
-              <button className="btn ghost sm" style={{ paddingLeft: 0 }} onClick={() => speak(built, settings.speechRate).catch(() => undefined)}>
+              <button className="btn ghost sm" style={{ paddingLeft: 0 }} onClick={() => speak(built, settings.speechRate).catch(reportSpeechError)}>
                 <IconSpeaker /> Hear it
               </button>
             )}

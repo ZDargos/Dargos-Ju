@@ -14,7 +14,11 @@ export default function GameScreen() {
   const content = useContent();
   const settings = useSettings();
   const navigate = useNavigate();
-  const pool = useMemo(() => (game ? poolFor(game, content, settings) : []), [game, content, settings]);
+  // Only the settings that change which sentences are eligible; other settings changes (like the
+  // pinyin switch) must not rebuild the pool.
+  const levelsKey = settings.gameLevels.join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const pool = useMemo(() => (game ? poolFor(game, content, settings) : []), [game, content, levelsKey, settings.gameMaxTiles]);
   const recent = useRef<string[]>([]);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState({ right: 0, total: 0, streak: 0, best: 0 });

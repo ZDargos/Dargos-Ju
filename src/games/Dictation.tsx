@@ -19,10 +19,10 @@ export default function Dictation({ sentence, pool, content, settings, hints, on
   const [speechError, setSpeechError] = useState('');
   const pinyin = useShowPinyin();
   const target = useMemo(() => tilesOf(sentence), [sentence]);
-  const extras = useMemo(() => {
-    const own = new Set(target);
+  const [extras] = useState(() => {
+    const own = new Set(tilesOf(sentence));
     return shuffle([...new Set(pool.flatMap((s) => s.tokens.filter(isHanWord)))].filter((w) => !own.has(w))).slice(0, 3);
-  }, [pool, target]);
+  });
 
   const play = (rate = settings.speechRate) => {
     setSpeechError('');

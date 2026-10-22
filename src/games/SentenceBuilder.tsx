@@ -37,7 +37,7 @@ export default function SentenceBuilder(props: GameProps) {
 
 function Translate({ sentence, pool, content, settings, hints, onResult, onNext }: GameProps) {
   const target = useMemo(() => tilesOf(sentence), [sentence]);
-  const extras = useMemo(() => distractorsFor(sentence, pool, Math.min(5, Math.max(3, Math.round(target.length / 2)))), [sentence, pool, target]);
+  const [extras] = useState(() => distractorsFor(sentence, pool, Math.min(5, Math.max(3, Math.round(tilesOf(sentence).length / 2)))));
   const [result, setResult] = useState<boolean | null>(null);
   const pinyin = useShowPinyin();
   return (
@@ -62,16 +62,17 @@ function Translate({ sentence, pool, content, settings, hints, onResult, onNext 
 
 function Free({ sentence, pool, content, settings, onResult, onNext }: GameProps) {
   // A word bank drawn from this sentence and two others; build anything that makes sense.
-  const sources = useMemo(() => [sentence, ...shuffle(pool.filter((s) => s.id !== sentence.id)).slice(0, 2)], [sentence, pool]);
-  const bank = useMemo(() => {
+  // Random picks are made once per round so re-renders never reshuffle them.
+  const [sources] = useState(() => [sentence, ...shuffle(pool.filter((s) => s.id !== sentence.id)).slice(0, 2)]);
+  const [bank] = useState(() => {
     const words = [...new Set(sources.flatMap((s) => s.tokens.filter(isHanWord)))];
     return shuffle(words).slice(0, 12);
-  }, [sources]);
+  });
   const [built, setBuilt] = useState<string | null>(null);
   const pinyin = useShowPinyin();
   const [graded, setGraded] = useState(false);
   const examples = sources.filter((s) => s.tokens.some((t) => bank.includes(t)));
-  const prompt = useMemo(() => pick(['Make a question.', 'Make a statement.', 'Make a negative sentence.', 'Use as many words as you can.', 'Talk about yourself.']), []);
+  const [prompt] = useState(() => pick(['Make a question.', 'Make a statement.', 'Make a negative sentence.', 'Use as many words as you can.', 'Talk about yourself.']));
 
   return (
     <>

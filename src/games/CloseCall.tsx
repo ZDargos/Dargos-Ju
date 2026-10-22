@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { GameProps } from './registry';
 import { joinTokens, mutate, normalize } from './common';
 import { isHanWord } from '../lib/segmenter';
@@ -8,8 +8,10 @@ import { PinyinText, useShowPinyin } from '../components/Pinyin';
 
 export default function CloseCall({ sentence, pool, content, settings, hints, onResult, onNext }: GameProps) {
   const pinyin = useShowPinyin();
-  const vocab = useMemo(() => [...new Set(pool.flatMap((s) => s.tokens.filter(isHanWord)))], [pool]);
-  const options = useMemo(() => {
+  // Generated once per round (the screen remounts this for each sentence). Using state rather
+  // than useMemo keeps the options from reshuffling when anything else re-renders the screen.
+  const [options] = useState(() => {
+    const vocab = [...new Set(pool.flatMap((s) => s.tokens.filter(isHanWord)))];
     const seen = new Set([normalize(sentence.zh)]);
     const wrong: { text: string; tokens: string[] }[] = [];
     for (let tries = 0; tries < 30 && wrong.length < 3; tries++) {
@@ -21,7 +23,7 @@ export default function CloseCall({ sentence, pool, content, settings, hints, on
       wrong.push({ text, tokens: m.tokens });
     }
     return shuffle([{ text: sentence.zh, tokens: sentence.tokens, correct: true }, ...wrong.map((w) => ({ ...w, correct: false }))]);
-  }, [sentence, vocab]);
+  });
   const [picked, setPicked] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
 

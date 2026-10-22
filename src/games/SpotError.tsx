@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { GameProps } from './registry';
 import { mutate } from './common';
 import { isHanWord, isPunctuation } from '../lib/segmenter';
@@ -9,8 +9,8 @@ import { useContent } from '../lib/content';
 type Choice = { type: 'word' | 'gap'; index: number };
 
 export default function SpotError({ sentence, pool, settings, hints, onResult, onNext }: GameProps) {
-  const vocab = useMemo(() => [...new Set(pool.flatMap((s) => s.tokens.filter(isHanWord)))], [pool]);
-  const m = useMemo(() => mutate(sentence.tokens, vocab, ['replace', 'extra', 'missing']), [sentence, vocab]);
+  // Made once per round so re-renders (like the pinyin switch) never change the puzzle.
+  const [m] = useState(() => mutate(sentence.tokens, [...new Set(pool.flatMap((s) => s.tokens.filter(isHanWord)))], ['replace', 'extra', 'missing']));
   const [choice, setChoice] = useState<Choice | null>(null);
   const [showEn, setShowEn] = useState(false);
   const pinyin = useShowPinyin();

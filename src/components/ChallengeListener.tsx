@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { acceptMatch, cancelMatch, watchMyMatches, type Match } from '../lib/match';
 import { supabase } from '../lib/supabase';
 import { gameById } from '../games/registry';
+
+const CHALLENGE_TTL_MS = 3 * 60 * 1000;
 
 interface Invite {
   match: Match;
@@ -13,10 +15,11 @@ interface Invite {
 export default function ChallengeListener({ userId }: { userId: string }) {
   const [invites, setInvites] = useState<Invite[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const add = async (m: Match) => {
-      const fresh = Date.now() - Date.parse(m.created_at) < 2 * 60 * 1000;
+      const fresh = Date.now() - Date.parse(m.created_at) < CHALLENGE_TTL_MS;
       if (m.player_b !== userId || m.is_public) return;
       if (m.status !== 'waiting' || !fresh) {
         setInvites((list) => list.filter((i) => i.match.id !== m.id));
@@ -31,12 +34,13 @@ export default function ChallengeListener({ userId }: { userId: string }) {
       .select('*')
       .eq('player_b', userId)
       .eq('status', 'waiting')
-      .gte('created_at', new Date(Date.now() - 2 * 60 * 1000).toISOString())
+      .gte('created_at', new Date(Date.now() - CHALLENGE_TTL_MS).toISOString())
       .then(({ data }) => (data ?? []).forEach((m) => add(m as Match)));
     return watchMyMatches(userId, add);
   }, [userId]);
 
-  if (!invites.length) return null;
+  // The challenge and match screens already show it.
+  if (!invites.length || /^\/(challenge|vs)\//.test(location.pathname)) return null;
   const { match, from } = invites[0];
   const game = gameById(match.game);
   const dismiss = () => setInvites((list) => list.filter((i) => i.match.id !== match.id));

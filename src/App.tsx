@@ -19,6 +19,7 @@ import { IconFriends } from './components/IconsExtra';
 import Friends from './pages/Friends';
 import VsLobby from './pages/VsLobby';
 import VsMatch from './pages/VsMatch';
+import ChallengePage from './pages/ChallengePage';
 
 function useTheme() {
   const { theme } = useSettings();
@@ -47,7 +48,7 @@ export default function App() {
   if (auth.status === 'signed-out') return <Login />;
 
   // Full-screen activities hide the tab bar.
-  const immersive = location.pathname.startsWith('/review') || /^\/(games|vs)\/.+/.test(location.pathname);
+  const immersive = location.pathname.startsWith('/review') || /^\/(games|vs|challenge)\/.+/.test(location.pathname);
 
   return (
     <div className="app">
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="/friends/:id" element={<Friends />} />
           <Route path="/vs/match/:id" element={<VsMatch />} />
           <Route path="/vs/:game" element={<VsLobby />} />
+          <Route path="/challenge/:id" element={<ChallengePage />} />
           <Route path="/settings" element={<SettingsPage isAdmin={auth.isAdmin} email={auth.session?.user.email ?? ''} />} />
           <Route path="/admin" element={auth.isAdmin ? <Admin /> : <Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

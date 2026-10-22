@@ -10,6 +10,10 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator && !Capacitor.isNativeP
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('Offline support unavailable', e));
   });
+  // A tapped notification asks an already-open app to show a page.
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    if (e.data?.type === 'open' && typeof e.data.url === 'string') location.href = e.data.url;
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

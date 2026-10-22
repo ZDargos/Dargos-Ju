@@ -6,9 +6,12 @@ import { cancelMatch, createMatch, findMatch, pickSentences, ROUNDS, watchMyMatc
 import { currentUserId, listFriends, useMyProfile, type Friend } from '../lib/social';
 import { gameById, poolFor } from '../games/registry';
 import NamePrompt from '../components/NamePrompt';
+import { notifyChallenge } from '../lib/push';
 import { IconBack } from '../components/Icons';
 
 const WAIT_LIMIT_MS = 2 * 60 * 1000;
+// Friends get a little longer: they may be opening the app from a notification.
+const CHALLENGE_WAIT_MS = 3 * 60 * 1000;
 
 export default function VsLobby() {
   const { game: gameId = '' } = useParams();
@@ -89,7 +92,7 @@ export default function VsLobby() {
       cancelMatch(match.id);
       setWaiting(null);
       setError(matchmaking ? 'Nobody else is looking for a match right now. Try again, or challenge a friend.' : 'Your friend didn\'t answer in time.');
-    }, WAIT_LIMIT_MS);
+    }, matchmaking ? WAIT_LIMIT_MS : CHALLENGE_WAIT_MS);
     stop.current = () => {
       unwatch();
       clearInterval(retry);
@@ -117,6 +120,7 @@ export default function VsLobby() {
       const ids = sentenceIds();
       if (ids.length < ROUNDS) return setError(`Pick more levels on the Games page: this game needs at least ${ROUNDS} sentences.`);
       const m = await createMatch(game!.id, ids, f.user_id);
+      notifyChallenge(m.id);
       waitFor(m, `Waiting for ${f.display_name} to accept…`, false);
     } catch (e) {
       setError((e as Error).message);

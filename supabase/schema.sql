@@ -158,3 +158,10 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- matches: live head-to-head games. Public matches are joined via find_match(game, older_than);
 --   challenges (player_b set) require an accepted friendship. Results go through submit_match_result.
 --   Players can only see their own matches. matches and friendships are in the supabase_realtime publication.
+
+-- ---------------------------------------------------------------------------------------------
+-- Push notifications (migration push_notifications).
+-- push_subscriptions(endpoint, user_id, p256dh, auth, platform): one row per device; own rows only.
+-- notification_prefs(user_id, enabled, challenges): master switch plus one boolean column per type.
+-- server_config(key, value): VAPID keys; RLS with no policies, readable only by the service role.
+-- Edge Function supabase/functions/notify-challenge sends the challenge notification.

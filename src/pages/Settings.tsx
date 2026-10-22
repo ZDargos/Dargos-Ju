@@ -7,6 +7,7 @@ import { speak, ttsAvailable } from '../lib/tts';
 import { GAMES } from '../games/registry';
 import { IconShield } from '../components/Icons';
 import { VoiceStatusPanel } from '../components/VoiceCheck';
+import NotificationSettings from '../components/NotificationSettings';
 import type { Settings } from '../types';
 
 function NumberField({ label, help, value, min, max, step = 1, onChange }: { label: string; help?: string; value: number; min: number; max: number; step?: number; onChange: (n: number) => void }) {
@@ -123,6 +124,11 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="section-title">Notifications</div>
+      <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
+        <NotificationSettings />
       </div>
 
       <div className="section-title">Account</div>

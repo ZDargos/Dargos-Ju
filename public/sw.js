@@ -91,3 +91,40 @@ self.addEventListener('fetch', (event) => {
     })(),
   );
 });
+
+// ---- Push notifications ----
+
+self.addEventListener('push', (event) => {
+  let msg = { title: 'Dargos Ju', body: '', url: './', tag: undefined };
+  try {
+    msg = { ...msg, ...event.data.json() };
+  } catch {
+    /* plain text or empty push */
+  }
+  event.waitUntil(
+    self.registration.showNotification(msg.title, {
+      body: msg.body,
+      tag: msg.tag,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      data: { url: msg.url },
+    }),
+  );
+});
+
+// Tapping a notification opens the app (or focuses it) on the page the notification points to.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url ?? './', self.registration.scope).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const open = windows.find((w) => w.url.startsWith(self.registration.scope));
+      if (open) {
+        await open.focus();
+        return open.navigate ? open.navigate(target) : open.postMessage({ type: 'open', url: target });
+      }
+      return self.clients.openWindow(target);
+    })(),
+  );
+});

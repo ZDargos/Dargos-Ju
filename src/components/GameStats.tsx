@@ -168,12 +168,12 @@ function GameStatsPanel({ gameId, onClose }: { gameId: string; onClose: () => vo
   );
 }
 
-/** Floating "Stats" button for the bottom-right of a game screen. */
+/** "Stats" button for a game's card on the Games page; opens that game's stats. */
 export default function GameStatsButton({ gameId }: { gameId: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="btn sm stats-fab" onClick={() => setOpen(true)}>
+      <button className="btn ghost sm" onClick={() => setOpen(true)} aria-label="Game stats">
         <IconStats /> Stats
       </button>
       {open && <GameStatsPanel gameId={gameId} onClose={() => setOpen(false)} />}

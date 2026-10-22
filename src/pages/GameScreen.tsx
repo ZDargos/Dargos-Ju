@@ -5,7 +5,6 @@ import { useSettings } from '../lib/store';
 import { gameById, poolFor } from '../games/registry';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
-import GameStatsButton from '../components/GameStats';
 import type { Sentence } from '../types';
 
 export default function GameScreen() {
@@ -69,7 +68,6 @@ export default function GameScreen() {
       ) : (
         <div className="card empty">No sentences fit this game for the selected levels.</div>
       )}
-      <GameStatsButton gameId={game.id} />
     </>
   );
 }

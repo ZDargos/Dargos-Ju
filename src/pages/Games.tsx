@@ -4,7 +4,7 @@ import { updateSettings, useSettings } from '../lib/store';
 import { ROUNDS } from '../lib/match';
 import { GAMES, poolFor } from '../games/registry';
 import LevelPicker from '../components/LevelPicker';
-import { GameStatsOverview } from '../components/GameStats';
+import GameStatsButton, { GameStatsOverview } from '../components/GameStats';
 
 export default function Games() {
   const content = useContent();
@@ -45,6 +45,8 @@ export default function Games() {
                     >
                       {challengeFriend ? 'Challenge' : 'Vs'}
                     </button>
+                    <span className="grow" />
+                    <GameStatsButton gameId={g.id} />
                   </div>
                 )}
               </div>

@@ -134,3 +134,41 @@ export function parseCedict(text: string, maxLen = 6): Map<string, DictEntry> {
   for (const [k, v] of map) out.set(k, { py: v.py, en: v.en });
   return out;
 }
+
+/** One reading of a word with all of its meanings, for the dictionary panel. */
+export interface FullEntry {
+  py: string;
+  defs: string[];
+}
+
+/** Makes CC-CEDICT cross-references readable: "see 上聲|上声[shang3 sheng1]" → "see 上声 (shàng shēng)". */
+export function cleanDefinition(def: string): string {
+  return def
+    .replace(/(\S+?)\|(\S+?)\[([^\]]+)\]/g, (_m, _t, simp, py) => `${simp} (${numberedToMarks(py.toLowerCase())})`)
+    .replace(/(\S+?)\[([^\]]+)\]/g, (_m, word, py) => `${word} (${numberedToMarks(py.toLowerCase())})`)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Every reading and meaning for the given words, most common reading first. */
+export function fullEntries(text: string, words: Set<string>, preferredPy: Record<string, string>): Record<string, FullEntry[]> {
+  const out: Record<string, (FullEntry & { proper: boolean })[]> = {};
+  const line = /^(\S+) (\S+) \[([^\]]*)\] \/(.*)\/\s*$/;
+  for (const raw of text.split(/\r?\n/)) {
+    if (!raw || raw.startsWith('#')) continue;
+    const m = line.exec(raw);
+    if (!m || !words.has(m[2])) continue;
+    const py = numberedToMarks(m[3].toLowerCase());
+    const defs = m[4].split('/').filter((d) => d && !/^CL:/.test(d)).map(cleanDefinition);
+    const list = (out[m[2]] ??= []);
+    const same = list.find((e) => e.py === py);
+    if (same) same.defs.push(...defs.filter((d) => !same.defs.includes(d)));
+    else list.push({ py, defs, proper: /^[A-Z]/.test(m[3]) });
+  }
+  const result: Record<string, FullEntry[]> = {};
+  for (const [w, list] of Object.entries(out)) {
+    list.sort((a, b) => Number(b.py === preferredPy[w]) - Number(a.py === preferredPy[w]) || Number(a.proper) - Number(b.proper));
+    result[w] = list.map(({ py, defs }) => ({ py, defs }));
+  }
+  return result;
+}

@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSentenceCsv, sentenceId } from '../src/lib/csv.ts';
 import { createRequire } from 'node:module';
-import { parseCedict, segment, wordsOf, type DictEntry } from '../src/lib/segmenter.ts';
+import { fullEntries, parseCedict, segment, wordsOf, type DictEntry } from '../src/lib/segmenter.ts';
 
 const jieba = createRequire(import.meta.url)('jieba-wasm/node') as { cut(text: string, hmm: boolean): string[] };
 const cut = (text: string) => jieba.cut(text, true);
@@ -71,6 +71,10 @@ for (const s of sentences) {
 
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, JSON.stringify({ levels, sentences, lexicon }));
+
+// Full dictionary entries (all readings and meanings) for the tap-a-word panel; loaded on demand.
+const preferred = Object.fromEntries(Object.entries(lexicon).map(([w, e]) => [w, e.py]));
+writeFileSync(join(dirname(outPath), 'dictionary.json'), JSON.stringify(fullEntries(dictText, new Set(Object.keys(lexicon)), preferred)));
 
 // Sorted, one entry per line, so manual edits and diffs stay readable.
 const sortedKeys = Object.keys(cache).sort();

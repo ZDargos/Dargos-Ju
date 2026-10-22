@@ -48,7 +48,7 @@ function Translate({ sentence, pool, content, settings, hints, onResult, onNext 
         target={target}
         distractors={extras}
         lexicon={content.lexicon}
-        showPinyin={hints || pinyin}
+        showPinyin={pinyin}
         allowHint={hints}
         onChecked={(ok, built) => {
           setResult(ok);
@@ -60,7 +60,7 @@ function Translate({ sentence, pool, content, settings, hints, onResult, onNext 
   );
 }
 
-function Free({ sentence, pool, content, settings, hints, onResult, onNext }: GameProps) {
+function Free({ sentence, pool, content, settings, onResult, onNext }: GameProps) {
   // A word bank drawn from this sentence and two others; build anything that makes sense.
   const sources = useMemo(() => [sentence, ...shuffle(pool.filter((s) => s.id !== sentence.id)).slice(0, 2)], [sentence, pool]);
   const bank = useMemo(() => {
@@ -78,7 +78,7 @@ function Free({ sentence, pool, content, settings, hints, onResult, onNext }: Ga
       <p className="muted small" style={{ marginTop: 0 }}>
         Build your own sentence from these words, then check it yourself. <strong>{prompt}</strong>
       </p>
-      <TileBuilder target={bank} lexicon={content.lexicon} showPinyin={hints || pinyin} judge={false} checkLabel="Done" onChecked={() => undefined} onBuilt={setBuilt} />
+      <TileBuilder target={bank} lexicon={content.lexicon} showPinyin={pinyin} judge={false} checkLabel="Done" onChecked={() => undefined} onBuilt={setBuilt} />
       {built !== null && (
         <>
           <div className="card" style={{ marginTop: 14 }}>

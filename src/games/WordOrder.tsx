@@ -16,7 +16,7 @@ export default function WordOrder({ sentence, content, settings, hints, onResult
       <TileBuilder
         target={target}
         lexicon={content.lexicon}
-        showPinyin={hints || pinyin}
+        showPinyin={pinyin}
         allowHint={hints}
         onChecked={(ok, built) => {
           setResult(ok);

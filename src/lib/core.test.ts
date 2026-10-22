@@ -8,6 +8,7 @@ import { mutate, vocabOf } from '../games/common';
 import { opsFor, project, tilesFor, wordsFor } from './learn';
 import { cleanEnglish, normalizeEnglish, tokenizeEnglish } from './english';
 import { DEFAULT_SETTINGS } from '../types';
+import { drawSentence } from './deck';
 
 describe('csv', () => {
   it('parses quoted fields, BOM and header', () => {
@@ -171,5 +172,40 @@ describe('English mode', () => {
   it('tracks English words by dictionary form', () => {
     const s = content.sentences.find((x) => /went/.test(x.enClean));
     if (s) expect(wordsFor(s, 'en', content)).toContain('go');
+  });
+});
+
+describe('game sentence deck', () => {
+  // Tests run in Node, which has no localStorage.
+  const mem = new Map<string, string>();
+  globalThis.localStorage ??= {
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => void mem.set(k, v),
+    removeItem: (k: string) => void mem.delete(k),
+    clear: () => mem.clear(),
+    key: (i: number) => [...mem.keys()][i] ?? null,
+    get length() {
+      return mem.size;
+    },
+  };
+
+  it('deals every sentence once, at random, before any repeats', () => {
+    localStorage.clear();
+    const pool = Array.from({ length: 50 }, (_, i) => ({ id: `s${i}` }));
+    const first = Array.from({ length: 50 }, () => drawSentence('word-order', 'zh', pool)!.id);
+    expect(new Set(first).size).toBe(50);
+    const second = Array.from({ length: 50 }, () => drawSentence('word-order', 'zh', pool)!.id);
+    expect(new Set(second).size).toBe(50);
+    expect(second.join()).not.toBe(first.join());
+    // The new pass doesn't open with the sentences that ended the last one.
+    expect(first.slice(-20)).not.toContain(second[0]);
+  });
+
+  it('keeps a separate deck per game and language', () => {
+    localStorage.clear();
+    const pool = Array.from({ length: 10 }, (_, i) => ({ id: `s${i}` }));
+    for (let i = 0; i < 10; i++) drawSentence('dictation', 'zh', pool);
+    const other = Array.from({ length: 10 }, () => drawSentence('dictation', 'en', pool)!.id);
+    expect(new Set(other).size).toBe(10);
   });
 });

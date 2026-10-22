@@ -6,6 +6,7 @@ import { gameById, poolFor } from '../games/registry';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
 import { LearnContext, type LearnSentence } from '../lib/learn';
+import { drawSentence } from '../lib/deck';
 import { useT } from '../i18n';
 import { PinyinContext, PinyinToggle, usePinyin } from '../components/Pinyin';
 
@@ -28,7 +29,6 @@ function GameScreen() {
   const levelsKey = settings.gameLevels.join(',');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const pool = useMemo(() => (game ? poolFor(game, content, settings, lang) : []), [game, content, levelsKey, settings.gameMaxTiles, lang]);
-  const recent = useRef<string[]>([]);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState({ right: 0, total: 0, streak: 0, best: 0 });
   const roundStart = useRef(Date.now());
@@ -38,13 +38,8 @@ function GameScreen() {
   }, [round]);
 
   const sentence = useMemo<LearnSentence | undefined>(() => {
-    if (!pool.length) return undefined;
-    // Avoid repeating any of the last few sentences.
-    const avoid = new Set(recent.current);
-    const fresh = pool.filter((s) => !avoid.has(s.id));
-    const s = (fresh.length ? fresh : pool)[Math.floor(Math.random() * (fresh.length ? fresh.length : pool.length))];
-    recent.current = [...recent.current, s.id].slice(-Math.min(20, Math.floor(pool.length / 2)));
-    return s;
+    // Every sentence comes up once, in random order, before any repeats (carried across sessions).
+    return game ? drawSentence(game.id, lang, pool) : undefined;
     // A new sentence only when the round changes.
   }, [round, pool.length, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 

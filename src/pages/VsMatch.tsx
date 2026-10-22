@@ -39,7 +39,10 @@ export default function VsMatch() {
   const [mine, setMine] = useState<ProgressEvent>(empty);
   const [theirs, setTheirs] = useState<ProgressEvent>(empty);
   const [online, setOnline] = useState(true);
-  const [answered, setAnswered] = useState(false);
+  // Which sentence is on screen. Kept separate from the answer count so the current round's
+  // feedback stays up until the player taps Next.
+  const [index, setIndex] = useState(0);
+  const answeredIndex = useRef(-1);
   const [error, setError] = useState('');
   const live = useRef<LiveChannel | null>(null);
   const startedAt = useRef(Date.now());
@@ -77,27 +80,27 @@ export default function VsMatch() {
   const iAmA = match && me === match.player_a;
 
   const record = (ok: boolean) => {
-    if (answered) return;
-    setAnswered(true);
-    setMine((p) => {
-      const next = { ...p, round: p.round + 1, score: p.score + (ok ? 1 : 0), results: [...p.results, ok] };
-      live.current?.send(next);
-      return next;
-    });
+    if (answeredIndex.current === index) return; // one answer per round
+    answeredIndex.current = index;
+    const progress = { ...mine, round: mine.round + 1, score: mine.score + (ok ? 1 : 0), results: [...mine.results, ok] };
+    setMine(progress);
+    live.current?.send(progress);
   };
 
   const next = async () => {
-    setAnswered(false);
-    if (mine.round >= total) {
-      const ms = Date.now() - startedAt.current;
-      const done = { ...mine, done: true, ms };
-      setMine(done);
-      live.current?.send(done);
-      try {
-        setMatch(await submitResult(id, mine.score, ms));
-      } catch (e) {
-        setError((e as Error).message);
-      }
+    if (answeredIndex.current !== index) return;
+    if (index + 1 < total) {
+      setIndex(index + 1);
+      return;
+    }
+    const ms = Date.now() - startedAt.current;
+    const done = { ...mine, done: true, ms };
+    setMine(done);
+    live.current?.send(done);
+    try {
+      setMatch(await submitResult(id, mine.score, ms));
+    } catch (e) {
+      setError((e as Error).message);
     }
   };
 
@@ -118,7 +121,7 @@ export default function VsMatch() {
   const finished = match.status === 'finished';
   const cancelled = match.status === 'cancelled';
   const Game = game.component;
-  const current = sentences[mine.round];
+  const current = sentences[index];
 
   let verdict = '';
   if (finished && myFinal !== null && theirFinal !== null) {
@@ -171,7 +174,7 @@ export default function VsMatch() {
         </div>
       ) : current ? (
         <Game
-          key={mine.round}
+          key={index}
           sentence={current}
           pool={pool}
           content={content}
@@ -183,7 +186,7 @@ export default function VsMatch() {
         />
       ) : (
         <div className="card empty">
-          Some sentences in this match aren't on your device yet. <button className="btn sm" onClick={next}>Finish</button>
+          This match's sentences aren't on your device yet. Try reopening the app. <button className="btn sm" onClick={() => navigate('/games')}>Back</button>
         </div>
       )}
     </>

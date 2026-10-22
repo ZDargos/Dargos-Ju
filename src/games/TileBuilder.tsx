@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { makeTiles, normalize, type Tile } from './common';
 import type { LexEntry } from '../types';
 import { IconUndo } from '../components/Icons';
@@ -19,7 +19,9 @@ interface Props {
 
 /** Tap word tiles into order. Shared by Word order, Sentence builder and Dictation. */
 export default function TileBuilder({ target, distractors = [], lexicon, showPinyin, allowHint, onChecked, judge = true, checkLabel = 'Check', onBuilt }: Props) {
-  const bank = useMemo(() => makeTiles([...target, ...distractors]), [target, distractors]);
+  // Shuffled once per sentence (the parent remounts this for each new sentence), so the tiles
+  // stay put while you pick them and used ones just grey out.
+  const [bank] = useState(() => makeTiles([...target, ...distractors]));
   const [placed, setPlaced] = useState<Tile[]>([]);
   const [result, setResult] = useState<null | boolean>(null);
   const used = new Set(placed.map((t) => t.id));

@@ -27,7 +27,6 @@ export default function Review() {
     const items = extra ? buildExtraPractice(c, s.studyLevels, s) : buildSession(c, s.studyLevels, s);
     return items.map((i) => ({ ...i, shown: 0 }));
   });
-  const [total] = useState(queue.length);
   const [revealed, setRevealed] = useState(false);
   const [tally, setTally] = useState<Record<Grade, number>>({ 1: 0, 2: 0, 3: 0 });
   const [finished, setFinished] = useState(new Set<string>());
@@ -45,13 +44,12 @@ export default function Review() {
       const due = gradeCard(current.sid, current.dir, g, current.kind === 'extra');
       setTally((t) => ({ ...t, [g]: t[g] + 1 }));
       setRevealed(false);
+      // Cards still in a short learning step (e.g. new cards, wrong answers) come back this session.
+      const again = due.getTime() - Date.now() <= REQUEUE_WINDOW_MS && current.shown + 1 < MAX_REPEATS;
+      if (!again) setFinished((f) => new Set(f).add(`${current.sid}|${current.dir}`));
       setQueue((q) => {
         const [head, ...rest] = q;
-        const again = due.getTime() - Date.now() <= REQUEUE_WINDOW_MS && head.shown + 1 < MAX_REPEATS;
-        if (!again) {
-          setFinished((f) => new Set(f).add(`${head.sid}|${head.dir}`));
-          return rest;
-        }
+        if (!again) return rest;
         // Bring it back a few cards later (sooner if it was wrong).
         const pos = Math.min(rest.length, g === 1 ? 3 : 6);
         return [...rest.slice(0, pos), { ...head, shown: head.shown + 1 }, ...rest.slice(pos)];
@@ -102,7 +100,10 @@ export default function Review() {
 
   const reading = current.dir === 'r';
   const words = wordsOf(sentence.tokens);
-  const done = finished.size;
+  // Every answer moves the bar: answers so far out of answers so far plus answers still queued.
+  const answers = tally[1] + tally[2] + tally[3];
+  const progress = answers / (answers + queue.length);
+  const left = new Set(queue.map((q) => `${q.sid}|${q.dir}`)).size;
 
   return (
     <>
@@ -110,11 +111,11 @@ export default function Review() {
         <button className="icon-btn" onClick={() => navigate('/')} aria-label="End session">
           <IconClose />
         </button>
-        <div className="progress" aria-label={`${done} of ${total} done`}>
-          <div style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+        <div className="progress" aria-label={`${left} cards left`}>
+          <div style={{ width: `${progress * 100}%` }} />
         </div>
         <span className="small muted" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          {done}/{total}
+          {left} left
         </span>
       </div>
 

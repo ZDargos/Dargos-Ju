@@ -14,6 +14,7 @@ import SettingsPage from './pages/Settings';
 import Admin from './pages/Admin';
 import { NoVoiceBanner } from './components/VoiceCheck';
 import ChallengeListener from './components/ChallengeListener';
+import UpdatePrompt from './components/UpdatePrompt';
 import { IconFriends } from './components/IconsExtra';
 import Friends from './pages/Friends';
 import VsLobby from './pages/VsLobby';
@@ -67,6 +68,7 @@ export default function App() {
         </Routes>
       </main>
       <NoVoiceBanner />
+      <UpdatePrompt />
       {auth.session && auth.session.user.id !== 'demo' && <ChallengeListener userId={auth.session.user.id} />}
       {!immersive && (
         <nav className="tabbar">

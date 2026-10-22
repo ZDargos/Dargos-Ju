@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { useSettings } from '../lib/store';
-import { cancelMatch, getMatch, joinLive, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
+import { cancelMatch, getMatch, joinLive, reportProgress, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
 import { gameById } from '../games/registry';
@@ -91,6 +91,8 @@ export default function VsMatch() {
     const progress = { ...mine, round: mine.round + 1, score: mine.score + (ok ? 1 : 0), results: [...mine.results, ok] };
     setMine(progress);
     live.current?.send(progress);
+    // Mid-match updates let the server end the game as soon as the result can't change.
+    if (progress.round < total) reportProgress(id, progress.round, progress.score).then((m) => m && setMatch(m)).catch(() => undefined);
   };
 
   const next = async () => {
@@ -125,6 +127,8 @@ export default function VsMatch() {
   const myTime = iAmA ? match.time_a : match.time_b;
   const theirTime = iAmA ? match.time_b : match.time_a;
   const finished = match.status === 'finished';
+  const myProgress = iAmA ? match.progress_a : match.progress_b;
+  const theirProgress = iAmA ? match.progress_b : match.progress_a;
   const cancelled = match.status === 'cancelled';
   const Game = game.component;
   const current = sentences[index];
@@ -165,8 +169,11 @@ export default function VsMatch() {
       ) : finished ? (
         <div className="card center" style={{ padding: 24 }}>
           <h2 style={{ marginTop: 0 }}>{verdict}</h2>
+          {myProgress < total && <p>{names.them} finished with a lead you couldn't catch, so the match ended early.</p>}
+          {theirProgress < total && <p>{names.them} couldn't catch up anymore, so the match ended early.</p>}
           <p className="muted">
-            {names.me}: {myFinal} in {((myTime ?? 0) / 1000).toFixed(1)}s · {names.them}: {theirFinal} in {((theirTime ?? 0) / 1000).toFixed(1)}s
+            {names.me}: {myFinal} {myProgress < total ? `(${myProgress}/${total} answered)` : `in ${((myTime ?? 0) / 1000).toFixed(1)}s`} · {names.them}: {theirFinal}{' '}
+            {theirProgress < total ? `(${theirProgress}/${total} answered)` : `in ${((theirTime ?? 0) / 1000).toFixed(1)}s`}
           </p>
           <div className="row" style={{ justifyContent: 'center' }}>
             <button className="btn" onClick={() => navigate('/games')}>Done</button>

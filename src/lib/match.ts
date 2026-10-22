@@ -25,6 +25,8 @@ export interface Match {
   time_b: number | null;
   created_at: string;
   started_at: string | null;
+  progress_a: number;
+  progress_b: number;
 }
 
 export function pickSentences(gameId: string, content: Content, settings: Settings): string[] {
@@ -70,6 +72,12 @@ export async function submitResult(id: string, score: number, ms: number): Promi
   const { data, error } = await supabase.rpc('submit_match_result', { match_id: id, score, ms });
   if (error) throw error;
   return data as Match;
+}
+
+/** Reports my progress after each answer; the server ends the match early once it's decided. */
+export async function reportProgress(id: string, answered: number, score: number): Promise<Match | null> {
+  const { data } = await supabase.rpc('report_match_progress', { match_id: id, answered, score });
+  return asMatch(data);
 }
 
 /** Calls back whenever one of my matches changes (joins, challenges, results). */

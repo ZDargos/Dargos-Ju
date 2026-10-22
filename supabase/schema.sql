@@ -169,3 +169,7 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- ---------------------------------------------------------------------------------------------
 -- Game stats (migration game_rounds): game_rounds(id, user_id, game, mode solo|vs, correct, ms,
 -- match_id, played_at, synced_at), own rows only. Vs results come from the matches table.
+
+-- matches.progress_a/b and live_a/b track live progress; report_match_progress() and
+-- submit_match_result() end a match early once the leader has finished and the other player
+-- can no longer catch up (migration match_early_finish).

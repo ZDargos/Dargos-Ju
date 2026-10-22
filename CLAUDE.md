@@ -54,6 +54,12 @@ Before calling any feature done, check it in both modes.
   in `data/segmentation.json`. Run `npm run sentences` after changing data.
 - Sentences added in the admin page store `en_clean` and `en_lex` so they work in English mode.
 
+## Platforms
+
+Since 2026-10-22 the app is used only as the website and the iPhone home-screen web app. The
+Android project (`android/`) is no longer maintained: don't build or ship APKs, and don't spend
+effort keeping native Android code in step. Test on phone-width browsers (Safari on iPhone matters most).
+
 ## Checks before committing
 
 `npx tsc --noEmit -p .` and `npm test` must pass. Try the change in the browser in both modes

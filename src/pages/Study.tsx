@@ -5,6 +5,7 @@ import { updateSettings, useStore } from '../lib/store';
 import { studyCounts } from '../lib/srs';
 import { streak } from '../lib/stats';
 import LevelPicker from '../components/LevelPicker';
+import InstallHint from '../components/InstallHint';
 import type { Settings } from '../types';
 
 export default function Study() {
@@ -39,6 +40,8 @@ export default function Study() {
           {days > 0 && <> · {days} day streak</>}
         </div>
       </header>
+
+      <InstallHint />
 
       <div className="card">
         <LevelPicker levels={content.levels} selected={levels} onChange={(studyLevels) => updateSettings({ studyLevels })} />

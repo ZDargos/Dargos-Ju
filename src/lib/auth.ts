@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { SUPABASE_URL } from '../config';
 import { clearUser, loadUser } from './store';
 import { pullRemote, pushPending } from './sync';
 import { loadRemoteContent } from './content';
@@ -9,6 +10,21 @@ export interface AuthState {
   status: 'loading' | 'signed-out' | 'signed-in';
   session: Session | null;
   isAdmin: boolean;
+}
+
+/**
+ * The session saved on this device, even if its access token has expired. Used offline: Supabase
+ * can't refresh an expired token without a connection and would otherwise report "signed out".
+ */
+function storedSession(): Session | null {
+  try {
+    const key = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+    const raw = localStorage.getItem(key);
+    const s = raw ? (JSON.parse(raw) as Session) : null;
+    return s?.user?.id ? s : null;
+  } catch {
+    return null;
+  }
 }
 
 async function checkAdmin(userId: string): Promise<boolean> {
@@ -49,8 +65,10 @@ export function useAuth(): AuthState {
         .then((isAdmin) => setState((s) => ({ ...s, isAdmin })))
         .catch(() => undefined);
     };
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.getSession().then(({ data, error }) => apply(data.session ?? (error && (error.name === 'AuthRetryableFetchError' || !navigator.onLine) ? storedSession() : null)));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // Offline token refreshes fail without signing out; keep studying with the saved session.
+      if (!session && event !== 'SIGNED_OUT' && currentUser) return;
       // Defer so Supabase's internal lock is released before we query.
       setTimeout(() => apply(session), 0);
     });

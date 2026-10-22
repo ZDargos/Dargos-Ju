@@ -47,7 +47,17 @@ for name, k in DENSITIES.items():
     '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#C0392B</color>\n</resources>\n',
     encoding="utf-8",
 )
-render(512, "square").save("public/icon-512.png")
+# Web app (PWA) icons: plain squares (iOS rounds the corners itself) and a maskable icon with padding.
+def full_square(size: int, scale: float) -> Image.Image:
+    big = size * 4
+    img = Image.new("RGBA", (big, big), RED)
+    glyph(img, scale)
+    return img.resize((size, size), Image.LANCZOS)
+
+full_square(180, 0.62).convert("RGB").save("public/apple-touch-icon.png")
+full_square(192, 0.62).save("public/icon-192.png")
+full_square(512, 0.62).save("public/icon-512.png")
+full_square(512, 0.46).save("public/icon-maskable-512.png")
 print("Icons written.")
 
 # Launch screen: the icon centred on the app background, at each existing splash size.

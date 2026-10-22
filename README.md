@@ -25,6 +25,12 @@ npm test
 npm run build      # outputs dist/
 ```
 
+## iPhone and offline use
+
+The website is an installable web app. On iPhone or iPad, open it in Safari, tap Share, then
+**Add to Home Screen**. A service worker (`public/sw.js`) caches the app so it opens and works
+offline; reviews are stored on the device and synced when the connection returns.
+
 ## Android
 
 Needs Android Studio's SDK (`ANDROID_HOME`) and JDK 21 (`JAVA_HOME`).

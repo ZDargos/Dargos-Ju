@@ -119,7 +119,10 @@ export async function speak(text: string, rate = 0.85): Promise<void> {
       u.rate = rate;
       u.volume = 1;
       u.onend = () => resolve();
-      u.onerror = (e) => (e.error === 'interrupted' || e.error === 'canceled' ? resolve() : reject(new Error(e.error)));
+      u.onerror = (e) =>
+        e.error === 'interrupted' || e.error === 'canceled'
+          ? resolve()
+          : reject(new Error(e.error === 'not-allowed' ? 'Tap Play to hear the sentence.' : e.error));
       synth.speak(u);
     };
     // Chrome sometimes drops an utterance queued right after cancel().

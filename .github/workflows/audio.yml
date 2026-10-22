@@ -1,0 +1,58 @@
+name: Make sentence audio
+
+# Generates natural-voice audio (Azure neural voices, free tier) for any sentence that doesn't have
+# it yet, commits it in batches so progress is kept, then redeploys the website.
+# Needs the repository secrets AZURE_SPEECH_KEY and AZURE_SPEECH_REGION; without them it does nothing.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/sentences/**'
+      - 'data/english-corrections.json'
+      - 'scripts/make-audio.ts'
+      - 'src/lib/audioKey.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: audio
+  cancel-in-progress: false
+
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
+      AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run sentences
+      - name: Make audio in batches
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          changed=0
+          while true; do
+            out=$(node scripts/make-audio.ts --limit 100)
+            echo "$out"
+            if [ -z "$(git status --porcelain public/audio data/audio-manifest.json)" ]; then break; fi
+            git add public/audio data/audio-manifest.json
+            git commit -q -m "Add sentence audio"
+            git pull -q --rebase origin main
+            git push -q origin HEAD:main
+            changed=1
+            echo "$out" | grep -qx more || break
+          done
+          # Commits made with the workflow token don't start other workflows, so redeploy explicitly.
+          if [ "$changed" = 1 ]; then gh workflow run deploy.yml --ref main; fi

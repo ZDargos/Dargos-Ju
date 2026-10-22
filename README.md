@@ -31,6 +31,19 @@ app's interface follows the mode (Chinese when learning English) unless set in "
   `node scripts/i18n-keys.ts` lists strings missing a translation; the tests fail if any are.
 - Rules for keeping both modes working are in `CLAUDE.md`.
 
+## Sentence audio
+
+Every sentence has natural-voice audio in both languages, made once with Azure neural voices
+(free tier) and stored in `public/audio/<lang>/<key>.mp3`, so it sounds the same on every device
+and works offline (bundled in the Android app; cached on first play on the web). Anything without
+a file (single words, sentences added in the admin page) uses the device's speech.
+
+- `.github/workflows/audio.yml` makes audio for new or changed sentences automatically. It needs
+  the repository secrets `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION`.
+- `data/audio-manifest.json` lists each file's text, voice and source. To replace one with a
+  native-speaker recording, overwrite its mp3 and set `"source": "human"`; the generator never
+  overwrites human recordings.
+
 ## Develop
 
 ```bash

@@ -124,6 +124,14 @@ const enLite: Record<string, [string, string, string]> = {};
 for (const [w, e] of Object.entries(ecdict)) enLite[w] = [normalizeIpa(e.ipa), shortGloss(e.zh), lemmaOf(w, ecdict)];
 writeFileSync(join(dirname(dictOutPath), 'ecdict-lite.json'), JSON.stringify(enLite));
 
+// Which sentences have pre-made audio (public/audio/<lang>/<key>.mp3, made by scripts/make-audio.ts).
+const audioIndex: Record<string, string[]> = { zh: [], en: [] };
+for (const lang of ['zh', 'en']) {
+  const dir = join(root, 'public', 'audio', lang);
+  if (existsSync(dir)) audioIndex[lang] = readdirSync(dir).filter((f) => f.endsWith('.mp3')).map((f) => f.slice(0, -4)).sort();
+}
+writeFileSync(join(dirname(outPath), 'audio-index.json'), JSON.stringify(audioIndex));
+
 console.log(
   `Sentences: ${sentences.length} in ${levels.length} levels (${levels.map((l) => l.level).join(', ')}); ` +
     `${newlySegmented} newly segmented; lexicon ${Object.keys(lexicon).length} entries; English words ${Object.keys(enLexicon).length}.`,

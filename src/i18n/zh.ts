@@ -148,6 +148,7 @@ const zh: Record<string, string> = {
   "No Chinese voice is installed on this device. See Settings → Audio to fix it.": "此设备没有安装中文语音。请到 设置 → 声音 中解决。",
   "No English voice is installed on this device. See Settings → Audio to fix it.": "此设备没有安装英语语音。请到 设置 → 声音 中解决。",
   "How to fix it": "如何解决",
+  "Sentences play built-in natural voices; this device voice is only used for single words and sentences added in the app.": "句子使用内置的自然人声播放；设备语音只用于单个词和在应用中添加的句子。",
   "This device has no text-to-speech voice, so Dictation can't play sentences.": "此设备没有语音朗读功能，所以听写无法播放句子。",
 
   // Notifications

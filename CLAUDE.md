@@ -32,7 +32,10 @@ Before calling any feature done, check it in both modes.
   - `lexiconFor`, `lookup`, `tilesFor`, `wordsFor` for pronunciation, meanings, tiles and word stats.
 - The mode comes from `settings.learning`; screens that need a fixed mode for their whole life
   (a study session, a game, a vs match) read it once and provide it with `LearnContext`.
-- Speech: `speak(text, rate, lang)`; voice checks: `voiceStatus(lang)`.
+- Speech: `speak(text, rate, lang)` plays the sentence's pre-made audio (`public/audio`, keyed by
+  `audioKey(lang, text)` of the exact text) and falls back to device speech; voice checks: `voiceStatus(lang)`.
+  Any new text the app speaks as a whole sentence should be added to `scripts/make-audio.ts`.
+  Never overwrite audio whose manifest entry has `"source": "human"`.
 - Pronunciation display: pinyin in Chinese mode, IPA phonetics in English mode (`components/Pinyin.tsx`).
 - Mark text in each language with `lang="zh-CN"` / `lang="en"` and the `zh` class for Chinese, so
   screen readers and fonts are right.

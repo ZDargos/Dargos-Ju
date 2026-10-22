@@ -4,6 +4,7 @@ import { updateSettings, useStore } from '../lib/store';
 import { signOut } from '../lib/auth';
 import { pullRemote, pushPending } from '../lib/sync';
 import { speak, ttsAvailable } from '../lib/tts';
+import { SAMPLE_SENTENCES as SAMPLE } from '../lib/audioKey';
 import { GAMES } from '../games/registry';
 import { langParams, useT } from '../i18n';
 import { IconShield } from '../components/Icons';
@@ -57,9 +58,6 @@ function Choice<T extends string>({ value, options, onChange, label }: { value: 
     </div>
   );
 }
-
-/** Test sentence for the speech speed control, in the language being learned. */
-const SAMPLE: Record<LearnLang, string> = { zh: '我们一起学习中文吧！', en: "Let's learn English together!" };
 
 export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; email: string }) {
   const t = useT();

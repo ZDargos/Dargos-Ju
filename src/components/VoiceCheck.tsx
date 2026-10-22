@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { voiceStatus, type VoiceStatus } from '../lib/tts';
+import { hasSentenceAudio, voiceStatus, type VoiceStatus } from '../lib/tts';
 import { useSettings } from '../lib/store';
 import { langName, useT } from '../i18n';
 import type { LearnLang } from '../lib/learn';
@@ -26,10 +26,13 @@ export function VoiceStatusPanel() {
   if (!status) return <div className="small muted">{t('Checking for a {lang} voice…', { lang: name })}</div>;
   return (
     <div role="status">
-      <div className="small" style={{ color: status.available ? 'var(--right)' : 'var(--wrong)', fontWeight: 600 }}>
+      <div className="small" style={{ color: status.available ? 'var(--right)' : hasSentenceAudio(lang) ? 'var(--muted)' : 'var(--wrong)', fontWeight: 600 }}>
         {status.available ? `✓ ${t('{lang} voice available', { lang: name })}` : `✕ ${t('No {lang} voice', { lang: name })}`}
       </div>
       <div className="small muted" style={{ marginTop: 2 }}>{status.detail}</div>
+      {hasSentenceAudio(lang) && (
+        <div className="small muted" style={{ marginTop: 2 }}>{t('Sentences play built-in natural voices; this device voice is only used for single words and sentences added in the app.')}</div>
+      )}
       {status.actions.length > 0 && (
         <div className="row wrap" style={{ marginTop: 8 }}>
           {status.actions.map((a) => (

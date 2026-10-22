@@ -1,4 +1,6 @@
-// Text-to-speech for the language being learned (Chinese, or English in English-learning mode).
+// Speech for the language being learned (Chinese, or English in English-learning mode).
+// Sentences play pre-made neural-voice audio (public/audio, made by scripts/make-audio.ts) when it
+// exists; anything else (single words, sentences added in the app) uses the device's speech:
 // - Android app: a small native plugin (ZhSpeechPlugin.java) that prefers Google's speech engine,
 //   since many phones default to an engine with no Chinese voice.
 // - Web: the browser's speechSynthesis, using a voice for the right language only. Without one,
@@ -8,6 +10,43 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { t } from '../i18n';
 import type { LearnLang } from './learn';
+import { audioKey } from './audioKey';
+import audioIndex from '../generated/audio-index.json';
+
+const recorded: Record<LearnLang, Set<string>> = { zh: new Set(audioIndex.zh), en: new Set(audioIndex.en) };
+
+/** The pre-made audio file for this exact text, if there is one. */
+export function audioFileFor(text: string, lang: LearnLang): string | null {
+  const key = audioKey(lang, text);
+  return recorded[lang].has(key) ? `./audio/${lang}/${key}.mp3` : null;
+}
+
+/** Whether this language has pre-made sentence audio at all. */
+export const hasSentenceAudio = (lang: LearnLang) => recorded[lang].size > 0;
+
+let playing: HTMLAudioElement | null = null;
+
+function stopAudio() {
+  if (playing) {
+    playing.pause();
+    playing = null;
+  }
+}
+
+/** Plays an audio file at the given speed (pitch kept). Resolves when it ends or is replaced. */
+function playFile(url: string, rate: number): Promise<void> {
+  stopAudio();
+  const audio = new Audio(url);
+  audio.playbackRate = rate;
+  audio.preservesPitch = true;
+  playing = audio;
+  return new Promise<void>((resolve, reject) => {
+    audio.onended = () => resolve();
+    audio.onpause = () => resolve();
+    audio.onerror = () => reject(new Error(`Could not play ${url}`));
+    audio.play().catch(reject);
+  });
+}
 
 interface NativeStatus {
   ready: boolean;
@@ -69,8 +108,9 @@ function pickVoice(voices: SpeechSynthesisVoice[], lang: LearnLang): SpeechSynth
   return pool.find((v) => /natural|online|google/i.test(v.name)) ?? pool[0];
 }
 
+/** Whether anything can be played: pre-made audio works everywhere, device speech fills the gaps. */
 export function ttsAvailable(): boolean {
-  return native || (typeof window !== 'undefined' && 'speechSynthesis' in window);
+  return native || (typeof window !== 'undefined' && ('speechSynthesis' in window || typeof Audio !== 'undefined'));
 }
 
 export async function voiceStatus(lang: LearnLang): Promise<VoiceStatus> {
@@ -118,6 +158,17 @@ let webTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Speaks text in the given language (default Chinese). Dialogue labels like "A:" are skipped. */
 export async function speak(text: string, rate = 0.85, lang: LearnLang = 'zh'): Promise<void> {
+  stopAudio();
+  if (!native && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  const file = audioFileFor(text, lang);
+  if (file) {
+    try {
+      return await playFile(file, rate);
+    } catch (e) {
+      if ((e as Error).name === 'NotAllowedError') throw new Error(t('Tap Play to hear the sentence.'));
+      console.warn('Audio file failed, using device speech', e);
+    }
+  }
   const clean = text.replace(/\b[AB]\s*[:：]\s*/g, '');
   if (native) {
     try {

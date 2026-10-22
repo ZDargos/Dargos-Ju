@@ -76,9 +76,7 @@ export default function TileBuilder({ target, distractors = [], lexicon, showPin
         {bank.map((t) => (
           <button key={t.id} className="tile" disabled={used.has(t.id) || result !== null} onClick={() => place(t)}>
             {t.text}
-            {showPinyin && lexicon[t.text] && (
-              <div style={{ fontSize: 11, fontFamily: 'system-ui, sans-serif', color: 'var(--muted)' }}>{lexicon[t.text].py}</div>
-            )}
+            {showPinyin && lexicon[t.text] && <span className="py">{lexicon[t.text].py}</span>}
           </button>
         ))}
       </div>

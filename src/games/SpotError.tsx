@@ -3,6 +3,8 @@ import type { GameProps } from './registry';
 import { mutate } from './common';
 import { isHanWord, isPunctuation } from '../lib/segmenter';
 import Feedback from './Feedback';
+import { useShowPinyin } from '../components/Pinyin';
+import { useContent } from '../lib/content';
 
 type Choice = { type: 'word' | 'gap'; index: number };
 
@@ -11,6 +13,8 @@ export default function SpotError({ sentence, pool, settings, hints, onResult, o
   const m = useMemo(() => mutate(sentence.tokens, vocab, ['replace', 'extra', 'missing']), [sentence, vocab]);
   const [choice, setChoice] = useState<Choice | null>(null);
   const [showEn, setShowEn] = useState(false);
+  const pinyin = useShowPinyin();
+  const { lexicon } = useContent();
 
   if (!m) {
     return (
@@ -73,7 +77,14 @@ export default function SpotError({ sentence, pool, settings, hints, onResult, o
                   <span className="spot-punct">{t}</span>
                 ) : (
                   <button className={`spot-word${cls(word)}`} onClick={() => choose(word)}>
-                    {t}
+                    {pinyin ? (
+                      <span className="pinyin-word">
+                        <span className="py" style={{ fontSize: 11 }}>{lexicon[t]?.py ?? ' '}</span>
+                        <span>{t}</span>
+                      </span>
+                    ) : (
+                      t
+                    )}
                   </button>
                 )}
               </Fragment>

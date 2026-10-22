@@ -3,6 +3,7 @@ import { useContent } from '../lib/content';
 import { useStore } from '../lib/store';
 import { activity, dueForecast, hardestSentences, levelProgress, overallCounts, retentionRate, streak, termDifficulty, type TermStat } from '../lib/stats';
 import { BarChart, BucketLegend, StackedBar } from '../components/Charts';
+import { PinyinText, PinyinToggle, usePinyin } from '../components/Pinyin';
 import type { Dir } from '../types';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -22,6 +23,7 @@ export default function Stats() {
   const cards = useStore((s) => s.cards);
   const logs = useStore((s) => s.logs);
   const settings = useStore((s) => s.settings);
+  const pinyin = usePinyin('stats');
 
   const [levelDir, setLevelDir] = useState<Dir>('r');
   const [hardDir, setHardDir] = useState<Dir>('r');
@@ -128,7 +130,9 @@ export default function Stats() {
               <li key={h.sentence.id}>
                 <div className="spread" style={{ alignItems: 'flex-start' }}>
                   <div>
-                    <div className="zh" style={{ fontSize: 18 }}>{h.sentence.zh}</div>
+                    <div style={{ fontSize: 18 }}>
+                      <PinyinText tokens={h.sentence.tokens} text={h.sentence.zh} lexicon={content.lexicon} show={pinyin} style={{ justifyContent: 'flex-start' }} />
+                    </div>
                     <div className="small muted">{h.sentence.en}</div>
                   </div>
                   <div style={{ textAlign: 'right', flex: 'none' }}>
@@ -201,6 +205,7 @@ export default function Stats() {
           Miss rate counts Wrong as a full miss and Mostly right as part of one, weighting recent answers more.
         </p>
       </div>
+      <PinyinToggle section="stats" aboveTabBar />
     </>
   );
 }

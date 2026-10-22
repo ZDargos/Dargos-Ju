@@ -5,6 +5,7 @@ import { useSettings } from '../lib/store';
 import { gameById, poolFor } from '../games/registry';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
+import { PinyinContext, PinyinToggle, usePinyin } from '../components/Pinyin';
 import type { Sentence } from '../types';
 
 export default function GameScreen() {
@@ -18,6 +19,7 @@ export default function GameScreen() {
   const [round, setRound] = useState(0);
   const [score, setScore] = useState({ right: 0, total: 0, streak: 0, best: 0 });
   const roundStart = useRef(Date.now());
+  const pinyin = usePinyin(id);
   useEffect(() => {
     roundStart.current = Date.now();
   }, [round]);
@@ -48,6 +50,7 @@ export default function GameScreen() {
           {score.streak > 1 && <span>🔥 {score.streak}</span>}
         </div>
       </div>
+      <PinyinContext.Provider value={pinyin}>
       {sentence ? (
         <Game
           key={round}
@@ -68,6 +71,8 @@ export default function GameScreen() {
       ) : (
         <div className="card empty">No sentences fit this game for the selected levels.</div>
       )}
+      </PinyinContext.Provider>
+      <PinyinToggle section={game.id} />
     </>
   );
 }

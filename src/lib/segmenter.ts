@@ -108,7 +108,7 @@ const PREFERRED_READING: Record<string, string> = {
   着: 'zhe5', 行: 'xing2', 要: 'yao4', 为: 'wei4', 得: 'de5', 差: 'cha4', 觉: 'jue2', 便: 'bian4', 种: 'zhong3',
   发: 'fa1', 重: 'zhong4', 数: 'shu4', 少: 'shao3', 教: 'jiao4', 空: 'kong1', 乐: 'le4', 处: 'chu4', 干: 'gan4',
   调: 'diao4', 倒: 'dao4', 相: 'xiang1', 只: 'zhi3', 了: 'le5', 还: 'hai2', 长: 'chang2', 都: 'dou1', 地: 'de5',
-  和: 'he2', 哪: 'na3', 那: 'na4', 什: 'shen2', 么: 'me5', 儿: 'er2', 会: 'hui4', 看: 'kan4', 没: 'mei2',
+  和: 'he2', 吗: 'ma5', 呢: 'ne5', 吧: 'ba5', 啊: 'a5', 们: 'men5', 哪: 'na3', 那: 'na4', 什: 'shen2', 么: 'me5', 儿: 'er2', 会: 'hui4', 看: 'kan4', 没: 'mei2',
 };
 
 export function parseCedict(text: string, maxLen = 6): Map<string, DictEntry> {

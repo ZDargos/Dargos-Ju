@@ -6,6 +6,7 @@ import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_
 import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { IconClose, IconSpeaker } from '../components/Icons';
 import WordBreakdown from '../components/WordBreakdown';
+import { PinyinText, PinyinToggle, usePinyin } from '../components/Pinyin';
 import type { Grade } from '../types';
 
 interface QueueItem extends SessionItem {
@@ -20,6 +21,7 @@ export default function Review() {
   const navigate = useNavigate();
   const content = useContent();
   const settings = useStore((s) => s.settings);
+  const pinyin = usePinyin('study');
 
   const [queue, setQueue] = useState<QueueItem[]>(() => {
     const s = getState().settings;
@@ -124,11 +126,23 @@ export default function Review() {
           {current.kind === 'new' && current.shown === 0 && <span className="tag new">New</span>}
           {current.kind === 'extra' && <span className="tag">Extra</span>}
         </div>
-        {reading ? <div className="prompt-zh">{sentence.zh}</div> : <div className="prompt-en">{sentence.en}</div>}
+        {reading ? (
+          <div className="prompt-zh">
+            <PinyinText tokens={sentence.tokens} text={sentence.zh} lexicon={content.lexicon} show={pinyin} />
+          </div>
+        ) : (
+          <div className="prompt-en">{sentence.en}</div>
+        )}
 
         {revealed && (
           <div className="answer">
-            {reading ? <div className="answer-en">{sentence.en}</div> : <div className="answer-zh">{sentence.zh}</div>}
+            {reading ? (
+              <div className="answer-en">{sentence.en}</div>
+            ) : (
+              <div className="answer-zh">
+                <PinyinText tokens={sentence.tokens} text={sentence.zh} lexicon={content.lexicon} show={pinyin} />
+              </div>
+            )}
             <WordBreakdown sentence={sentence} lexicon={content.lexicon} />
             {ttsAvailable() && (
               <button
@@ -163,6 +177,7 @@ export default function Review() {
           Show answer
         </button>
       )}
+      <PinyinToggle section="study" />
     </>
   );
 }

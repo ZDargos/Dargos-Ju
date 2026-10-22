@@ -4,21 +4,23 @@ import { joinTokens, mutate, normalize } from './common';
 import { isHanWord } from '../lib/segmenter';
 import { shuffle } from '../lib/srs';
 import Feedback from './Feedback';
+import { PinyinText, useShowPinyin } from '../components/Pinyin';
 
-export default function CloseCall({ sentence, pool, settings, hints, onResult, onNext }: GameProps) {
+export default function CloseCall({ sentence, pool, content, settings, hints, onResult, onNext }: GameProps) {
+  const pinyin = useShowPinyin();
   const vocab = useMemo(() => [...new Set(pool.flatMap((s) => s.tokens.filter(isHanWord)))], [pool]);
   const options = useMemo(() => {
     const seen = new Set([normalize(sentence.zh)]);
-    const wrong: string[] = [];
+    const wrong: { text: string; tokens: string[] }[] = [];
     for (let tries = 0; tries < 30 && wrong.length < 3; tries++) {
       const m = mutate(sentence.tokens, vocab, ['replace', 'replace', 'swap', 'extra', 'missing']);
       if (!m) continue;
       const text = joinTokens(m.tokens);
       if (seen.has(normalize(text))) continue;
       seen.add(normalize(text));
-      wrong.push(text);
+      wrong.push({ text, tokens: m.tokens });
     }
-    return shuffle([{ text: sentence.zh, correct: true }, ...wrong.map((text) => ({ text, correct: false }))]);
+    return shuffle([{ text: sentence.zh, tokens: sentence.tokens, correct: true }, ...wrong.map((w) => ({ ...w, correct: false }))]);
   }, [sentence, vocab]);
   const [picked, setPicked] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
@@ -43,7 +45,7 @@ export default function CloseCall({ sentence, pool, settings, hints, onResult, o
               onResult(o.correct, o.text);
             }}
           >
-            {o.text}
+            <PinyinText tokens={o.tokens} text={o.text} lexicon={content.lexicon} show={pinyin} style={{ justifyContent: 'flex-start' }} />
           </button>
         ),
       )}

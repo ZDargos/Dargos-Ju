@@ -7,6 +7,7 @@ import { speak, ttsAvailable } from '../lib/tts';
 import { IconSpeaker } from '../components/Icons';
 import TileBuilder from './TileBuilder';
 import Feedback from './Feedback';
+import { useShowPinyin } from '../components/Pinyin';
 
 type Mode = 'tiles' | 'type';
 
@@ -16,6 +17,7 @@ export default function Dictation({ sentence, pool, content, settings, hints, on
   const [typed, setTyped] = useState('');
   const [showEn, setShowEn] = useState(false);
   const [speechError, setSpeechError] = useState('');
+  const pinyin = useShowPinyin();
   const target = useMemo(() => tilesOf(sentence), [sentence]);
   const extras = useMemo(() => {
     const own = new Set(target);
@@ -70,7 +72,7 @@ export default function Dictation({ sentence, pool, content, settings, hints, on
         </button>
       </div>
       {mode === 'tiles' ? (
-        <TileBuilder target={target} distractors={extras} lexicon={content.lexicon} onChecked={finish} />
+        <TileBuilder target={target} distractors={extras} lexicon={content.lexicon} showPinyin={pinyin} onChecked={finish} />
       ) : (
         <form
           onSubmit={(e) => {

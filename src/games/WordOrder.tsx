@@ -3,10 +3,12 @@ import type { GameProps } from './registry';
 import { tilesOf } from './common';
 import TileBuilder from './TileBuilder';
 import Feedback from './Feedback';
+import { useShowPinyin } from '../components/Pinyin';
 
 export default function WordOrder({ sentence, content, settings, hints, onResult, onNext }: GameProps) {
   const target = useMemo(() => tilesOf(sentence), [sentence]);
   const [result, setResult] = useState<boolean | null>(null);
+  const pinyin = useShowPinyin();
   return (
     <>
       <p className="muted small" style={{ marginTop: 0 }}>Put the words in order:</p>
@@ -14,7 +16,7 @@ export default function WordOrder({ sentence, content, settings, hints, onResult
       <TileBuilder
         target={target}
         lexicon={content.lexicon}
-        showPinyin={hints}
+        showPinyin={hints || pinyin}
         allowHint={hints}
         onChecked={(ok, built) => {
           setResult(ok);

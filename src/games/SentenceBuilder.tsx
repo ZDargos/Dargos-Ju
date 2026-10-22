@@ -7,6 +7,7 @@ import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { IconSpeaker } from '../components/Icons';
 import TileBuilder from './TileBuilder';
 import Feedback from './Feedback';
+import { useShowPinyin } from '../components/Pinyin';
 import type { Sentence } from '../types';
 
 type Mode = 'translate' | 'free';
@@ -38,6 +39,7 @@ function Translate({ sentence, pool, content, settings, hints, onResult, onNext 
   const target = useMemo(() => tilesOf(sentence), [sentence]);
   const extras = useMemo(() => distractorsFor(sentence, pool, Math.min(5, Math.max(3, Math.round(target.length / 2)))), [sentence, pool, target]);
   const [result, setResult] = useState<boolean | null>(null);
+  const pinyin = useShowPinyin();
   return (
     <>
       <p className="muted small" style={{ marginTop: 0 }}>Translate using the word bank. Some words don't belong.</p>
@@ -46,7 +48,7 @@ function Translate({ sentence, pool, content, settings, hints, onResult, onNext 
         target={target}
         distractors={extras}
         lexicon={content.lexicon}
-        showPinyin={hints}
+        showPinyin={hints || pinyin}
         allowHint={hints}
         onChecked={(ok, built) => {
           setResult(ok);
@@ -66,6 +68,7 @@ function Free({ sentence, pool, content, settings, hints, onResult, onNext }: Ga
     return shuffle(words).slice(0, 12);
   }, [sources]);
   const [built, setBuilt] = useState<string | null>(null);
+  const pinyin = useShowPinyin();
   const [graded, setGraded] = useState(false);
   const examples = sources.filter((s) => s.tokens.some((t) => bank.includes(t)));
   const prompt = useMemo(() => pick(['Make a question.', 'Make a statement.', 'Make a negative sentence.', 'Use as many words as you can.', 'Talk about yourself.']), []);
@@ -75,7 +78,7 @@ function Free({ sentence, pool, content, settings, hints, onResult, onNext }: Ga
       <p className="muted small" style={{ marginTop: 0 }}>
         Build your own sentence from these words, then check it yourself. <strong>{prompt}</strong>
       </p>
-      <TileBuilder target={bank} lexicon={content.lexicon} showPinyin={hints} judge={false} checkLabel="Done" onChecked={() => undefined} onBuilt={setBuilt} />
+      <TileBuilder target={bank} lexicon={content.lexicon} showPinyin={hints || pinyin} judge={false} checkLabel="Done" onChecked={() => undefined} onBuilt={setBuilt} />
       {built !== null && (
         <>
           <div className="card" style={{ marginTop: 14 }}>

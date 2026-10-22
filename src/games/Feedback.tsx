@@ -4,15 +4,19 @@ import { IconSpeaker } from '../components/Icons';
 import type { Sentence } from '../types';
 import { useContent } from '../lib/content';
 import WordBreakdown from '../components/WordBreakdown';
+import { PinyinText, useShowPinyin } from '../components/Pinyin';
 
 export default function Feedback({ correct, sentence, rate, onNext, children }: { correct: boolean; sentence: Sentence; rate: number; onNext: () => void; children?: ReactNode }) {
   const { lexicon } = useContent();
+  const pinyin = useShowPinyin();
   return (
     <>
       <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
         <strong>{correct ? 'Correct!' : 'Not quite.'}</strong>
         {children}
-        <div className="zh" style={{ fontSize: 20, marginTop: 6 }}>{sentence.zh}</div>
+        <div style={{ fontSize: 20, marginTop: 6 }}>
+          <PinyinText tokens={sentence.tokens} text={sentence.zh} lexicon={lexicon} show={pinyin} style={{ justifyContent: 'flex-start' }} />
+        </div>
         <div className="small muted">{sentence.en}</div>
         <WordBreakdown sentence={sentence} lexicon={lexicon} align="start" />
         {ttsAvailable() && (

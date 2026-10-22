@@ -83,6 +83,8 @@ export interface Settings {
   hints: Record<GameId, boolean>;
   /** Longest sentence (in word tiles) used by tile games. */
   gameMaxTiles: number;
+  /** Pinyin switch per section ('study', a game id, 'stats'). */
+  pinyin: Record<string, boolean>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -102,4 +104,5 @@ export const DEFAULT_SETTINGS: Settings = {
     dictation: true,
   },
   gameMaxTiles: 12,
+  pinyin: {},
 };

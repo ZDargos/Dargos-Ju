@@ -87,7 +87,7 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
     setError('');
     try {
       await fn();
-      setMessage(done);
+      if (done) setMessage(done);
       loadFriends();
       loadBoard();
     } catch (e) {
@@ -181,12 +181,14 @@ function FriendsHome({ myName, onRenamed }: { myName: string; onRenamed: () => v
             </li>
           ))}
         </ul>
-        <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-          <label htmlFor="friend-search">Add a friend</label>
-          <input id="friend-search" className="input" placeholder="Search by display name" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
+      </div>
+
+      <div className="section-title">Find players</div>
+      <div className="card">
+        <input id="friend-search" className="input" aria-label="Search players" placeholder="Search by display name" value={query} onChange={(e) => setQuery(e.target.value)} />
+        {results.length === 0 && <p className="small muted" style={{ marginBottom: 0 }}>{query.trim() ? 'No players match that name.' : 'No other players yet.'}</p>}
         {results.length > 0 && (
-          <ul className="list">
+          <ul className="list" style={{ maxHeight: 360, overflowY: 'auto' }}>
             {results.map((p) => (
               <li key={p.user_id} className="spread">
                 <span>{p.display_name}</span>

@@ -40,16 +40,13 @@ export function useMyProfile() {
   return { profile, reload };
 }
 
+/** Registered players by display name; an empty query lists everyone (A to Z). */
 export async function searchProfiles(query: string): Promise<Profile[]> {
-  const q = query.trim();
-  if (q.length < 2) return [];
+  const q = query.trim().replace(/[%_]/g, '');
   const me = await currentUserId();
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('user_id, display_name')
-    .ilike('display_name', `%${q.replace(/[%_]/g, '')}%`)
-    .neq('user_id', me ?? '')
-    .limit(10);
+  let req = supabase.from('profiles').select('user_id, display_name').neq('user_id', me ?? '').order('display_name').limit(q ? 20 : 100);
+  if (q) req = req.ilike('display_name', `%${q}%`);
+  const { data, error } = await req;
   if (error) throw error;
   return data ?? [];
 }

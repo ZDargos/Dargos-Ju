@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { asDuelLevel, DUEL_LEVELS, DUEL_LIVES, duelIntensity, shortGloss, type DuelLevel } from '../lib/vocabGame';
+import { asDuelLevel, DUEL_LEVELS, DUEL_LIVES, duelIntensity, type DuelLevel } from '../lib/vocabGame';
 import { reportSpeechError, speak } from '../lib/tts';
 import { useSettings } from '../lib/store';
 import { useT } from '../i18n';
 import { IconSpeaker } from '../components/Icons';
 import type { LearnLang } from '../lib/learn';
-import type { VocabItem } from '../lib/vocab';
+import { glossOf, type VocabItem } from '../lib/vocab';
 
 export interface DuelPlayer {
   name: string;
@@ -97,7 +97,7 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
           <div className="duel-word zh" lang="zh-CN" key={`${item.id}-${moveKey}`}>{item.text}</div>
         ) : (
           <div className="duel-word duel-gloss" lang="zh-CN" key={`${item.id}-${moveKey}`}>
-            {shortGloss(item.gloss)}
+            {glossOf(item)}
             <button className="icon-btn" aria-label={t('Listen')} onClick={() => speak(item.text, settings.speechRate, 'en').catch(reportSpeechError)}><IconSpeaker /></button>
           </div>
         )}

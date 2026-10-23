@@ -119,6 +119,8 @@ export interface Settings {
   fullDeck?: boolean;
   /** Card keys (as in cards) someone chose to hide from study. */
   hiddenCards?: string[];
+  /** Definitions picked or written for words ("zh:我" → meaning), used on word cards and in word games. */
+  glossOverrides?: Record<string, string>;
   /** Daily XP goal changes (lib/xp.ts); each applies from its day on, so past days keep their goal. */
   goalHistory?: { from: string; xp: number }[];
 }

@@ -532,3 +532,6 @@ html.kbd-tight .pinned-game .review-top { margin-bottom: 2px; }
 .back-card { font-size: 26px; line-height: 1; }
 .back-card:disabled { opacity: 0.3; }
 .card.flash.peeking { border-style: dashed; }
+.definition-picker .list { max-height: 45vh; overflow-y: auto; }
+.sense { width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: 10px; padding: 8px 10px; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.sense.on { border-color: var(--accent); background: var(--accent-soft, var(--surface-2)); }

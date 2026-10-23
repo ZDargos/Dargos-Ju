@@ -67,7 +67,14 @@ export default function VsLobby() {
   const lang = settings.learning;
   const sentenceIds = () => (vocab ? [] : pickSentences(game.id, getContent(), settings));
   // Vocabulary games: both players draw from the same levels with a shared seed ("My words" stay out).
-  const vocabMatch = () => (vocab ? { seed: newSeed(), levels: settings.gameLevels, ...(game.kind === 'speed' ? { variant: answer } : game.kind === 'duel' ? { variant: duelLevel } : {}) } : undefined);
+  const vocabMatch = () =>
+    vocab
+      ? {
+          seed: newSeed(),
+          levels: settings.gameLevels,
+          ...(game.kind === 'speed' ? { variant: answer } : game.kind === 'duel' ? { variant: duelLevel, pool_size: poolSize } : {}),
+        }
+      : undefined;
   const needed = vocab ? MIN_VOCAB : ROUNDS;
   const poolSize = vocab ? vocabFor(getContent(), lang, settings.gameLevels, 'both').length : poolFor(game, getContent(), settings, lang).length;
   const needMore = vocab

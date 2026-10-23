@@ -769,6 +769,16 @@ const zh: Record<string, string> = {
   "Next card": "下一张卡",
   "Back to the current card": "回到当前卡片",
   "Done looking back": "回看结束",
+  "Word cards: Change definition (pick one or write your own)": "词语卡：可更改释义（选择一个或自己写）",
+  "Pinyin duel: missed words come back once the list runs out; a draw counts as a win for both": "拼音对决：词表用完后会重出答错的词；平局算双方都赢",
+  "Change definition": "更改释义",
+  "Pick the meaning to show on this word’s cards and in the word games.": "选择这个词在卡片和词语游戏中显示的意思。",
+  "Default": "默认",
+  "Write your own ({lang})": "自己写（{lang}）",
+  "You answered every word!": "你答完了所有的词！",
+  "words right, with lives to spare": "个词答对，还剩下生命",
+  "It's a draw: you both win!": "平局：你们都赢了！",
+  "Every word has been answered. Most lives left wins.": "所有的词都答完了。剩余生命最多的人获胜。",
 };
 
 export default zh;

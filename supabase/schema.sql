@@ -208,3 +208,5 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- move's time off the clock for a wrong guess; only running out of time costs a life.
 -- finish_stale_match(match_id) (migration finish_stale_match): the player who finished can close a
 -- match the opponent abandoned (speed rounds after 50 s, sentence games after 6 minutes).
+-- Duel word list (migration duel_word_list_end): matches.pool_size; duel state keeps n (current word),
+-- fresh (next new word) and replay (missed words). When all are answered the duel ends on lives.

@@ -146,6 +146,9 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
   const deadlineRef = useRef(0);
   const busy = useRef(false);
   const state = useRef({ index: 0, correct: 0, level: 'hard' as DuelLevel });
+  // Words are dealt once each; missed words come back after the list runs out.
+  const deal = useRef({ fresh: 1, replay: [] as number[] });
+  const [cleared, setCleared] = useState(false);
   const seqRef = useRef<((i: number) => VocabItem) | null>(null);
   const seq = run ? seqRef.current : null;
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -178,9 +181,27 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
     const seed = newSeed();
     seqRef.current = wordSequence(pool, seed);
     state.current = { index: 0, correct: 0, level };
+    deal.current = { fresh: 1, replay: [] };
+    setCleared(false);
     setRun({ seed, level });
     nextWord(0, 0);
   };
+
+  /** The next word: a new one while any are left, then the missed ones; none left means you've cleared the list. */
+  function advance(soFar: number) {
+    const dl = deal.current;
+    let next: number | undefined;
+    if (dl.fresh < pool.length) next = dl.fresh++;
+    else next = dl.replay.shift();
+    if (next === undefined) {
+      clearTimeout(timer.current);
+      setCleared(true);
+      setOver({ score: soFar, record: saveBest(bestId, lang, soFar) });
+      setRun(null);
+      return;
+    }
+    nextWord(next, soFar);
+  }
 
   /** Running out of time costs a life. */
   function timeUp() {
@@ -191,6 +212,7 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
     busy.current = true;
     recordRound(game.id, 'solo', false, Date.now() - shownAt.current, undefined, lang);
     setResults((r) => [...r, { item, ok: false }]);
+    deal.current.replay.push(index);
     setFeedback({ ok: false, text: t("Time's up! It was {answer}", { answer: lang === 'zh' ? readingsOf(item) : item.text }) });
     setLives((l) => {
       const left = l - 1;
@@ -199,7 +221,7 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
           setOver({ score: soFar, record: saveBest(bestId, lang, soFar) });
           setRun(null);
         }, 1600);
-      } else setTimeout(() => nextWord(index + 1, soFar), 1600);
+      } else setTimeout(() => advance(soFar), 1600);
       return left;
     });
   }
@@ -216,7 +238,7 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
       setResults((r) => [...r, { item, ok: true }]);
       setCorrect(soFar + 1);
       setFeedback({ ok: true, text: '✓' });
-      setTimeout(() => nextWord(index + 1, soFar + 1), 350);
+      setTimeout(() => advance(soFar + 1), 350);
       return;
     }
     const cut = WRONG_GUESS_PENALTY * duelSeconds(soFar, lv) * 1000;
@@ -236,9 +258,9 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
       {over ? (
         <>
           <div className="card center" role="status">
-            <h2 style={{ marginTop: 4 }}>{t('Out of lives!')}</h2>
+            <h2 style={{ marginTop: 4 }}>{cleared ? `${t('You answered every word!')} 🎉` : t('Out of lives!')}</h2>
             <div className="speed-final">{over.score}</div>
-            <p className="muted">{t('words right before your 4 lives ran out')}</p>
+            <p className="muted">{cleared ? t('words right, with lives to spare') : t('words right before your 4 lives ran out')}</p>
             {over.record ? <p className="xp-earned">{t('New best!')}</p> : best !== null && <p className="small muted">{t('Best: {n}', { n: best })}</p>}
             <DuelLevelPicker value={level} onChange={setLevel} />
             <button className="btn accent block" onClick={start}>{t('Play again')}</button>

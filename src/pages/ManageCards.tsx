@@ -5,7 +5,7 @@ import { updateSettings, useStore } from '../lib/store';
 import { cardKey, hiddenSet, setCardsHidden } from '../lib/srs';
 import { studyUnits } from '../lib/studyUnits';
 import { project, wordsFor } from '../lib/learn';
-import { vocabItem } from '../lib/vocab';
+import { glossOf, vocabItem } from '../lib/vocab';
 import { myVocab, useMyWords } from '../lib/myWords';
 import { levelName, useT } from '../i18n';
 import { IconBack } from '../components/Icons';
@@ -39,7 +39,7 @@ export default function ManageCards() {
       if (words) {
         const v = vocabItem(content, lang, u.id) ?? myVocab(lang).find((x) => x.id === u.id);
         const text = v?.text ?? u.id.slice(2);
-        return { id: u.id, level: u.level, main: text, sub: v ? `${v.py} · ${v.gloss}` : '', terms: lang === 'zh' && [...text].length > 1 ? [...new Set(text)] : [] };
+        return { id: u.id, level: u.level, main: text, sub: v ? `${v.py} · ${glossOf(v)}` : '', terms: lang === 'zh' && [...text].length > 1 ? [...new Set(text)] : [] };
       }
       const s = content.byId.get(u.id)!;
       const ls = project(s, lang);

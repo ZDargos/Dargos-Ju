@@ -11,6 +11,8 @@ import { isEnglishWord } from './english';
 import type { Content } from './content';
 import type { LearnLang } from './learn';
 import type { Sentence } from '../types';
+import { getState } from './store';
+import { shortGloss } from './vocabGame';
 
 export type WordKind = 'words' | 'chars' | 'both';
 
@@ -120,4 +122,17 @@ export function findVocab(content: Content, lang: LearnLang, text: string): Voca
   const w = lang === 'en' ? text.trim().toLowerCase() : text.trim();
   const key = WORD_PREFIX + (lang === 'en' ? content.enLemma[w] ?? w : w);
   return allItems(content, lang).find((v) => v.id === key);
+}
+
+/** Key for a word's chosen definition in settings.glossOverrides. */
+export const glossKey = (v: Pick<VocabItem, 'lang' | 'text'>) => `${v.lang}:${v.text}`;
+
+/**
+ * The meaning shown on word cards and in the word games: the definition the learner picked or
+ * wrote ("Change definition"), else the dictionary's (cut to its first meanings when `short`).
+ */
+export function glossOf(v: VocabItem, short = true): string {
+  const own = getState().settings.glossOverrides?.[glossKey(v)];
+  if (own) return own;
+  return short ? shortGloss(v.gloss) : v.gloss;
 }

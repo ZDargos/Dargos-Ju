@@ -5,7 +5,7 @@
 import { normalizeEnglish } from './english';
 import { pinyinLettersMatch } from './pinyin';
 import type { LearnLang } from './learn';
-import type { VocabItem } from './vocab';
+import { glossOf, type VocabItem } from './vocab';
 
 /** Small seeded random generator (mulberry32). */
 export function rng(seed: number) {
@@ -71,7 +71,7 @@ export interface ChoiceQuestion {
 export type SpeedAnswer = 'meaning' | 'sound';
 
 /** The text shown for an item as an answer or prompt. */
-export const answerText = (v: VocabItem, answer: SpeedAnswer) => (answer === 'sound' ? v.py.trim() : shortGloss(v.gloss));
+export const answerText = (v: VocabItem, answer: SpeedAnswer) => (answer === 'sound' ? v.py.trim() : glossOf(v));
 
 /** Items usable for the answer type (every item has a meaning; a few English words lack phonetics). */
 export const usableFor = (pool: VocabItem[], answer: SpeedAnswer) => (answer === 'sound' ? pool.filter((v) => v.py.trim()) : pool);

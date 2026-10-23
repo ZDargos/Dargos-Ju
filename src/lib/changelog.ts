@@ -14,6 +14,8 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-23',
     items: [
+      msg('Word cards: Change definition (pick one or write your own)'),
+      msg('Pinyin duel: missed words come back once the list runs out; a draw counts as a win for both'),
       msg('Study: a Back button to look at the cards you just saw'),
       msg('Vs games no longer get stuck on "Waiting for… to finish"'),
       msg('Typing games stay above the phone keyboard'),

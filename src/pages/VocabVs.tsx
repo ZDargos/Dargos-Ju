@@ -66,7 +66,8 @@ function Verdict({ match, iAmA, them, lines }: { match: Match; iAmA: boolean; th
   const navigate = useNavigate();
   const content = useContent();
   const w = decideWinner(match, content);
-  const text = w === 'tie' ? t("It's a tie") : (w === 'a') === iAmA ? `${t('You win!')} 🎉` : t('{name} wins', { name: them });
+  const duelDraw = match.game === 'word-duel' && w === 'tie';
+  const text = duelDraw ? `${t("It's a draw: you both win!")} 🎉` : w === 'tie' ? t("It's a tie") : (w === 'a') === iAmA ? `${t('You win!')} 🎉` : t('{name} wins', { name: them });
   return (
     <div className="card center" style={{ padding: 24 }} role="status">
       <h2 style={{ marginTop: 0 }}>{text}</h2>
@@ -274,7 +275,16 @@ export function DuelVs({ id }: { id: string }) {
     <Shell title={title} onLeave={leave} pinned={!finished}>
       {finished ? (
         <>
-          <Verdict match={match} iAmA={iAmA} them={names.them} lines={[t('Lives left: {me} – {them}', { me: myLives, them: theirLives }), t('{n} right answers in total', { n: d.correct })]} />
+          <Verdict
+            match={match}
+            iAmA={iAmA}
+            them={names.them}
+            lines={[
+              ...((d as { ended?: string }).ended === 'words' ? [t('Every word has been answered. Most lives left wins.')] : []),
+              t('Lives left: {me} – {them}', { me: myLives, them: theirLives }),
+              t('{n} right answers in total', { n: d.correct }),
+            ]}
+          />
           <VocabSummary results={results} />
         </>
       ) : (

@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { readingsOf, shortGloss } from '../lib/vocabGame';
+import { readingsOf } from '../lib/vocabGame';
+import { glossOf, type VocabItem } from '../lib/vocab';
 import { useT } from '../i18n';
 import DictPanel from './DictPanel';
-import type { VocabItem } from '../lib/vocab';
+
 
 export interface WordResult {
   item: VocabItem;
@@ -30,7 +31,7 @@ export default function VocabSummary({ results }: { results: WordResult[] }) {
                 <span className="grow">
                   <span className={`vs-word${r.item.lang === 'zh' ? ' zh' : ''}`} lang={r.item.lang === 'zh' ? 'zh-CN' : 'en'}>{r.item.text}</span>{' '}
                   <span className="small muted">{readingsOf(r.item)}</span>
-                  <span className="small" style={{ display: 'block' }} lang={r.item.lang === 'zh' ? 'en' : 'zh-CN'}>{shortGloss(r.item.gloss)}</span>
+                  <span className="small" style={{ display: 'block' }} lang={r.item.lang === 'zh' ? 'en' : 'zh-CN'}>{glossOf(r.item)}</span>
                 </span>
                 {(r.by || r.steal) && <span className="small muted">{[r.by, r.steal ? t('steal') : ''].filter(Boolean).join(' · ')}</span>}
               </button>

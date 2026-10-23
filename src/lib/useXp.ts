@@ -32,7 +32,8 @@ export async function refreshVsResults(): Promise<void> {
   if (!uid || uid === 'demo') return;
   const matches = await fetchMatchHistory();
   vsFor(uid);
-  vs = matches.map((m) => ({ id: m.id, at: m.at, win: m.outcome === 'win' }));
+  // A duel that ends level on lives is a draw that counts as a win for both players.
+  vs = matches.map((m) => ({ id: m.id, at: m.at, win: m.outcome === 'win' || (m.game === 'word-duel' && m.outcome === 'tie') }));
   try {
     localStorage.setItem(cacheKey(uid), JSON.stringify(vs));
   } catch {

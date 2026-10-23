@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getContent, useContent } from '../lib/content';
 import { getState, useStore } from '../lib/store';
 import { buildExtraPractice, buildFullDeck, buildSession, cardKey, fullDeckProgress, gradeCard, markFullDeckDone, previewIntervals, REQUEUE_WINDOW_MS, setCardsHidden, type SessionItem, type StudyUnit } from '../lib/srs';
-import { vocabItem, type VocabItem } from '../lib/vocab';
+import { glossOf, vocabItem, type VocabItem } from '../lib/vocab';
+import DefinitionPicker from '../components/DefinitionPicker';
 import { studyUnits } from '../lib/studyUnits';
 import { updateSettings } from '../lib/store';
 import { myVocab } from '../lib/myWords';
@@ -31,6 +32,7 @@ export default function Review() {
   const full = params.get('mode') === 'full';
   const words = params.get('deck') === 'words';
   const [dict, setDict] = useState<string | null>(null);
+  const [defining, setDefining] = useState<VocabItem | null>(null);
   const navigate = useNavigate();
   const content = useContent();
   const settings = useStore((s) => s.settings);
@@ -186,7 +188,7 @@ export default function Review() {
   ) : (
     <PinyinText tokens={sentence!.tokens} text={sentence!.target} lexicon={lexicon} show={pinyin} lang={lang} />
   );
-  const native = <span lang={targetIsZh ? 'en' : 'zh-CN'}>{word ? word.gloss : sentence!.native}</span>;
+  const native = <span lang={targetIsZh ? 'en' : 'zh-CN'}>{word ? glossOf(word, false) : sentence!.native}</span>;
 
   return (
     <>
@@ -246,7 +248,10 @@ export default function Review() {
                     <div className="small muted" lang={targetIsZh ? 'en' : 'zh-CN'}>{exampleView.native}</div>
                   </div>
                 )}
-                <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); setDict(word.text); }}>{t('Dictionary')}</button>
+                <div className="row" style={{ justifyContent: 'center', gap: 6 }}>
+                  <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); setDict(word.text); }}>{t('Dictionary')}</button>
+                  <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); setDefining(word); }}>{t('Change definition')}</button>
+                </div>
               </div>
             ) : (
               <WordBreakdown sentence={sentence!} lexicon={lexicon} />
@@ -299,6 +304,7 @@ export default function Review() {
         </div>
       )}
       {dict && <DictPanel word={dict} lang={lang} onClose={() => setDict(null)} />}
+      {defining && <DefinitionPicker item={defining} onClose={() => setDefining(null)} />}
     </>
   );
 }

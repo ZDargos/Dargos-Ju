@@ -106,7 +106,7 @@ export async function findMatch(game: string, lang: LearnLang, olderThan?: strin
   return asMatch(data);
 }
 
-export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string, vocab?: { seed: number; levels: number[]; variant?: string }): Promise<Match> {
+export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string, vocab?: { seed: number; levels: number[]; variant?: string; pool_size?: number }): Promise<Match> {
   const { data, error } = await supabase
     .from('matches')
     .insert({ game, sentence_ids: sentenceIds, is_public: !opponent, player_b: opponent ?? null, lang, lang_a: lang, ...(vocab ?? {}) })

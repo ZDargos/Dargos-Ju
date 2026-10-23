@@ -9,7 +9,7 @@ import { opsFor, project, tilesFor, wordsFor } from './learn';
 import { cleanEnglish, normalizeEnglish, tokenizeEnglish } from './english';
 import { DEFAULT_SETTINGS } from '../types';
 import { drawSentence } from './deck';
-import { vocabFor } from './vocab';
+import { glossOf, vocabFor } from './vocab';
 import { choiceQuestions, duelAnswerOk, duelSeconds, wordSequence } from './vocabGame';
 import { pinyinLettersMatch, pinyinMatches, toSapi } from './pinyin';
 import { BADGES, XP_RULES, badgeStatus, challengesFor, computeXp, dayKey, levelFor, xpForLevel } from './xp';
@@ -440,5 +440,18 @@ describe('full deck and hidden cards', () => {
     expect(buildFullDeck(units, s)).toHaveLength(7);
     setState({ settings: { ...s, ...setCardsHidden(hide.slice(0, 1), false, s) } });
     expect(buildSession(units, getState().settings)).toHaveLength(8);
+  });
+});
+
+describe('chosen definitions', () => {
+  it('a picked or written definition replaces the dictionary one', () => {
+    const v = vocabFor(getContent(), 'zh', [getContent().levels[0].level])[0];
+    setState({ settings: { ...DEFAULT_SETTINGS, glossOverrides: {} } });
+    const plain = glossOf(v);
+    setState({ settings: { ...DEFAULT_SETTINGS, glossOverrides: { [`zh:${v.text}`]: 'my meaning' } } });
+    expect(glossOf(v)).toBe('my meaning');
+    expect(glossOf(v, false)).toBe('my meaning');
+    setState({ settings: { ...DEFAULT_SETTINGS } });
+    expect(glossOf(v)).toBe(plain);
   });
 });

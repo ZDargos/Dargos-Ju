@@ -52,11 +52,16 @@ export default function Review() {
   const [revealed, setRevealed] = useState(false);
   const [tally, setTally] = useState<Record<Grade, number>>({ 1: 0, 2: 0, 3: 0 });
   const [finished, setFinished] = useState(new Set<string>());
+  // Cards already answered this session, for looking back. `peek` is how many cards back you are
+  // (null: on the current card). Looking back only shows the card; it doesn't grade it again.
+  const [history, setHistory] = useState<QueueItem[]>([]);
+  const [peek, setPeek] = useState<number | null>(null);
 
   const current = queue[0];
-  const source = current && !words ? content.byId.get(current.sid) : undefined;
+  const shownItem = peek !== null ? history[history.length - peek] : current;
+  const source = shownItem && !words ? content.byId.get(shownItem.sid) : undefined;
   const sentence = source ? project(source, lang) : undefined;
-  const word: VocabItem | undefined = current && words ? vocabItem(content, lang, current.sid) ?? myVocab(lang).find((v) => v.id === current.sid) : undefined;
+  const word: VocabItem | undefined = shownItem && words ? vocabItem(content, lang, shownItem.sid) ?? myVocab(lang).find((v) => v.id === shownItem.sid) : undefined;
   const lexicon = lexiconFor(content, lang);
   const intervals = useMemo(
     () => (current && revealed ? previewIntervals(current.sid, current.dir, { ...settings, learning: lang }) : null),
@@ -67,6 +72,7 @@ export default function Review() {
     (g: Grade) => {
       if (!current) return;
       const due = gradeCard(current.sid, current.dir, g, current.kind === 'extra', lang);
+      setHistory((h) => [...h.slice(-49), current]);
       setTally((x) => ({ ...x, [g]: x[g] + 1 }));
       setRevealed(false);
       if (full) {
@@ -105,6 +111,10 @@ export default function Review() {
     if (full) setDeck((d) => ({ ...d, total: d.total + 1 }));
     setHiddenNote(null);
   };
+  const canGoBack = peek === null ? history.length > 0 : peek < history.length;
+  const goBack = () => canGoBack && setPeek((p) => (p ?? 0) + 1);
+  const goForward = () => setPeek((p) => (p !== null && p > 1 ? p - 1 : null));
+
   useEffect(() => {
     if (!hiddenNote) return;
     const timer = setTimeout(() => setHiddenNote(null), 6000);
@@ -113,6 +123,11 @@ export default function Review() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') return goBack();
+      if (peek !== null) {
+        if (e.key === 'ArrowRight' || e.key === 'Escape') goForward();
+        return;
+      }
       if (!current) return;
       if (!revealed && (e.key === ' ' || e.key === 'Enter')) {
         e.preventDefault();
@@ -121,9 +136,9 @@ export default function Review() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [current, revealed, grade]);
+  });
 
-  if (!current || (!sentence && !word)) {
+  if (peek === null && (!current || (!sentence && !word))) {
     const reviewed = tally[1] + tally[2] + tally[3];
     return (
       <div className="center-screen">
@@ -144,6 +159,7 @@ export default function Review() {
             <p className="muted">{t('There are no cards for this selection right now.')}</p>
           )}
           <div className="stack" style={{ marginTop: 18 }}>
+            {history.length > 0 && <button className="btn block" onClick={goBack}>‹ {t('Look back at the last card')}</button>}
             <button className="btn primary block" onClick={() => navigate('/')}>{t('Done')}</button>
           </div>
         </div>
@@ -151,7 +167,8 @@ export default function Review() {
     );
   }
 
-  const reading = current.dir === 'r';
+  if (!shownItem || (!sentence && !word)) return null;
+  const reading = shownItem.dir === 'r';
   // Every answer moves the bar: answers so far out of answers so far plus answers still queued.
   const answers = tally[1] + tally[2] + tally[3];
   const left = full ? Math.max(0, deck.total - deck.done) : new Set(queue.map((q) => `${q.sid}|${q.dir}`)).size;
@@ -177,6 +194,9 @@ export default function Review() {
         <button className="icon-btn" onClick={() => navigate('/')} aria-label={t('End session')}>
           <IconClose />
         </button>
+        <button className="icon-btn back-card" onClick={goBack} disabled={!canGoBack} aria-label={t('Previous card')} title={t('Previous card')}>
+          ‹
+        </button>
         <div className="progress" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={t('{n} cards left', { n: left })}>
           <div style={{ width: `${progress * 100}%` }} />
         </div>
@@ -185,7 +205,7 @@ export default function Review() {
         </span>
       </div>
 
-      <div className="card flash" onClick={() => !revealed && setRevealed(true)} style={{ cursor: revealed ? 'default' : 'pointer' }}>
+      <div className={`card flash${peek !== null ? ' peeking' : ''}`} onClick={() => peek === null && !revealed && setRevealed(true)} style={{ cursor: revealed || peek !== null ? 'default' : 'pointer' }}>
         <div className="row" style={{ gap: 6 }}>
           <span className="dir-label">
             {word
@@ -196,10 +216,11 @@ export default function Review() {
                 ? t('Read · translate to {native}', names)
                 : t('Produce · say it in {target}', names)}
           </span>
-          {current.kind === 'new' && current.shown === 0 && <span className="tag new">{t('New')}</span>}
-          {current.kind === 'extra' && <span className="tag">{t('Extra')}</span>}
+          {peek !== null && <span className="tag">{t('Previous card')}</span>}
+          {peek === null && current.kind === 'new' && current.shown === 0 && <span className="tag new">{t('New')}</span>}
+          {peek === null && current.kind === 'extra' && <span className="tag">{t('Extra')}</span>}
           <span className="grow" />
-          <button
+          {peek === null && <button
             className="btn ghost sm hide-card"
             onClick={(e) => {
               e.stopPropagation();
@@ -208,12 +229,12 @@ export default function Review() {
             title={reading ? t('Hide this reading card') : t('Hide this producing card')}
           >
             {t('Hide')}
-          </button>
+          </button>}
         </div>
         {/* Reading shows the language being learned; producing shows your own language. */}
         <div className={reading === targetIsZh ? 'prompt-zh' : 'prompt-en'}>{reading ? target : native}</div>
 
-        {revealed && (
+        {(revealed || peek !== null) && (
           <div className="answer" aria-live="polite">
             <div className={reading === targetIsZh ? 'answer-en' : 'answer-zh'}>{reading ? native : target}</div>
             {word ? (
@@ -246,7 +267,14 @@ export default function Review() {
         )}
       </div>
 
-      {revealed ? (
+      {peek !== null ? (
+        <div className="row" style={{ gap: 8, marginTop: 14 }}>
+          <button className="btn grow" onClick={goBack} disabled={!canGoBack}>‹ {t('Earlier')}</button>
+          <button className="btn primary grow" style={{ minHeight: 60 }} onClick={goForward}>
+            {peek > 1 ? t('Next card') : current ? t('Back to the current card') : t('Done looking back')} ›
+          </button>
+        </div>
+      ) : revealed ? (
         <div className="grades">
           <button className="grade g1" onClick={() => grade(1)}>
             ✗ {t('Wrong')}<span className="iv">{intervals?.[1]}</span>

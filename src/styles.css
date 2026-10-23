@@ -529,3 +529,6 @@ html.kbd-tight .pinned-game .review-top { margin-bottom: 2px; }
 .word-chip { border: 1px solid var(--border); background: var(--surface); border-radius: 99px; padding: 3px 10px; font-size: 14px; cursor: pointer; color: inherit; }
 .word-chip .zh { font-size: 16px; }
 .word-chip.on { border-color: var(--accent); background: var(--accent-soft, var(--surface-2)); color: var(--accent); }
+.back-card { font-size: 26px; line-height: 1; }
+.back-card:disabled { opacity: 0.3; }
+.card.flash.peeking { border-style: dashed; }

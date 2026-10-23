@@ -762,6 +762,13 @@ const zh: Record<string, string> = {
   "Hide producing": "隐藏表达卡",
   "Hide both": "两张都隐藏",
   "Show all": "全部显示",
+  "Study: a Back button to look at the cards you just saw": "学习：新增返回按钮，可以回看刚才的卡片",
+  "Previous card": "上一张卡",
+  "Look back at the last card": "回看最后一张卡",
+  "Earlier": "更早",
+  "Next card": "下一张卡",
+  "Back to the current card": "回到当前卡片",
+  "Done looking back": "回看结束",
 };
 
 export default zh;

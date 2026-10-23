@@ -2,6 +2,7 @@
 // race through them; progress is shared over a Supabase Realtime broadcast channel, and final
 // scores are written through database functions so neither side can edit the other's result.
 
+import { useEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { shuffle } from './srs';
@@ -217,4 +218,32 @@ export async function duelWrong(id: string, turn: number): Promise<Match | null>
   const { data, error } = await supabase.rpc('duel_wrong', { match_id: id, turn });
   if (error) throw error;
   return asMatch(data);
+}
+
+/** Ends a match whose opponent left without finishing (the server checks enough time has passed). */
+export async function finishStaleMatch(id: string): Promise<Match | null> {
+  const { data } = await supabase.rpc('finish_stale_match', { match_id: id });
+  return asMatch(data);
+}
+
+/**
+ * Backup for the live updates: while a match is running, re-reads it every few seconds and when the
+ * app comes back to the front, so a missed update never leaves a player stuck waiting. Once I've
+ * finished, it also asks the server to close the match if the opponent has left.
+ */
+export function useMatchRefresh(id: string, running: boolean, iFinished: boolean, onMatch: (m: Match) => void) {
+  useEffect(() => {
+    if (!running) return;
+    const refresh = async () => {
+      const m = iFinished ? (await finishStaleMatch(id)) ?? (await getMatch(id)) : await getMatch(id);
+      if (m) onMatch(m);
+    };
+    const timer = setInterval(() => refresh().catch(() => undefined), 2500);
+    const onVisible = () => document.visibilityState === 'visible' && refresh().catch(() => undefined);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [id, running, iFinished]); // eslint-disable-line react-hooks/exhaustive-deps
 }

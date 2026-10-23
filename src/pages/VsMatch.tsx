@@ -10,6 +10,7 @@ import {
   joinLive,
   reportProgress,
   submitResult,
+  useMatchRefresh,
   watchMyMatches,
   type LiveChannel,
   type Match,
@@ -111,6 +112,7 @@ function VsMatch() {
     };
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useMatchRefresh(id, !!match && (match.status === 'active' || match.status === 'waiting'), mine.done, setMatch);
   const iAmA = !!match && me === match.player_a;
   // Each player answers in the language they're learning, even when the opponent learns the other one.
   const myLang: LearnLang = (match ? (iAmA ? match.lang_a : match.lang_b) : null) ?? settings.learning;

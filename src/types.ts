@@ -115,6 +115,10 @@ export interface Settings {
   wordKind?: 'words' | 'chars' | 'both';
   /** New word cards per day (sentences use newPerDay). */
   wordsNewPerDay?: number;
+  /** Study every card of the selected levels once per pass instead of scheduled sessions. */
+  fullDeck?: boolean;
+  /** Card keys (as in cards) someone chose to hide from study. */
+  hiddenCards?: string[];
   /** Daily XP goal changes (lib/xp.ts); each applies from its day on, so past days keep their goal. */
   goalHistory?: { from: string; xp: number }[];
 }

@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { parseSentenceCsv } from './csv';
 import { getContent } from './content';
 import { setState, getState } from './store';
-import { buildExtraPractice, buildSession, cardKey, gradeCard, sentenceUnits } from './srs';
+import { buildExtraPractice, buildFullDeck, buildSession, cardKey, fullDeckProgress, gradeCard, markFullDeckDone, sentenceUnits, setCardsHidden } from './srs';
 import { termDifficulty } from './stats';
 import { mutate, vocabOf } from '../games/common';
 import { opsFor, project, tilesFor, wordsFor } from './learn';
@@ -390,5 +390,55 @@ describe('vocabulary games', () => {
     const s = computeXp({ logs: [], rounds, vs: [], liveVoices: 0, goalHistory: [], now: Date.parse(at(30)) });
     const challenge = s.today.challengesDone * XP_RULES.challenge + (s.today.challengesDone === 3 ? XP_RULES.sweep : 0);
     expect(s.today.xp - challenge).toBe(0);
+  });
+});
+
+describe('full deck and hidden cards', () => {
+  const content = getContent();
+  const mem = new Map<string, string>();
+  globalThis.localStorage ??= {
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => void mem.set(k, v),
+    removeItem: (k: string) => void mem.delete(k),
+    clear: () => mem.clear(),
+    key: (i: number) => [...mem.keys()][i] ?? null,
+    get length() {
+      return mem.size;
+    },
+  };
+
+  it('goes through every card once per pass, readings first, then reshuffles', () => {
+    localStorage.clear();
+    setState({ cards: {}, logs: [], settings: { ...DEFAULT_SETTINGS, directions: 'both' } });
+    const s = getState().settings;
+    const units = sentenceUnits(content, [content.levels[0].level]).slice(0, 10);
+    const first = buildFullDeck(units, s);
+    expect(first).toHaveLength(20);
+    expect(first.slice(0, 10).every((i) => i.dir === 'r')).toBe(true);
+    for (const item of first.slice(0, 7)) markFullDeckDone(units, s, item);
+    expect(fullDeckProgress(units, s)).toEqual({ done: 7, total: 20 });
+    expect(buildFullDeck(units, s).map((i) => i.sid + i.dir)).toEqual(first.slice(7).map((i) => i.sid + i.dir));
+    let complete = false;
+    for (const item of first.slice(7)) complete = markFullDeckDone(units, s, item);
+    expect(complete).toBe(true);
+    expect(fullDeckProgress(units, s)).toEqual({ done: 0, total: 20 });
+    // Another level combination has its own order.
+    const other = sentenceUnits(content, [content.levels[1].level]).slice(0, 5);
+    expect(fullDeckProgress(other, s)).toEqual({ done: 0, total: 10 });
+  });
+
+  it('hidden cards never come up in sessions or the full deck', () => {
+    localStorage.clear();
+    const units = sentenceUnits(content, [content.levels[0].level]).slice(0, 10);
+    setState({ cards: {}, logs: [], settings: { ...DEFAULT_SETTINGS, directions: 'r', newPerDay: 50, sessionSize: 50 } });
+    const hide = units.slice(0, 3).map((u) => cardKey(u.id, 'r'));
+    setState({ settings: { ...getState().settings, ...setCardsHidden(hide, true, getState().settings) } });
+    const s = getState().settings;
+    const session = buildSession(units, s);
+    expect(session.some((i) => hide.includes(cardKey(i.sid, i.dir)))).toBe(false);
+    expect(session).toHaveLength(7);
+    expect(buildFullDeck(units, s)).toHaveLength(7);
+    setState({ settings: { ...s, ...setCardsHidden(hide.slice(0, 1), false, s) } });
+    expect(buildSession(units, getState().settings)).toHaveLength(8);
   });
 });

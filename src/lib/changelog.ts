@@ -14,6 +14,10 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-23',
     items: [
+      msg('Vs games no longer get stuck on "Waiting for… to finish"'),
+      msg('Typing games stay above the phone keyboard'),
+      msg('Full deck study: every card once per pass'),
+      msg('Hide cards while studying, or in Manage cards'),
       msg('Typing games keep the keyboard open between words'),
       msg('A pop-up after each update points to What\'s new'),
       msg('Pinyin duel: every reading counts (胖 = pàng or pán)'),

@@ -206,3 +206,5 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- Duel difficulty (migration duel_difficulty_and_wrong_guesses): matches.variant 'easy' | 'medium' |
 -- 'hard' picks the clock in private.duel_seconds(correct, variant). duel_wrong() takes 20% of the
 -- move's time off the clock for a wrong guess; only running out of time costs a life.
+-- finish_stale_match(match_id) (migration finish_stale_match): the player who finished can close a
+-- match the opponent abandoned (speed rounds after 50 s, sentence games after 6 minutes).

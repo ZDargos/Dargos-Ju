@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getContent, useContent } from '../lib/content';
 import { getState, useStore } from '../lib/store';
-import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_WINDOW_MS, sentenceUnits, type SessionItem } from '../lib/srs';
-import { vocabFor, vocabItem, type VocabItem } from '../lib/vocab';
+import { buildExtraPractice, buildFullDeck, buildSession, cardKey, fullDeckProgress, gradeCard, markFullDeckDone, previewIntervals, REQUEUE_WINDOW_MS, setCardsHidden, type SessionItem, type StudyUnit } from '../lib/srs';
+import { vocabItem, type VocabItem } from '../lib/vocab';
+import { studyUnits } from '../lib/studyUnits';
+import { updateSettings } from '../lib/store';
 import { myVocab } from '../lib/myWords';
 import DictPanel from '../components/DictPanel';
 import { lexiconFor, project } from '../lib/learn';
@@ -25,6 +27,8 @@ export default function Review() {
   const t = useT();
   const [params] = useSearchParams();
   const extra = params.get('mode') === 'extra';
+  // Full deck: every card of the selected levels once per pass, in the deck's shuffled order.
+  const full = params.get('mode') === 'full';
   const words = params.get('deck') === 'words';
   const [dict, setDict] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -36,17 +40,15 @@ export default function Review() {
   // The session keeps the learning mode it started in.
   const [lang] = useState(() => getState().settings.learning);
 
+  const [units] = useState<StudyUnit[]>(() => studyUnits(getContent(), getState().settings, words));
   const [queue, setQueue] = useState<QueueItem[]>(() => {
     const s = getState().settings;
-    const c = getContent();
-    const units = words
-      ? [...myVocab(s.learning), ...vocabFor(c, s.learning, s.studyLevels, s.learning === 'zh' ? s.wordKind ?? 'both' : 'words')]
-          .filter((v, i, all) => all.findIndex((x) => x.id === v.id) === i)
-          .map((v) => ({ id: v.id, level: v.level }))
-      : sentenceUnits(c, s.studyLevels);
-    const items = extra ? buildExtraPractice(units, s) : buildSession(units, s);
+    const items = full ? buildFullDeck(units, s) : extra ? buildExtraPractice(units, s) : buildSession(units, s);
     return items.map((i) => ({ ...i, shown: 0 }));
   });
+  const [deck, setDeck] = useState(() => (full ? fullDeckProgress(units, getState().settings) : { done: 0, total: 0 }));
+  const [passDone, setPassDone] = useState(false);
+  const [hiddenNote, setHiddenNote] = useState<QueueItem | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [tally, setTally] = useState<Record<Grade, number>>({ 1: 0, 2: 0, 3: 0 });
   const [finished, setFinished] = useState(new Set<string>());
@@ -67,8 +69,13 @@ export default function Review() {
       const due = gradeCard(current.sid, current.dir, g, current.kind === 'extra', lang);
       setTally((x) => ({ ...x, [g]: x[g] + 1 }));
       setRevealed(false);
+      if (full) {
+        // Each card once per pass.
+        if (markFullDeckDone(units, { ...getState().settings, learning: lang }, current)) setPassDone(true);
+        setDeck((d) => ({ ...d, done: d.done + 1 }));
+      }
       // Cards still in a short learning step (e.g. new cards, wrong answers) come back this session.
-      const again = due.getTime() - Date.now() <= REQUEUE_WINDOW_MS && current.shown + 1 < MAX_REPEATS;
+      const again = !full && due.getTime() - Date.now() <= REQUEUE_WINDOW_MS && current.shown + 1 < MAX_REPEATS;
       if (!again) setFinished((f) => new Set(f).add(`${current.sid}|${current.dir}`));
       setQueue((q) => {
         const [head, ...rest] = q;
@@ -78,8 +85,31 @@ export default function Review() {
         return [...rest.slice(0, pos), { ...head, shown: head.shown + 1 }, ...rest.slice(pos)];
       });
     },
-    [current, lang],
+    [current, lang, full, units],
   );
+
+  /** Hides this card for good (this direction only); Undo brings it back. */
+  const hideCurrent = () => {
+    if (!current) return;
+    const s = getState().settings;
+    updateSettings(setCardsHidden([cardKey(current.sid, current.dir, lang)], true, s));
+    setRevealed(false);
+    setHiddenNote(current);
+    setQueue((q) => q.filter((i) => !(i.sid === current.sid && i.dir === current.dir)));
+    if (full) setDeck((d) => ({ ...d, total: Math.max(0, d.total - 1) }));
+  };
+  const undoHide = () => {
+    if (!hiddenNote) return;
+    updateSettings(setCardsHidden([cardKey(hiddenNote.sid, hiddenNote.dir, lang)], false, getState().settings));
+    setQueue((q) => [hiddenNote, ...q]);
+    if (full) setDeck((d) => ({ ...d, total: d.total + 1 }));
+    setHiddenNote(null);
+  };
+  useEffect(() => {
+    if (!hiddenNote) return;
+    const timer = setTimeout(() => setHiddenNote(null), 6000);
+    return () => clearTimeout(timer);
+  }, [hiddenNote]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -98,7 +128,8 @@ export default function Review() {
     return (
       <div className="center-screen">
         <div className="card center" style={{ width: '100%', maxWidth: 420 }} role="status">
-          <h2 style={{ marginTop: 4 }}>{reviewed ? t('Session complete') : t('Nothing to review')}</h2>
+          <h2 style={{ marginTop: 4 }}>{passDone ? t('Whole deck done!') : reviewed ? t('Session complete') : t('Nothing to review')}</h2>
+          {passDone && <p className="muted">{t("You've been through every card in this deck. It will be shuffled for the next pass.")}</p>}
           {reviewed > 0 ? (
             <>
               <p className="muted">{t('{cards} cards, {answers} answers', { cards: finished.size, answers: reviewed })}</p>
@@ -123,8 +154,8 @@ export default function Review() {
   const reading = current.dir === 'r';
   // Every answer moves the bar: answers so far out of answers so far plus answers still queued.
   const answers = tally[1] + tally[2] + tally[3];
-  const progress = answers / (answers + queue.length);
-  const left = new Set(queue.map((q) => `${q.sid}|${q.dir}`)).size;
+  const left = full ? Math.max(0, deck.total - deck.done) : new Set(queue.map((q) => `${q.sid}|${q.dir}`)).size;
+  const progress = full ? (deck.total ? deck.done / deck.total : 0) : answers / (answers + queue.length);
   const targetIsZh = lang === 'zh';
   const names = { target: langName(lang), native: langName(targetIsZh ? 'en' : 'zh') };
   const spoken = word ? word.text : sentence!.target;
@@ -150,7 +181,7 @@ export default function Review() {
           <div style={{ width: `${progress * 100}%` }} />
         </div>
         <span className="small muted" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          {t('{n} left', { n: left })}
+          {full ? `${deck.done}/${deck.total}` : t('{n} left', { n: left })}
         </span>
       </div>
 
@@ -167,6 +198,17 @@ export default function Review() {
           </span>
           {current.kind === 'new' && current.shown === 0 && <span className="tag new">{t('New')}</span>}
           {current.kind === 'extra' && <span className="tag">{t('Extra')}</span>}
+          <span className="grow" />
+          <button
+            className="btn ghost sm hide-card"
+            onClick={(e) => {
+              e.stopPropagation();
+              hideCurrent();
+            }}
+            title={reading ? t('Hide this reading card') : t('Hide this producing card')}
+          >
+            {t('Hide')}
+          </button>
         </div>
         {/* Reading shows the language being learned; producing shows your own language. */}
         <div className={reading === targetIsZh ? 'prompt-zh' : 'prompt-en'}>{reading ? target : native}</div>
@@ -222,6 +264,12 @@ export default function Review() {
         </button>
       )}
       <PinyinToggle section="study" />
+      {hiddenNote && (
+        <div className="banner hidden-note" role="status">
+          <span className="grow">{hiddenNote.dir === 'r' ? t('Reading card hidden. Bring it back any time from Manage cards.') : t('Producing card hidden. Bring it back any time from Manage cards.')}</span>
+          <button className="btn sm" onClick={undoHide}>{t('Undo')}</button>
+        </div>
+      )}
       {dict && <DictPanel word={dict} lang={lang} onClose={() => setDict(null)} />}
     </>
   );

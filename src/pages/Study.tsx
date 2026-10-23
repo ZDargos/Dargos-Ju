@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { updateSettings, useStore } from '../lib/store';
-import { sentenceUnits, studyCounts } from '../lib/srs';
-import { vocabFor } from '../lib/vocab';
-import { myVocab, useMyWords } from '../lib/myWords';
+import { fullDeckProgress, studyCounts } from '../lib/srs';
+import { studyUnits } from '../lib/studyUnits';
+import { useMyWords } from '../lib/myWords';
 import MyWords from '../components/MyWords';
 import { langParams, useT } from '../i18n';
 import LevelPicker from '../components/LevelPicker';
@@ -29,14 +29,13 @@ export default function Study() {
   const wordKind = settings.learning === 'zh' ? settings.wordKind ?? 'both' : 'words';
   const myWords = useMyWords();
   const units = useMemo(
-    () =>
-      words
-        ? [...myVocab(settings.learning), ...vocabFor(content, settings.learning, levels, wordKind)]
-            .filter((v, i, all) => all.findIndex((x) => x.id === v.id) === i)
-            .map((v) => ({ id: v.id, level: v.level }))
-        : sentenceUnits(content, levels),
+    () => studyUnits(content, settings, words, levels),
     [content, words, settings.learning, levels.join(','), wordKind, myWords], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const full = !!settings.fullDeck;
+  const hiddenCount = (settings.hiddenCards ?? []).filter((k) => (settings.learning === 'en' ? k.startsWith('en:') : !k.startsWith('en:'))).length;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const deck = useMemo(() => (full ? fullDeckProgress(units, settings) : { done: 0, total: 0 }), [full, units, settings, cards]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const counts = useMemo(() => studyCounts(units, settings), [units, settings, cards]);
   const newLimit = words ? settings.wordsNewPerDay ?? 15 : settings.newPerDay;
@@ -133,6 +132,32 @@ export default function Study() {
 
       {words && <MyWords />}
 
+      <div className="card" style={{ marginTop: 12, paddingTop: 4, paddingBottom: 4 }}>
+        <div className="toggle-row">
+          <div>
+            <div style={{ fontWeight: 600 }}>{t('Full deck')}</div>
+            <div className="small muted">{t('Go through every card of the selected levels once, in random order, before the deck is shuffled again. Each level combination keeps its own place.')}</div>
+          </div>
+          <label className="switch" aria-label={t('Full deck')}>
+            <input type="checkbox" checked={full} onChange={(e) => updateSettings({ fullDeck: e.target.checked })} />
+            <span />
+          </label>
+        </div>
+        <div className="toggle-row">
+          <div className="small muted">{hiddenCount ? t('{n} cards hidden', { n: hiddenCount }) : t('Hide cards you never want to see again.')}</div>
+          <Link to="/cards" className="btn sm">{t('Manage cards')}</Link>
+        </div>
+      </div>
+
+      {full ? (
+        <div className="card" style={{ marginTop: 12 }}>
+          <div className="spread small" style={{ marginBottom: 6 }}>
+            <strong>{t('This pass through the deck')}</strong>
+            <span className="muted">{deck.done} / {deck.total}</span>
+          </div>
+          <div className="progress" aria-hidden><div style={{ width: `${deck.total ? (deck.done / deck.total) * 100 : 0}%` }} /></div>
+        </div>
+      ) : (
       <div className="stat-grid" style={{ marginTop: 12, gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="stat">
           <div className="value">{levels.length ? counts.due : '–'}</div>
@@ -147,15 +172,22 @@ export default function Study() {
           <div className="label">{t('Unseen')}</div>
         </div>
       </div>
+      )}
 
       <div className="stack" style={{ marginTop: 16 }}>
-        <button className="btn accent block" disabled={!canStudy} onClick={() => navigate(words ? '/review?mode=study&deck=words' : '/review?mode=study')}>
-          {canStudy ? t('Start session') : levels.length ? t('All caught up') : t('Pick a level to start')}
-        </button>
+        {full ? (
+          <button className="btn accent block" disabled={!deck.total} onClick={() => navigate(words ? '/review?mode=full&deck=words' : '/review?mode=full')}>
+            {!deck.total ? t('Pick a level to start') : deck.done ? t('Continue the deck') : t('Start the deck')}
+          </button>
+        ) : (
+          <button className="btn accent block" disabled={!canStudy} onClick={() => navigate(words ? '/review?mode=study&deck=words' : '/review?mode=study')}>
+            {canStudy ? t('Start session') : levels.length ? t('All caught up') : t('Pick a level to start')}
+          </button>
+        )}
         <button className="btn block" disabled={!levels.length || counts.seen === 0} onClick={() => navigate(words ? '/review?mode=extra&deck=words' : '/review?mode=extra')}>
           {t('Extra practice on weak cards')}
         </button>
-        {levels.length > 0 && counts.due === 0 && newLeft === 0 && counts.newAvailable > 0 && (
+        {!full && levels.length > 0 && counts.due === 0 && newLeft === 0 && counts.newAvailable > 0 && (
           <p className="small muted center">{t("You've reached today's limit of {n} new cards. You can raise it in Settings.", { n: newLimit })}</p>
         )}
       </div>

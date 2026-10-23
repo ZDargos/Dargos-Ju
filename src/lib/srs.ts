@@ -144,6 +144,21 @@ export function newIntroducedToday(lang: LearnLang = getState().settings.learnin
   return getState().logs.filter((l) => l.mode === 'new' && l.at >= since && logLang(l) === lang && isWordId(l.sid) === words).length;
 }
 
+// ---------- Hidden cards ----------
+
+/** Cards someone chose never to see again (card keys, per learning mode). */
+export const hiddenSet = (settings: Settings) => new Set(settings.hiddenCards ?? []);
+
+/** Settings patch that hides or shows cards. */
+export function setCardsHidden(keys: string[], hide: boolean, settings: Settings): Pick<Settings, 'hiddenCards'> {
+  const set = hiddenSet(settings);
+  for (const k of keys) {
+    if (hide) set.add(k);
+    else set.delete(k);
+  }
+  return { hiddenCards: [...set] };
+}
+
 /** Something with two cards (reading and producing): a sentence, or a word ("w:" ids). */
 export interface StudyUnit {
   id: string;
@@ -177,6 +192,7 @@ interface Candidates {
 
 function collect(units: StudyUnit[], settings: Settings, now: Date): Candidates {
   const cards = getState().cards;
+  const hidden = hiddenSet(settings);
   const dirs = allowedDirs(settings);
   const due: Candidates['due'] = [];
   const fresh: SessionItem[] = [];
@@ -187,11 +203,13 @@ function collect(units: StudyUnit[], settings: Settings, now: Date): Candidates 
     let best: { item: SessionItem; r: number } | undefined;
     let newDir: Dir | undefined;
     for (const dir of dirs) {
+      if (hidden.has(cardKey(s.id, dir, settings.learning))) continue;
       const rec = cards[cardKey(s.id, dir, settings.learning)];
       if (isNewCard(rec)) {
-        // In "both" mode the producing card is introduced only after the sentence has been read once.
+        // In "both" mode the producing card is introduced only after the sentence has been read once
+        // (unless the reading card is hidden).
         const readRec = cards[cardKey(s.id, 'r', settings.learning)];
-        if (dir === 'p' && settings.directions === 'both' && isNewCard(readRec)) continue;
+        if (dir === 'p' && settings.directions === 'both' && isNewCard(readRec) && !hidden.has(cardKey(s.id, 'r', settings.learning))) continue;
         if (!newDir) newDir = dir;
         continue;
       }
@@ -263,3 +281,90 @@ export function buildExtraPractice(units: StudyUnit[], settings: Settings): Sess
 export const REQUEUE_WINDOW_MS = 20 * 60 * 1000;
 
 export const sentenceOf = (content: Content, sid: string): Sentence | undefined => content.byId.get(sid);
+
+// ---------- Full deck ----------
+// "Full deck" study goes through every card of the selected levels once, in a shuffled order,
+// before the deck is shuffled again. Each combination of levels (and mode, deck and directions) has
+// its own order, remembered on this device. Reading cards come before producing cards in a pass.
+
+interface FullDeckState {
+  order: string[];
+  done: string[];
+}
+
+const fullDeckKey = (units: StudyUnit[], settings: Settings) => {
+  const levels = [...new Set(units.map((u) => u.level))].sort((a, b) => a - b).join(',');
+  return `dj:full-deck:${getState().userId ?? 'anon'}:${settings.learning}:${isWordDeck(units) ? 'words' : 'sentences'}:${settings.directions}:${levels}`;
+};
+
+const itemId = (i: { sid: string; dir: Dir }) => `${i.sid}|${i.dir}`;
+
+function deckCards(units: StudyUnit[], settings: Settings): string[] {
+  const hidden = hiddenSet(settings);
+  const out: string[] = [];
+  for (const dir of allowedDirs(settings))
+    for (const u of units) if (!hidden.has(cardKey(u.id, dir, settings.learning))) out.push(itemId({ sid: u.id, dir }));
+  return out;
+}
+
+/** A new pass: reading cards shuffled, then producing cards shuffled. */
+const freshOrder = (cards: string[]) => [...shuffle(cards.filter((c) => c.endsWith('|r'))), ...shuffle(cards.filter((c) => c.endsWith('|p')))];
+
+function loadFullDeck(units: StudyUnit[], settings: Settings): { key: string; state: FullDeckState; cards: string[] } {
+  const key = fullDeckKey(units, settings);
+  const cards = deckCards(units, settings);
+  const present = new Set(cards);
+  let state: FullDeckState | null = null;
+  try {
+    state = JSON.parse(localStorage.getItem(key) ?? 'null');
+  } catch {
+    /* start a new pass */
+  }
+  if (!state) state = { order: freshOrder(cards), done: [] };
+  // Cards hidden or removed since drop out; new ones join the end of this pass.
+  const inOrder = new Set(state.order);
+  const order = [...state.order.filter((c) => present.has(c)), ...freshOrder(cards.filter((c) => !inOrder.has(c)))];
+  const done = state.done.filter((c) => present.has(c));
+  state = { order, done };
+  if (order.length && done.length >= order.length) state = { order: freshOrder(cards), done: [] };
+  return { key, state, cards };
+}
+
+function saveFullDeck(key: string, state: FullDeckState) {
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch {
+    /* progress through the pass isn't remembered */
+  }
+}
+
+/** Where you are in the current pass. */
+export function fullDeckProgress(units: StudyUnit[], settings: Settings): { done: number; total: number } {
+  const { state } = loadFullDeck(units, settings);
+  return { done: state.done.length, total: state.order.length };
+}
+
+/** The rest of the current pass, in order. */
+export function buildFullDeck(units: StudyUnit[], settings: Settings): SessionItem[] {
+  const { key, state } = loadFullDeck(units, settings);
+  saveFullDeck(key, state);
+  const done = new Set(state.done);
+  const cards = getState().cards;
+  return state.order
+    .filter((c) => !done.has(c))
+    .map((c) => {
+      const i = c.lastIndexOf('|');
+      const sid = c.slice(0, i);
+      const dir = c.slice(i + 1) as Dir;
+      return { sid, dir, kind: isNewCard(cards[cardKey(sid, dir, settings.learning)]) ? 'new' : 'review' } as SessionItem;
+    });
+}
+
+/** Marks a card done in this pass. Returns true when the pass is complete. */
+export function markFullDeckDone(units: StudyUnit[], settings: Settings, item: { sid: string; dir: Dir }): boolean {
+  const { key, state } = loadFullDeck(units, settings);
+  const id = itemId(item);
+  if (!state.done.includes(id)) state.done.push(id);
+  saveFullDeck(key, state);
+  return state.done.length >= state.order.length;
+}

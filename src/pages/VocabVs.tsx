@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { useSettings } from '../lib/store';
-import { cancelMatch, decideWinner, duelAnswer, duelTimeout, duelWrong, getMatch, joinLive, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
+import { cancelMatch, decideWinner, duelAnswer, duelTimeout, duelWrong, useMatchRefresh, getMatch, joinLive, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
 import { gameById, gameName } from '../games/registry';
@@ -15,6 +15,7 @@ import { IconClose } from '../components/Icons';
 import SpeedRound, { answerLabel, SPEED_MS, type SpeedResult } from '../games/SpeedRound';
 import DuelBoard, { duelLevelName } from '../games/DuelBoard';
 import type { LearnLang } from '../lib/learn';
+import { usePinnedToViewport } from '../lib/viewport';
 
 /** Loads a match, both names, and keeps the match row live. */
 function useMatch(id: string) {
@@ -45,16 +46,18 @@ function useMatch(id: string) {
   return { me, match, setMatch, names, error, iAmA, myLang, theirLang };
 }
 
-function Shell({ title, onLeave, children }: { title: string; onLeave: () => void; children: React.ReactNode }) {
+function Shell({ title, onLeave, children, pinned = false }: { title: string; onLeave: () => void; children: React.ReactNode; pinned?: boolean }) {
   const t = useT();
+  // Typing games stay pinned to the visible screen above the phone keyboard.
+  usePinnedToViewport(pinned);
   return (
-    <>
+    <div className={pinned ? 'pinned-game' : undefined}>
       <div className="review-top">
         <button className="icon-btn" onClick={onLeave} aria-label={t('Leave match')}><IconClose /></button>
         <strong className="grow">{title}</strong>
       </div>
       {children}
-    </>
+    </div>
   );
 }
 
@@ -85,6 +88,7 @@ export function SpeedVs({ id }: { id: string }) {
   const { me, match, setMatch, names, error, iAmA, myLang, theirLang } = useMatch(id);
   const [theirs, setTheirs] = useState<ProgressEvent>({ round: 0, score: 0, results: [], done: false });
   const [mine, setMine] = useState<SpeedResult | null>(null);
+  useMatchRefresh(id, !!match && (match.status === 'active' || match.status === 'waiting'), !!mine, (m) => setMatch((cur) => ({ ...cur, ...m })));
   const [live, setLive] = useState(0);
   const [words, setWords] = useState<WordResult[]>([]);
   const channel = useRef<LiveChannel | null>(null);
@@ -174,6 +178,7 @@ export function DuelVs({ id }: { id: string }) {
   const content = useContent();
   useSettings();
   const { me, match, setMatch, names, error, iAmA, myLang, theirLang } = useMatch(id);
+  useMatchRefresh(id, !!match && (match.status === 'active' || match.status === 'waiting'), false, (m) => setMatch((cur) => ({ ...cur, ...m })));
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const [penalty, setPenalty] = useState<{ text: string; key: number } | null>(null);
   const [results, setResults] = useState<WordResult[]>([]);
@@ -266,7 +271,7 @@ export function DuelVs({ id }: { id: string }) {
   };
 
   return (
-    <Shell title={title} onLeave={leave}>
+    <Shell title={title} onLeave={leave} pinned={!finished}>
       {finished ? (
         <>
           <Verdict match={match} iAmA={iAmA} them={names.them} lines={[t('Lives left: {me} – {them}', { me: myLives, them: theirLives }), t('{n} right answers in total', { n: d.correct })]} />

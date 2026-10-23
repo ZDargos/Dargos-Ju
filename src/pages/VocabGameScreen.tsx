@@ -6,6 +6,7 @@ import { gameName, MIN_VOCAB, vocabPoolFor, type GameDef } from '../games/regist
 import { recordRound } from '../lib/gameStats';
 import { DUEL_LIVES, duelAnswerOk, duelSeconds, newSeed, readingsOf, WRONG_GUESS_PENALTY, wordSequence, type DuelLevel } from '../lib/vocabGame';
 import VocabSummary, { type WordResult } from '../components/VocabSummary';
+import { usePinnedToViewport } from '../lib/viewport';
 import type { VocabItem } from '../lib/vocab';
 import { useT } from '../i18n';
 import { IconClose } from '../components/Icons';
@@ -225,8 +226,12 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
     armTimer();
   }
 
+  // While a run is on, the game stays pinned to the visible screen above the phone keyboard.
+  const playing = !!run && !!seq && !over;
+  usePinnedToViewport(playing);
+
   return (
-    <>
+    <div className={playing ? 'pinned-game' : undefined}>
       <Top game={game} />
       {over ? (
         <>
@@ -265,6 +270,6 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
           <button className="btn accent block" onClick={start}>{t('Start')}</button>
         </div>
       )}
-    </>
+    </div>
   );
 }

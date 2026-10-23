@@ -24,6 +24,7 @@ import VsMatch from './pages/VsMatch';
 import ChallengePage from './pages/ChallengePage';
 import Voice from './pages/Voice';
 import Progress from './pages/Progress';
+import ManageCards from './pages/ManageCards';
 import { XpWatcher } from './components/XpBits';
 import RecordingVote from './components/RecordingVote';
 import ChallengeBanner from './components/ChallengeBanner';
@@ -105,6 +106,7 @@ export default function App() {
           <Route path="/challenge/:id" element={<ChallengePage />} />
           <Route path="/voice" element={<Voice />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/cards" element={<ManageCards />} />
           <Route path="/settings" element={<SettingsPage isAdmin={auth.isAdmin} email={auth.session?.user.email ?? ''} />} />
           <Route path="/admin" element={auth.isAdmin ? <Admin /> : <Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

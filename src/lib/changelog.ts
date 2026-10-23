@@ -18,6 +18,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       msg('Typing games stay above the phone keyboard'),
       msg('Full deck study: every card once per pass'),
       msg('Hide cards while studying, or in Manage cards'),
+      msg('Manage cards: group cards by a word they contain'),
       msg('Typing games keep the keyboard open between words'),
       msg('A pop-up after each update points to What\'s new'),
       msg('Pinyin duel: every reading counts (胖 = pàng or pán)'),

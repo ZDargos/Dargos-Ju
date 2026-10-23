@@ -749,6 +749,19 @@ const zh: Record<string, string> = {
   "{hidden} of {total} cards hidden in these levels": "这些级别的{total}张卡中隐藏了{hidden}张",
   "No cards match.": "没有符合的卡片。",
   "Show more ({n} left)": "显示更多（还有{n}个）",
+  "Manage cards: group cards by a word they contain": "管理卡片：按包含的词给卡片分组",
+  "Group by word": "按词分组",
+  "Group by character": "按汉字分组",
+  "Clear word filter": "清除词语筛选",
+  "Find a word (characters or pinyin)": "查找词语（汉字或拼音）",
+  "Find a word": "查找单词",
+  "More…": "更多…",
+  "{n} of {total} shown": "显示{total}个中的{n}个",
+  "All shown:": "当前显示的全部：",
+  "Hide reading": "隐藏阅读卡",
+  "Hide producing": "隐藏表达卡",
+  "Hide both": "两张都隐藏",
+  "Show all": "全部显示",
 };
 
 export default zh;

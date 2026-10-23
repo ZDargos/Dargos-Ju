@@ -524,3 +524,8 @@ html.kbd-tight .pinned-game .review-top { margin-bottom: 2px; }
 .manage-chips { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .chip { border: 1px solid var(--accent); background: var(--accent-soft, var(--surface-2)); color: var(--accent); border-radius: 99px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .chip.off { border-color: var(--border); background: var(--surface-2); color: var(--muted); text-decoration: line-through; }
+.word-filter { margin-bottom: 10px; }
+.word-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; max-height: 210px; overflow-y: auto; }
+.word-chip { border: 1px solid var(--border); background: var(--surface); border-radius: 99px; padding: 3px 10px; font-size: 14px; cursor: pointer; color: inherit; }
+.word-chip .zh { font-size: 16px; }
+.word-chip.on { border-color: var(--accent); background: var(--accent-soft, var(--surface-2)); color: var(--accent); }

@@ -17,6 +17,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "01088576862f33e2": {
+  "lang": "zh",
+  "text": "身",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "013913ccd69cacf0": {
   "lang": "zh",
   "text": "请三天以内告诉我你的想法。",
@@ -125,6 +131,18 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "03d66d679b21d2bc": {
+  "lang": "zh",
+  "text": "过日子",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "0406cbbe9084c81e": {
+  "lang": "zh",
+  "text": "说话",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "045746f5fc4d0778": {
   "lang": "en",
   "text": "A: Can you move your hand now? B: Yes, but I can't move it for too long.",
@@ -152,6 +170,12 @@
  "04c99cad99a1a044": {
   "lang": "zh",
   "text": "她又想妈妈了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "04caee3322a53c72": {
+  "lang": "zh",
+  "text": "中国",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -254,6 +278,12 @@
  "07e1923266649a6e": {
   "lang": "zh",
   "text": "桌子上有几百只虫子！",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "080148e86cc86fa6": {
+  "lang": "zh",
+  "text": "没",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -376,6 +406,12 @@
   "text": "I want to go to China next year.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "0c03ddc78029edb8": {
+  "lang": "zh",
+  "text": "认",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "0c1ee7781c86fa20": {
   "lang": "en",
@@ -671,6 +707,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "1317140e470416b2": {
+  "lang": "zh",
+  "text": "电话卡",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "1325fe77db1ef9dc": {
   "lang": "zh",
   "text": "我吐了一个早上。",
@@ -682,6 +724,18 @@
   "text": "A: I called you this morning, but you weren't there. B: What time did you call me? A: Ten o'clock. B: How many times did you call me? A: I only called once.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "13f3a9ce1ee90ede": {
+  "lang": "zh",
+  "text": "的话",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "13fab7abc52df0b0": {
+  "lang": "zh",
+  "text": "中国人",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "1446bd70827c7ff0": {
   "lang": "zh",
@@ -827,6 +881,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "194b60aba094a800": {
+  "lang": "zh",
+  "text": "子",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "1950bffd8738646c": {
   "lang": "en",
   "text": "I can do it.",
@@ -899,9 +959,21 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "1c77fc7f3679584c": {
+  "lang": "zh",
+  "text": "马上",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "1c8d39c139acfc62": {
   "lang": "zh",
   "text": "我有没有工作的机会？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "1cd85434899f3370": {
+  "lang": "zh",
+  "text": "身上",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -1019,6 +1091,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "2158054395023890": {
+  "lang": "zh",
+  "text": "午",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "217626f4ee47d27c": {
   "lang": "zh",
   "text": "A:有几行？B: 一行。",
@@ -1034,6 +1112,12 @@
  "220273851e2db2c6": {
   "lang": "zh",
   "text": "你还记得我吗？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "220ae3d695e056a2": {
+  "lang": "zh",
+  "text": "手",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -1079,6 +1163,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "235808694aa6089c": {
+  "lang": "zh",
+  "text": "半",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "23720305d75b4798": {
   "lang": "en",
   "text": "We're having a meeting.",
@@ -1114,6 +1204,12 @@
   "text": "Luckily, he took a car back.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "240ae6fc4b8426ae": {
+  "lang": "zh",
+  "text": "才",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "242ab3bc0616fca0": {
   "lang": "en",
@@ -1262,6 +1358,12 @@
  "284a60539a350a00": {
   "lang": "zh",
   "text": "一个人想办法，另一个人去找警察。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "285810481944e066": {
+  "lang": "zh",
+  "text": "十",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -1469,6 +1571,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "2d909d6c62c074f6": {
+  "lang": "zh",
+  "text": "面包",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "2d9b26a2e24cad98": {
   "lang": "en",
   "text": "He is sitting and eating.",
@@ -1510,6 +1618,12 @@
   "text": "Write down my phone number.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "2f389f4d087e2084": {
+  "lang": "zh",
+  "text": "但",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "2f3a07e7e8c9b60c": {
   "lang": "zh",
@@ -1600,6 +1714,12 @@
   "text": "Oh my god, what on earth do you mean?",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "31d66db03d15d382": {
+  "lang": "zh",
+  "text": "一下",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "31ed67c1f8acb0fc": {
   "lang": "zh",
@@ -1709,6 +1829,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "342a7c2ccf82ef0e": {
+  "lang": "zh",
+  "text": "白",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "34505ef24534bc64": {
   "lang": "zh",
   "text": "小心一点，车多。",
@@ -1799,6 +1925,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "370b04e553748f14": {
+  "lang": "zh",
+  "text": "找",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "37352429951090d2": {
   "lang": "zh",
   "text": "你自己看着办吧！",
@@ -1838,6 +1970,12 @@
  "3820496ab330a1c4": {
   "lang": "zh",
   "text": "A:你来中国几个月了？ B: 一个月了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "38371a78c16b1ec6": {
+  "lang": "zh",
+  "text": "乱",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -1925,6 +2063,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "3a1ac79e76601ad2": {
+  "lang": "zh",
+  "text": "米",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "3a24791aab768e38": {
   "lang": "en",
   "text": "A: Do you eat bread in the afternoon? B: I do.",
@@ -1976,6 +2120,12 @@
  "3b3bfe7a355a10b0": {
   "lang": "zh",
   "text": "你等我一下。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "3b504f313abd66cc": {
+  "lang": "zh",
+  "text": "干",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -2092,6 +2242,12 @@
   "text": "I want to order bread, and I also want to order beer.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "3d505257f06136d8": {
+  "lang": "zh",
+  "text": "年",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "3d54cf1c2820f7d4": {
   "lang": "zh",
@@ -2279,6 +2435,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "418107352600812e": {
+  "lang": "zh",
+  "text": "入口",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "419113ba10ff8446": {
   "lang": "en",
   "text": "Are you in China or in the United States?",
@@ -2309,6 +2471,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "41f46793dc07e580": {
+  "lang": "zh",
+  "text": "明年",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "421a110e0b18b38c": {
   "lang": "zh",
   "text": "你儿子的这种行为给别人带来了不少麻烦。",
@@ -2330,6 +2498,12 @@
  "42bf7320ffcc476c": {
   "lang": "zh",
   "text": "你看，这是我买的手机。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "431a3e5c566d7d6e": {
+  "lang": "zh",
+  "text": "饭",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -2362,6 +2536,12 @@
   "text": "We're having a meeting in a little while.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "441bd2ef29b38f68": {
+  "lang": "zh",
+  "text": "马",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "443541c55c12cdf4": {
   "lang": "zh",
@@ -2525,6 +2705,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "485842a87381e126": {
+  "lang": "zh",
+  "text": "卡",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "487f48977264960c": {
   "lang": "zh",
   "text": "我是中国人。",
@@ -2546,6 +2732,18 @@
  "4922ed64ba7a6332": {
   "lang": "zh",
   "text": "我取出来了一张电话卡",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "49336a985fa87db6": {
+  "lang": "zh",
+  "text": "明白",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "4938c83b41cfb120": {
+  "lang": "zh",
+  "text": "你",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -2584,6 +2782,12 @@
   "text": "Is the phone under the table?",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "4a305361f4b8312c": {
+  "lang": "zh",
+  "text": "面",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "4a51f7938480d188": {
   "lang": "zh",
@@ -2666,6 +2870,18 @@
  "4bf038ec5ab2a61c": {
   "lang": "zh",
   "text": "我快要吃饭了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "4c1304f4b5a9c93e": {
+  "lang": "zh",
+  "text": "来",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "4c5522f482998d3e": {
+  "lang": "zh",
+  "text": "入",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -2891,6 +3107,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "516064cb96854bc4": {
+  "lang": "zh",
+  "text": "一个半",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "519c6915dc4b9376": {
   "lang": "en",
   "text": "Why can airplanes fly?",
@@ -2942,6 +3164,12 @@
  "52b9e7098ec976d6": {
   "lang": "zh",
   "text": "你早上来还是下午来？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "52d6a1a38806eabc": {
+  "lang": "zh",
+  "text": "一个",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -3089,6 +3317,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "580b38d81108c786": {
+  "lang": "zh",
+  "text": "我",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "5877db4400e3f900": {
   "lang": "en",
   "text": "I have a cell phone.",
@@ -3158,6 +3392,12 @@
  "5a0fd5b0f1780c60": {
   "lang": "zh",
   "text": "你总是吃米饭。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "5a59f1fe045c2b92": {
+  "lang": "zh",
+  "text": "吓",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -3269,6 +3509,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "5e59f84a6fa3cbaa": {
+  "lang": "zh",
+  "text": "吗",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "5e6c7165d5ea89cc": {
   "lang": "zh",
   "text": "A: 这本书好看吗？B: 一点儿也不好看，浪费了我一个晚上的时间。",
@@ -3278,6 +3524,12 @@
  "5e95598041e174f8": {
   "lang": "zh",
   "text": "他今天下午回来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "5f0b43ddd7224fa4": {
+  "lang": "zh",
+  "text": "或",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -3347,6 +3599,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "601324707b2e6a16": {
+  "lang": "zh",
+  "text": "有",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "6030f09c9f838e28": {
   "lang": "en",
   "text": "A: What are you looking for? B: I'm looking for bread. A: That bread of yours went bad, so I threw it away.",
@@ -3359,6 +3617,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "603759709f55e016": {
+  "lang": "zh",
+  "text": "三",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "6047d1fea23aa6da": {
   "lang": "zh",
   "text": "A: 我和儿子上午过来吗？B: 不，下午过来吧！",
@@ -3370,6 +3634,12 @@
   "text": "I remember that last September he came to China and studied Chinese for half a month.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "61132603205c8210": {
+  "lang": "zh",
+  "text": "月",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "611868e2d6b141bc": {
   "lang": "zh",
@@ -3401,6 +3671,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "62375c9654f9b022": {
+  "lang": "zh",
+  "text": "下",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "6242c61897734f96": {
   "lang": "zh",
   "text": "你说得太快了！",
@@ -3430,6 +3706,12 @@
   "text": "It's only October, and it's already starting to snow here.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "63375e29fa27c81c": {
+  "lang": "zh",
+  "text": "上",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "6366807ef13ccf6a": {
   "lang": "zh",
@@ -3470,6 +3752,12 @@
  "6429a223ca69db8c": {
   "lang": "zh",
   "text": "面包坏了，不可以吃了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "64375fbc0a9d802e": {
+  "lang": "zh",
+  "text": "不",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -3536,6 +3824,12 @@
  "66e243526ffc42a4": {
   "lang": "zh",
   "text": "这个包三千块以下我不会卖。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "67119c75132ff834": {
+  "lang": "zh",
+  "text": "明",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -3617,6 +3911,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "6937679b6df4b7e0": {
+  "lang": "zh",
+  "text": "一",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "69a360771b3c26c0": {
   "lang": "zh",
   "text": "行了，你们明天回去。",
@@ -3628,6 +3928,18 @@
   "text": "You're welcome.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "6a5a0b2eb17aabf2": {
+  "lang": "zh",
+  "text": "吃",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "6a837889f2972e7a": {
+  "lang": "zh",
+  "text": "米饭",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "6a9a203d6d40670a": {
   "lang": "en",
@@ -3662,6 +3974,12 @@
  "6c09dee5febe7940": {
   "lang": "zh",
   "text": "记住！每天都要过来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "6c587b54390681fe": {
+  "lang": "zh",
+  "text": "包",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -3941,6 +4259,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "7655651216281e9a": {
+  "lang": "zh",
+  "text": "儿",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "765795fffb2f136c": {
   "lang": "zh",
   "text": "你看，这是我才买的手机。",
@@ -3980,6 +4304,12 @@
  "77b2c0c6e6e52c4c": {
   "lang": "zh",
   "text": "窗户坏了，关不上。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "77c5573cd37565e4": {
+  "lang": "zh",
+  "text": "中午",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -4103,6 +4433,18 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "7aadfa7a617d647c": {
+  "lang": "zh",
+  "text": "下午",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "7ade5f33716dcc1a": {
+  "lang": "zh",
+  "text": "没有",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "7b4116852c0da470": {
   "lang": "zh",
   "text": "A: 明天你回家吗？B: 嗯，回去。",
@@ -4115,6 +4457,18 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "7bef32a49fbcc4d6": {
+  "lang": "zh",
+  "text": "上来",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "7bf2706dc8cf9a50": {
+  "lang": "zh",
+  "text": "本子",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "7c1be0520f06e43c": {
   "lang": "en",
   "text": "One person came up.",
@@ -4126,6 +4480,12 @@
   "text": "Over the past few years, the Chinese government has paid more and more attention to the mental health of Chinese people.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "7c295a847f55b65e": {
+  "lang": "zh",
+  "text": "电",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "7c2f66c0505002b8": {
   "lang": "zh",
@@ -4241,6 +4601,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "7f48180c7b7e9ef0": {
+  "lang": "zh",
+  "text": "吓人",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "7f6208be191faab8": {
   "lang": "en",
   "text": "My son is sitting on the table, talking.",
@@ -4286,6 +4652,12 @@
  "81178126e82c5de0": {
   "lang": "zh",
   "text": "我早上8点起来。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "812962633ce9eed0": {
+  "lang": "zh",
+  "text": "用",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -4361,6 +4733,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "833790895464c8dc": {
+  "lang": "zh",
+  "text": "个",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "833953c10cf24616": {
   "lang": "zh",
   "text": "A: 在中文里，男的孩子是男子，女的孩子是女子，对吗？B: 不对不对。男子和女子都是18岁以上的。如果是18岁以下，我们就叫他们男孩或女孩。A: 所以“儿”的意思就是你的孩子，你的男孩子叫 “儿子”，你的女孩子叫“女儿”。B: 对！你的解释太有意思了！",
@@ -4397,6 +4775,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "8437921c64da80ee": {
+  "lang": "zh",
+  "text": "中",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "844477480a954b7a": {
   "lang": "zh",
   "text": "几点钟了？",
@@ -4421,6 +4805,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "85135eafe5e122e8": {
+  "lang": "zh",
+  "text": "本",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "852a6a6578391da4": {
   "lang": "zh",
   "text": "我们一会儿开会。",
@@ -4430,6 +4820,12 @@
  "85794fc652f8bca4": {
   "lang": "zh",
   "text": "你打开门，我有话要说。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "8611cd42c83ee0fa": {
+  "lang": "zh",
+  "text": "是",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -4568,6 +4964,12 @@
  "8a25d0eef561aa40": {
   "lang": "zh",
   "text": "明天是休息日。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "8a3101e6021ab2bc": {
+  "lang": "zh",
+  "text": "儿子",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -4721,6 +5123,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "8e5a43da76ff4cca": {
+  "lang": "zh",
+  "text": "吧",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "8ea8bde4e7994888": {
   "lang": "en",
   "text": "I had no choice but to agree.",
@@ -4784,6 +5192,12 @@
  "9085a8da3787b29e": {
   "lang": "zh",
   "text": "吐在地上太不文明了！",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "90aa0fb31945c3f8": {
+  "lang": "zh",
+  "text": "上午",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -4864,6 +5278,12 @@
   "text": "What time is it?",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "93031f4cf5b5934e": {
+  "lang": "zh",
+  "text": "话",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "932e404f55ec97ca": {
   "lang": "en",
@@ -5063,6 +5483,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "98c82cebd5dca008": {
+  "lang": "zh",
+  "text": "勺子",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "98e82661d721d8bc": {
   "lang": "zh",
   "text": "我认为每个人都应该运动。",
@@ -5243,6 +5669,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "9e0b0f9d60701d24": {
+  "lang": "zh",
+  "text": "胖",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "9e2124d622fe19e0": {
   "lang": "en",
   "text": "The population here is just a few thousand people.",
@@ -5266,6 +5698,12 @@
   "text": "You've all finally come back!",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "9f36299d963ba924": {
+  "lang": "zh",
+  "text": "他",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "9f61cfc438bcbbf0": {
   "lang": "en",
@@ -5470,6 +5908,12 @@
   "text": "A: Why is China called 中国 in Chinese? B: Because 国 means \"kingdom\", and China was the kingdom in the middle of the map, so it's called 中国. Do you think that's right? A: Hmm... let me think about it!",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "a40a1d7cb47829ae": {
+  "lang": "zh",
+  "text": "拍",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "a412aaf971fac9f4": {
   "lang": "zh",
@@ -5747,6 +6191,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "ad09943a3a488b8a": {
+  "lang": "zh",
+  "text": "过",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ad29db2482c6a1c6": {
   "lang": "zh",
   "text": "中国人都会说英语吗？",
@@ -5776,6 +6226,12 @@
   "text": "To our friendship, cheers!",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "ae0349cd2716bb84": {
+  "lang": "zh",
+  "text": "识",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "ae28b0e33f393918": {
   "lang": "en",
@@ -5981,6 +6437,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "b355c51932a091fc": {
+  "lang": "zh",
+  "text": "勺",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "b36b48389bc577d8": {
   "lang": "en",
   "text": "A: Do you have a good solution to this problem? B: There's nothing I can do.",
@@ -6020,6 +6482,12 @@
  "b454ae27fff6f290": {
   "lang": "zh",
   "text": "A: 你说过这种话吗？B: 说过。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "b45c12acfb76320e": {
+  "lang": "zh",
+  "text": "国",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -6119,6 +6587,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "b8b09546729ba002": {
+  "lang": "zh",
+  "text": "但是",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "b8c3864820c60b9c": {
   "lang": "zh",
   "text": "他内心很矛盾。",
@@ -6200,6 +6674,12 @@
  "bbbdce2496f9efa8": {
   "lang": "zh",
   "text": "面包闻起来很香。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "bc035fd71e916bd8": {
+  "lang": "zh",
+  "text": "说",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -6389,6 +6869,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "c00f02902db57856": {
+  "lang": "zh",
+  "text": "早",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "c01219c5912a063c": {
   "lang": "zh",
   "text": "你快看那个女人，她好美。",
@@ -6425,6 +6911,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "c10f8fa702104970": {
+  "lang": "zh",
+  "text": "半年",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "c1354293e4f1ffdc": {
   "lang": "en",
   "text": "At 10:30 in the morning, I ate one and a half pieces of bread.",
@@ -6449,6 +6941,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "c20cdb49012b385c": {
+  "lang": "zh",
+  "text": "自",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "c2126db42a4062f0": {
   "lang": "zh",
   "text": "我想明年去中国。",
@@ -6461,6 +6959,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "c2576fb668a8f462": {
+  "lang": "zh",
+  "text": "叫",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "c28d13b65eb454a6": {
   "lang": "en",
   "text": "Did you get the rice to go?",
@@ -6472,6 +6976,12 @@
   "text": "Yeah, I'm going back tomorrow.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "c3b96a86720e5416": {
+  "lang": "zh",
+  "text": "一点",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "c3bdc5680c50f234": {
   "lang": "zh",
@@ -6665,6 +7175,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "ca577c4e9219b432": {
+  "lang": "zh",
+  "text": "口",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ca80e855f92cb140": {
   "lang": "zh",
   "text": "A: 你有电话吗？B: 我有一个电话。",
@@ -6704,6 +7220,12 @@
  "cba881eddb461e1c": {
   "lang": "zh",
   "text": "我坐了一个小时。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "cc0f1574c26dd83e": {
+  "lang": "zh",
+  "text": "日",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -6779,6 +7301,12 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "ce0f189a7811a84a": {
+  "lang": "zh",
+  "text": "旧",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ce2b397b8aadd148": {
   "lang": "en",
   "text": "Open the door; I have something to say.",
@@ -6820,6 +7348,12 @@
   "text": "I've started to like him.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "ced48f1b81b12912": {
+  "lang": "zh",
+  "text": "电话",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "ceddfbe8c7e0ef64": {
   "lang": "en",
@@ -7379,9 +7913,21 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "e0ba8e3aa90bd4f8": {
+  "lang": "zh",
+  "text": "来自",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "e0ddcbda47fdc910": {
   "lang": "zh",
   "text": "我想去中国。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "e1515483fa105510": {
+  "lang": "zh",
+  "text": "很",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -7540,6 +8086,12 @@
   "text": "The airplane is about to take off.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "e55939cf4bcfd728": {
+  "lang": "zh",
+  "text": "和",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "e59e35f6f8c2b8e0": {
   "lang": "zh",
@@ -7715,6 +8267,18 @@
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
+ "ea1b454160b182ec": {
+  "lang": "zh",
+  "text": "骂",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "ea4063937eb896f4": {
+  "lang": "zh",
+  "text": "认识",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ea7154a078dc5bf0": {
   "lang": "en",
   "text": "I want to go to China.",
@@ -7811,6 +8375,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "ed2a0c670e714af8": {
+  "lang": "zh",
+  "text": "的",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ed2fadfbe9b0123c": {
   "lang": "zh",
   "text": "我女儿个子长高了",
@@ -7859,6 +8429,12 @@
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
  },
+ "ef36a78df7d42b04": {
+  "lang": "zh",
+  "text": "了",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
  "ef6b29c32e122e18": {
   "lang": "en",
   "text": "Where did you go? I couldn't reach you all day today.",
@@ -7882,6 +8458,12 @@
   "text": "I just came up.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "f0209f206d197776": {
+  "lang": "zh",
+  "text": "点",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "f038bdf8c38fdc00": {
   "lang": "en",
@@ -7918,6 +8500,12 @@
   "text": "Wait for me.",
   "source": "neural",
   "voice": "en-US-AvaNeural+en-US-AndrewNeural"
+ },
+ "f215966e049ea628": {
+  "lang": "zh",
+  "text": "早上",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
  "f22ab928b48f77bc": {
   "lang": "en",
@@ -7988,6 +8576,12 @@
  "f329024686dc549c": {
   "lang": "zh",
   "text": "我得回去了。",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "f336add9103a4b7c": {
+  "lang": "zh",
+  "text": "人",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },
@@ -8426,6 +9020,12 @@
  "fe9eea21937e522e": {
   "lang": "zh",
   "text": "三加几是十？",
+  "source": "neural",
+  "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
+ },
+ "ff03c950464375d6": {
+  "lang": "zh",
+  "text": "让",
   "source": "neural",
   "voice": "zh-CN-XiaoxiaoNeural+zh-CN-YunxiNeural"
  },

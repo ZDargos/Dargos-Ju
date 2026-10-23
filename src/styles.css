@@ -494,3 +494,6 @@ html[data-text-size='xl'] body { zoom: 1.25; }
 .changelog summary { cursor: pointer; font-weight: 700; }
 .changelog ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; }
 .changelog li + li { margin-top: 3px; }
+.duel-input .input.waiting { opacity: 0.6; }
+.update-notice ul { margin: 0 0 16px; padding-left: 18px; }
+.update-notice li + li { margin-top: 4px; }

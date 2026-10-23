@@ -14,6 +14,8 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-23',
     items: [
+      msg('Typing games keep the keyboard open between words'),
+      msg('A pop-up after each update points to What\'s new'),
       msg('Pinyin duel: every reading counts (胖 = pàng or pán)'),
       msg('Pinyin duel: Easy, Medium and Hard clocks'),
       msg('Pinyin duel: a wrong guess costs time, not a life'),

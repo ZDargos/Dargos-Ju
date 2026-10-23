@@ -244,7 +244,7 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
         <DuelBoard
           item={seq(n)}
           lang={lang}
-          myTurn={!feedback}
+          myTurn
           steal={false}
           deadline={deadline}
           seconds={duelSeconds(correct, run.level)}

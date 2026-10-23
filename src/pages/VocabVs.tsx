@@ -276,6 +276,7 @@ export function DuelVs({ id }: { id: string }) {
         <DuelBoard
           item={item}
           lang={myTurn ? myLang : theirLang}
+          inputLang={myLang}
           myTurn={myTurn}
           steal={d.phase === 'steal'}
           deadline={deadline}

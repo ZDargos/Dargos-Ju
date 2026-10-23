@@ -27,6 +27,7 @@ import Progress from './pages/Progress';
 import { XpWatcher } from './components/XpBits';
 import RecordingVote from './components/RecordingVote';
 import ChallengeBanner from './components/ChallengeBanner';
+import UpdateNotice from './components/UpdateNotice';
 import { loadVoices } from './lib/voices';
 import { loadMyWords } from './lib/myWords';
 import { msg } from './i18n/msg';
@@ -112,6 +113,7 @@ export default function App() {
       <NoVoiceBanner />
       <RecordingVote />
       <ChallengeBanner />
+      <UpdateNotice />
       <XpWatcher />
       <UpdatePrompt />
       {auth.session && auth.session.user.id !== 'demo' && <ChallengeListener userId={auth.session.user.id} />}

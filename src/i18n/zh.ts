@@ -717,6 +717,13 @@ const zh: Record<string, string> = {
   "{name} didn't answer in time.": "{name}没有及时回应。",
   "{name} ran out of time.": "{name}超时了。",
   "{start} seconds per word at first, dropping to {min}.": "开始时每个词{start}秒，最少降到{min}秒。",
+  "Typing games keep the keyboard open between words": "打字游戏在换词时键盘不再收起",
+  "A pop-up after each update points to What's new": "每次更新后会弹窗提示查看更新内容",
+  "Dargos Ju has been updated": "Dargos Ju 已更新",
+  "…and {n} more": "……还有{n}项",
+  "OK": "好的",
+  "See what's new": "查看更新内容",
+  "Wait for your turn…": "等待轮到你…",
 };
 
 export default zh;

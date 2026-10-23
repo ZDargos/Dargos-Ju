@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { updateSettings, useStore } from '../lib/store';
 import { signOut } from '../lib/auth';
 import { pullRemote, pushPending } from '../lib/sync';
@@ -68,6 +68,15 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
   const [syncMsg, setSyncMsg] = useState('');
   const [modeMsg, setModeMsg] = useState('');
   const names = langParams(settings.learning);
+  // The update pop-up links straight to What's new.
+  const [params] = useSearchParams();
+  const whatsNew = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (params.get('section') !== 'whats-new') return;
+    // After the page has rendered and the route's own scroll reset has happened.
+    const timer = setTimeout(() => whatsNew.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    return () => clearTimeout(timer);
+  }, [params]);
 
   const syncNow = async () => {
     setSyncMsg(t('Syncing…'));
@@ -223,7 +232,7 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
         <NotificationSettings />
       </div>
 
-      <div className="section-title">{t("What's new")}</div>
+      <div className="section-title" ref={whatsNew} id="whats-new">{t("What's new")}</div>
       <div className="card changelog">
         {CHANGELOG.map((entry, i) => (
           <details key={entry.date} open={i === 0}>

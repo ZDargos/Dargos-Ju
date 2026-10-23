@@ -32,10 +32,12 @@ interface Props {
   /** A wrong guess's time penalty, shown briefly to the player who guessed. */
   penalty: { text: string; key: number } | null;
   onSubmit: (typed: string) => void;
+  /** The language I type in (vs: mine, even while the opponent's word is showing). */
+  inputLang?: LearnLang;
 }
 
 /** The duel screen: lives, the word, the shrinking clock and the answer box. Heats up as correct answers pile up. */
-export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds, correct, players, moverName, feedback, moveKey, penalty, onSubmit }: Props) {
+export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds, correct, players, moverName, feedback, moveKey, penalty, onSubmit, inputLang = lang }: Props) {
   const t = useT();
   const settings = useSettings();
   const [typed, setTyped] = useState('');
@@ -50,21 +52,21 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
     return () => clearInterval(timer);
   }, []);
 
-  // New word: clear the box, focus it on my move, and in English mode say the word to spell.
+  // New word: clear the box and, in English mode, say the word to spell on my move. The answer box
+  // stays on screen (and focused) for the whole game, so the phone keyboard never closes between
+  // words; iPhones only open the keyboard again after a tap.
   useEffect(() => {
     setTyped('');
-    if (myTurn) {
-      input.current?.focus();
-      if (lang === 'en') speak(item.text, settings.speechRate, 'en').catch(reportSpeechError);
-    }
+    input.current?.focus({ preventScroll: true });
+    if (myTurn && lang === 'en') speak(item.text, settings.speechRate, 'en').catch(reportSpeechError);
   }, [moveKey, myTurn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = () => {
-    if (!myTurn || !typed.trim()) return;
+    if (!typed.trim()) return;
+    if (!myTurn) return setTyped('');
     onSubmit(typed);
     // A wrong guess keeps the turn: clear the box for another try.
     setTyped('');
-    input.current?.focus();
   };
 
   return (
@@ -107,26 +109,27 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
         <div style={{ width: `${Math.min(100, (left / (seconds * 1000)) * 100)}%` }} />
       </div>
 
-      {myTurn ? (
-        <form className="row duel-input" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-          <input
-            ref={input}
-            className="input grow"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            placeholder={lang === 'zh' ? t('Type the pinyin') : t('Type the English word')}
-            aria-label={lang === 'zh' ? t('Type the pinyin') : t('Type the English word')}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            enterKeyHint="send"
-          />
-          <button className="btn primary" disabled={!typed.trim()}>{t('Go')}</button>
-        </form>
-      ) : (
-        <p className="center muted" role="status">{t('{name} is answering…', { name: moverName })}</p>
-      )}
+      {!myTurn && <p className="center muted" role="status" style={{ margin: '0 0 8px' }}>{t('{name} is answering…', { name: moverName })}</p>}
+      <form className="row duel-input" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        <input
+          ref={input}
+          className={`input grow${myTurn ? '' : ' waiting'}`}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          placeholder={myTurn ? (inputLang === 'zh' ? t('Type the pinyin') : t('Type the English word')) : t('Wait for your turn…')}
+          aria-label={inputLang === 'zh' ? t('Type the pinyin') : t('Type the English word')}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          enterKeyHint="send"
+          autoFocus
+        />
+        {/* Tapping Go mustn't take focus from the box, or the keyboard would close. */}
+        <button className="btn primary" disabled={!myTurn || !typed.trim()} onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()}>
+          {t('Go')}
+        </button>
+      </form>
     </div>
   );
 }

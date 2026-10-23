@@ -364,6 +364,11 @@ describe('vocabulary games', () => {
     expect(duelAnswerOk(letters, word, 'zh')).toBe(true);
     expect(duelAnswerOk(word.py, word, 'zh')).toBe(true);
     expect(duelAnswerOk('xyz', word, 'zh')).toBe(false);
+    const pang = zh.find((v) => v.text === '胖');
+    if (pang) {
+      expect(duelAnswerOk('pang', pang, 'zh')).toBe(true);
+      expect(duelAnswerOk('pan', pang, 'zh')).toBe(true);
+    }
     const go = en.find((v) => v.text === 'go')!;
     expect(duelAnswerOk('Go', go, 'en')).toBe(true);
     expect(duelAnswerOk('goo', go, 'en')).toBe(false);
@@ -373,6 +378,10 @@ describe('vocabulary games', () => {
     expect(duelSeconds(0)).toBe(15);
     expect(duelSeconds(4)).toBe(12);
     expect(duelSeconds(100)).toBe(6);
+    expect(duelSeconds(0, 'easy')).toBe(25);
+    expect(duelSeconds(12, 'easy')).toBe(10);
+    expect(duelSeconds(0, 'medium')).toBe(20);
+    expect(duelSeconds(50, 'medium')).toBe(6);
   });
 
   it('speed round XP comes from the net score, so random tapping earns nothing', () => {

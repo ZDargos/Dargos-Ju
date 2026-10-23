@@ -203,3 +203,6 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 -- never ended early by finish_if_decided. matches.duel holds the duel state, started by the
 -- duel_init trigger and advanced only by duel_answer() / duel_timeout() (rules in private.duel_apply).
 -- user_words(user_id, lang, text, py, gloss): "My words", own rows only.
+-- Duel difficulty (migration duel_difficulty_and_wrong_guesses): matches.variant 'easy' | 'medium' |
+-- 'hard' picks the clock in private.duel_seconds(correct, variant). duel_wrong() takes 20% of the
+-- move's time off the clock for a wrong guess; only running out of time costs a life.

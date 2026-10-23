@@ -28,6 +28,8 @@ export interface Content {
   byId: Map<string, Sentence>;
   levels: Level[];
   lexicon: Record<string, LexEntry>;
+  /** Every reading of Chinese words that have several (胖: pàng, pán). */
+  readings: Record<string, string[]>;
   /** Word → ids of sentences containing it. */
   wordIndex: Map<string, string[]>;
   /** English words (lowercase) → IPA and Chinese meaning, for English-learning mode. */
@@ -93,6 +95,7 @@ function assemble(r: Remote): Content {
     byId: new Map(sentences.map((s) => [s.id, s])),
     levels,
     lexicon,
+    readings: (built.readings ?? {}) as Record<string, string[]>,
     wordIndex,
     enLexicon,
     enLemma,

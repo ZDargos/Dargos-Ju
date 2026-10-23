@@ -8,9 +8,10 @@ import { gameById, gameName, isVocabGame, MIN_VOCAB, poolFor } from '../games/re
 import { vocabFor } from '../lib/vocab';
 import { newSeed } from '../lib/vocabGame';
 import { SpeedAnswerPicker, useSpeedAnswer } from '../games/SpeedRound';
+import { DuelLevelPicker, useDuelLevel } from '../games/DuelBoard';
 import { useT } from '../i18n';
 import NamePrompt from '../components/NamePrompt';
-import { notifyChallenge } from '../lib/push';
+import { sendChallenge } from '../lib/outgoing';
 import { IconBack } from '../components/Icons';
 
 const WAIT_LIMIT_MS = 2 * 60 * 1000;
@@ -29,6 +30,7 @@ export default function VsLobby() {
   const [error, setError] = useState('');
   const stop = useRef<() => void>(() => {});
   const [answer, setAnswer] = useSpeedAnswer(gameId, getState().settings.learning);
+  const [duelLevel, setDuelLevel] = useDuelLevel();
 
   useEffect(() => {
     listFriends()
@@ -65,7 +67,7 @@ export default function VsLobby() {
   const lang = settings.learning;
   const sentenceIds = () => (vocab ? [] : pickSentences(game.id, getContent(), settings));
   // Vocabulary games: both players draw from the same levels with a shared seed ("My words" stay out).
-  const vocabMatch = () => (vocab ? { seed: newSeed(), levels: settings.gameLevels, ...(game.kind === 'speed' ? { variant: answer } : {}) } : undefined);
+  const vocabMatch = () => (vocab ? { seed: newSeed(), levels: settings.gameLevels, ...(game.kind === 'speed' ? { variant: answer } : game.kind === 'duel' ? { variant: duelLevel } : {}) } : undefined);
   const needed = vocab ? MIN_VOCAB : ROUNDS;
   const poolSize = vocab ? vocabFor(getContent(), lang, settings.gameLevels, 'both').length : poolFor(game, getContent(), settings, lang).length;
   const needMore = vocab
@@ -136,9 +138,9 @@ export default function VsLobby() {
     try {
       const ids = sentenceIds();
       if (!enough(ids)) return setError(needMore);
-      const m = await createMatch(game!.id, ids, lang, f.user_id, vocabMatch());
-      notifyChallenge(m.id);
-      waitFor(m, t('Waiting for {name} to accept…', { name: f.display_name }), false);
+      // The challenge waits in a banner at the top while you carry on using the app.
+      await sendChallenge(f.display_name, game!.id, () => createMatch(game!.id, ids, lang, f.user_id, vocabMatch()));
+      navigate('/games', { replace: true });
     } catch (e) {
       setError((e as Error).message);
     }
@@ -166,9 +168,15 @@ export default function VsLobby() {
             {game.kind === 'speed'
               ? t("30 seconds each, at the same time, no hints. Right answers +1, wrong −1; the higher score wins. You can play people learning either language: each of you gets words in the language you're learning.")
               : game.kind === 'duel'
-                ? t("Take turns answering. Miss (or run out of time) and you lose a life, then your opponent gets one chance at it. The clock speeds up from 15 to 6 seconds. 4 lives each; last one standing wins.")
+                ? t("Take turns answering. A wrong guess costs a little time; run out of time and you lose a life, then your opponent gets one chance at it. The clock speeds up as you go. 4 lives each; last one standing wins.")
                 : t("{n} rounds, same sentences for both players, no hints. Most correct answers wins; if it's a tie, the faster player wins. You can play people learning either language: each of you answers in the language you're learning.", { n: ROUNDS })}
           </p>
+          {game.kind === 'duel' && (
+            <>
+              <DuelLevelPicker value={duelLevel} onChange={setDuelLevel} />
+              <p className="small muted" style={{ marginTop: -6 }}>{t('Find an opponent joins whoever is waiting, in the mode they picked.')}</p>
+            </>
+          )}
           {game.kind === 'speed' && (
             <>
               <SpeedAnswerPicker value={answer} onChange={setAnswer} lang={lang} />

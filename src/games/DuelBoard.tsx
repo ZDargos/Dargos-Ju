@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { DUEL_LIVES, duelIntensity, shortGloss } from '../lib/vocabGame';
+import { asDuelLevel, DUEL_LEVELS, DUEL_LIVES, duelIntensity, shortGloss, type DuelLevel } from '../lib/vocabGame';
 import { reportSpeechError, speak } from '../lib/tts';
 import { useSettings } from '../lib/store';
 import { useT } from '../i18n';
@@ -27,11 +27,15 @@ interface Props {
   /** Whose move it is, for the "answering" line. */
   moverName: string;
   feedback: { ok: boolean; text: string } | null;
+  /** Changes with every new move (a new word or a steal), to clear the answer box. */
+  moveKey: string | number;
+  /** A wrong guess's time penalty, shown briefly to the player who guessed. */
+  penalty: { text: string; key: number } | null;
   onSubmit: (typed: string) => void;
 }
 
 /** The duel screen: lives, the word, the shrinking clock and the answer box. Heats up as correct answers pile up. */
-export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds, correct, players, moverName, feedback, onSubmit }: Props) {
+export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds, correct, players, moverName, feedback, moveKey, penalty, onSubmit }: Props) {
   const t = useT();
   const settings = useSettings();
   const [typed, setTyped] = useState('');
@@ -53,11 +57,14 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
       input.current?.focus();
       if (lang === 'en') speak(item.text, settings.speechRate, 'en').catch(reportSpeechError);
     }
-  }, [item.id, myTurn, deadline]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [moveKey, myTurn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = () => {
     if (!myTurn || !typed.trim()) return;
     onSubmit(typed);
+    // A wrong guess keeps the turn: clear the box for another try.
+    setTyped('');
+    input.current?.focus();
   };
 
   return (
@@ -85,9 +92,9 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
       <div className={`duel-card${feedback ? (feedback.ok ? ' ok' : ' bad') : ''}`}>
         {steal && <div className="duel-steal">{t('Steal! One chance')}</div>}
         {lang === 'zh' ? (
-          <div className="duel-word zh" lang="zh-CN" key={item.id + deadline}>{item.text}</div>
+          <div className="duel-word zh" lang="zh-CN" key={`${item.id}-${moveKey}`}>{item.text}</div>
         ) : (
-          <div className="duel-word duel-gloss" lang="zh-CN" key={item.id + deadline}>
+          <div className="duel-word duel-gloss" lang="zh-CN" key={`${item.id}-${moveKey}`}>
             {shortGloss(item.gloss)}
             <button className="icon-btn" aria-label={t('Listen')} onClick={() => speak(item.text, settings.speechRate, 'en').catch(reportSpeechError)}><IconSpeaker /></button>
           </div>
@@ -95,6 +102,7 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
         {feedback && <div className="duel-feedback" role="status">{feedback.text}</div>}
       </div>
 
+      {penalty && <div className="duel-penalty" key={penalty.key} role="status">{penalty.text}</div>}
       <div className={`duel-timer${low ? ' low' : ''}`} role="timer" aria-label={t('{s} seconds left', { s: Math.ceil(left / 1000) })}>
         <div style={{ width: `${Math.min(100, (left / (seconds * 1000)) * 100)}%` }} />
       </div>
@@ -120,5 +128,48 @@ export default function DuelBoard({ item, lang, myTurn, steal, deadline, seconds
         <p className="center muted" role="status">{t('{name} is answering…', { name: moverName })}</p>
       )}
     </div>
+  );
+}
+
+const LEVEL_KEY = 'dj:duel-level';
+
+/** The duel difficulty last picked, remembered on this device. */
+export function useDuelLevel(): [DuelLevel, (l: DuelLevel) => void] {
+  const [level, setLevel] = useState<DuelLevel>(() => {
+    try {
+      return asDuelLevel(localStorage.getItem(LEVEL_KEY));
+    } catch {
+      return 'hard';
+    }
+  });
+  const set = (l: DuelLevel) => {
+    setLevel(l);
+    try {
+      localStorage.setItem(LEVEL_KEY, l);
+    } catch {
+      /* this visit only */
+    }
+  };
+  return [level, set];
+}
+
+export const duelLevelName = (l: DuelLevel, t: (k: string) => string) => (l === 'easy' ? t('Easy') : l === 'medium' ? t('Medium') : t('Hard'));
+
+/** Easy / Medium / Hard: how long each move gets, and how far the clock drops. */
+export function DuelLevelPicker({ value, onChange }: { value: DuelLevel; onChange: (l: DuelLevel) => void }) {
+  const t = useT();
+  return (
+    <>
+      <div className="segmented" role="group" aria-label={t('Difficulty')} style={{ margin: '0 0 6px' }}>
+        {(['easy', 'medium', 'hard'] as DuelLevel[]).map((l) => (
+          <button key={l} className={value === l ? 'on' : ''} aria-pressed={value === l} onClick={() => onChange(l)}>
+            {duelLevelName(l, t)}
+          </button>
+        ))}
+      </div>
+      <p className="small muted" style={{ margin: '0 0 14px' }}>
+        {t('{start} seconds per word at first, dropping to {min}.', { start: DUEL_LEVELS[value].start, min: DUEL_LEVELS[value].min })}
+      </p>
+    </>
   );
 }

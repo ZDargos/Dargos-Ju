@@ -8,6 +8,7 @@ import { SAMPLE_SENTENCES as SAMPLE } from '../lib/audioKey';
 import { GAMES, gameName } from '../games/registry';
 import { langParams, useT } from '../i18n';
 import { IconShield } from '../components/Icons';
+import { CHANGELOG } from '../lib/changelog';
 import { VoiceStatusPanel } from '../components/VoiceCheck';
 import NotificationSettings from '../components/NotificationSettings';
 import type { LearnLang, Settings } from '../types';
@@ -220,6 +221,20 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
       <div className="section-title">{t('Notifications')}</div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
         <NotificationSettings />
+      </div>
+
+      <div className="section-title">{t("What's new")}</div>
+      <div className="card changelog">
+        {CHANGELOG.map((entry, i) => (
+          <details key={entry.date} open={i === 0}>
+            <summary>{new Date(`${entry.date}T12:00:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</summary>
+            <ul>
+              {entry.items.map((item) => (
+                <li key={item}>{t(item)}</li>
+              ))}
+            </ul>
+          </details>
+        ))}
       </div>
 
       <div className="section-title">{t('Account')}</div>

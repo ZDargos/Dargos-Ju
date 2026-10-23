@@ -4,12 +4,14 @@ import { useContent } from '../lib/content';
 import { useSettings } from '../lib/store';
 import { gameName, MIN_VOCAB, vocabPoolFor, type GameDef } from '../games/registry';
 import { recordRound } from '../lib/gameStats';
-import { DUEL_LIVES, duelAnswerOk, duelSeconds, newSeed, wordSequence } from '../lib/vocabGame';
+import { DUEL_LIVES, duelAnswerOk, duelSeconds, newSeed, readingsOf, WRONG_GUESS_PENALTY, wordSequence, type DuelLevel } from '../lib/vocabGame';
+import VocabSummary, { type WordResult } from '../components/VocabSummary';
+import type { VocabItem } from '../lib/vocab';
 import { useT } from '../i18n';
 import { IconClose } from '../components/Icons';
 import { PinyinToggle, usePinyin } from '../components/Pinyin';
 import SpeedRound, { SpeedAnswerPicker, useSpeedAnswer, type SpeedResult } from '../games/SpeedRound';
-import DuelBoard from '../games/DuelBoard';
+import DuelBoard, { DuelLevelPicker, useDuelLevel } from '../games/DuelBoard';
 
 const bestKey = (game: string, lang: string) => `dj:best:${game}:${lang}`;
 function readBest(game: string, lang: string): number | null {
@@ -68,12 +70,14 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
   const [run, setRun] = useState<{ seed: number; startAt: number } | null>(null);
   const [result, setResult] = useState<(SpeedResult & { record: boolean }) | null>(null);
   const [answer, setAnswer] = useSpeedAnswer(game.id, lang);
+  const [words, setWords] = useState<WordResult[]>([]);
   // Best scores are kept per mode (definitions or pinyin/phonetics).
   const bestId = `${game.id}:${answer}`;
   const best = readBest(bestId, lang);
 
   const start = () => {
     setResult(null);
+    setWords([]);
     setRun({ seed: newSeed(), startAt: Date.now() + 3000 });
   };
 
@@ -81,6 +85,7 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
     <>
       <Top game={game} />
       {result ? (
+        <>
         <div className="card center" role="status">
           <h2 style={{ marginTop: 4 }}>{t("Time's up!")}</h2>
           <div className="speed-final">{result.score}</div>
@@ -89,6 +94,8 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
           <SpeedAnswerPicker value={answer} onChange={setAnswer} lang={lang} />
           <button className="btn accent block" onClick={start}>{t('Play again')}</button>
         </div>
+        <VocabSummary results={words} />
+        </>
       ) : run ? (
         <SpeedRound
           key={run.seed}
@@ -99,7 +106,10 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
           lang={lang}
           showPy={pinyin}
           startAt={run.startAt}
-          onAnswer={(ok, ms) => recordRound(game.id, 'solo', ok, ms, undefined, lang)}
+          onAnswer={(ok, ms, _score, _answered, item) => {
+            recordRound(game.id, 'solo', ok, ms, undefined, lang);
+            setWords((w) => [...w, { item, ok }]);
+          }}
           onDone={(r) => {
             setResult({ ...r, record: saveBest(bestId, lang, r.score) });
             setRun(null);
@@ -121,77 +131,115 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
 function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof vocabPoolFor> }) {
   const t = useT();
   const lang = useSettings().learning;
-  const [run, setRun] = useState<{ seed: number } | null>(null);
+  const [level, setLevel] = useDuelLevel();
+  const [run, setRun] = useState<{ seed: number; level: DuelLevel } | null>(null);
   const [n, setN] = useState(0);
   const [lives, setLives] = useState(DUEL_LIVES);
   const [correct, setCorrect] = useState(0);
   const [deadline, setDeadline] = useState(0);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
+  const [penalty, setPenalty] = useState<{ text: string; key: number } | null>(null);
+  const [results, setResults] = useState<WordResult[]>([]);
   const [over, setOver] = useState<{ score: number; record: boolean } | null>(null);
   const shownAt = useRef(0);
-  const seqRef = useRef<((i: number) => import('../lib/vocab').VocabItem) | null>(null);
+  const deadlineRef = useRef(0);
+  const busy = useRef(false);
+  const state = useRef({ index: 0, correct: 0, level: 'hard' as DuelLevel });
+  const seqRef = useRef<((i: number) => VocabItem) | null>(null);
   const seq = run ? seqRef.current : null;
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const best = readBest(game.id, lang);
+  // Best scores are kept per difficulty.
+  const bestId = `${game.id}:${level}`;
+  const best = readBest(bestId, lang);
+
+  const armTimer = () => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => timeUp(), Math.max(0, deadlineRef.current - Date.now()) + 100);
+  };
 
   const nextWord = (index: number, correctSoFar: number) => {
+    state.current = { ...state.current, index, correct: correctSoFar };
+    busy.current = false;
     setN(index);
     setFeedback(null);
-    const ms = duelSeconds(correctSoFar) * 1000;
-    setDeadline(Date.now() + ms);
+    setPenalty(null);
+    deadlineRef.current = Date.now() + duelSeconds(correctSoFar, state.current.level) * 1000;
+    setDeadline(deadlineRef.current);
     shownAt.current = Date.now();
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => answer(null, index, correctSoFar), ms + 100);
+    armTimer();
   };
 
   const start = () => {
     setOver(null);
     setLives(DUEL_LIVES);
     setCorrect(0);
+    setResults([]);
     const seed = newSeed();
     seqRef.current = wordSequence(pool, seed);
-    setRun({ seed });
+    state.current = { index: 0, correct: 0, level };
+    setRun({ seed, level });
     nextWord(0, 0);
   };
 
-  // `typed` is null on a timeout.
-  function answer(typed: string | null, index: number, correctSoFar: number) {
+  /** Running out of time costs a life. */
+  function timeUp() {
     clearTimeout(timer.current);
-    if (!seqRef.current) return;
-    const item = seqRef.current(index);
-    const ok = typed !== null && duelAnswerOk(typed, item, lang);
-    recordRound(game.id, 'solo', ok, Date.now() - shownAt.current, undefined, lang);
-    if (ok) {
-      setCorrect(correctSoFar + 1);
-      setFeedback({ ok: true, text: '✓' });
-      setTimeout(() => nextWord(index + 1, correctSoFar + 1), 350);
-      return;
-    }
-    const answerText = lang === 'zh' ? item.py : item.text;
-    setFeedback({ ok: false, text: typed === null ? t("Time's up! It was {answer}", { answer: answerText }) : t('It was {answer}', { answer: answerText }) });
+    const { index, correct: soFar } = state.current;
+    const item = seqRef.current?.(index);
+    if (!item || busy.current) return;
+    busy.current = true;
+    recordRound(game.id, 'solo', false, Date.now() - shownAt.current, undefined, lang);
+    setResults((r) => [...r, { item, ok: false }]);
+    setFeedback({ ok: false, text: t("Time's up! It was {answer}", { answer: lang === 'zh' ? readingsOf(item) : item.text }) });
     setLives((l) => {
       const left = l - 1;
       if (left <= 0) {
         setTimeout(() => {
-          setOver({ score: correctSoFar, record: saveBest(game.id, lang, correctSoFar) });
+          setOver({ score: soFar, record: saveBest(bestId, lang, soFar) });
           setRun(null);
-        }, 1400);
-      } else setTimeout(() => nextWord(index + 1, correctSoFar), 1400);
+        }, 1600);
+      } else setTimeout(() => nextWord(index + 1, soFar), 1600);
       return left;
     });
+  }
+
+  /** A right answer moves on; a wrong guess takes time off the clock and the player tries again. */
+  function guess(typed: string) {
+    const { index, correct: soFar, level: lv } = state.current;
+    const item = seqRef.current?.(index);
+    if (!item || busy.current) return;
+    if (duelAnswerOk(typed, item, lang)) {
+      busy.current = true;
+      clearTimeout(timer.current);
+      recordRound(game.id, 'solo', true, Date.now() - shownAt.current, undefined, lang);
+      setResults((r) => [...r, { item, ok: true }]);
+      setCorrect(soFar + 1);
+      setFeedback({ ok: true, text: '✓' });
+      setTimeout(() => nextWord(index + 1, soFar + 1), 350);
+      return;
+    }
+    const cut = WRONG_GUESS_PENALTY * duelSeconds(soFar, lv) * 1000;
+    deadlineRef.current = Math.max(Date.now(), deadlineRef.current - cut);
+    setDeadline(deadlineRef.current);
+    setPenalty({ text: t('Wrong: −{s}s', { s: Number((cut / 1000).toFixed(1)) }), key: Date.now() });
+    armTimer();
   }
 
   return (
     <>
       <Top game={game} />
       {over ? (
-        <div className="card center" role="status">
-          <h2 style={{ marginTop: 4 }}>{t('Out of lives!')}</h2>
-          <div className="speed-final">{over.score}</div>
-          <p className="muted">{t('words right before your 4 lives ran out')}</p>
-          {over.record ? <p className="xp-earned">{t('New best!')}</p> : best !== null && <p className="small muted">{t('Best: {n}', { n: best })}</p>}
-          <button className="btn accent block" onClick={start}>{t('Play again')}</button>
-        </div>
+        <>
+          <div className="card center" role="status">
+            <h2 style={{ marginTop: 4 }}>{t('Out of lives!')}</h2>
+            <div className="speed-final">{over.score}</div>
+            <p className="muted">{t('words right before your 4 lives ran out')}</p>
+            {over.record ? <p className="xp-earned">{t('New best!')}</p> : best !== null && <p className="small muted">{t('Best: {n}', { n: best })}</p>}
+            <DuelLevelPicker value={level} onChange={setLevel} />
+            <button className="btn accent block" onClick={start}>{t('Play again')}</button>
+          </div>
+          <VocabSummary results={results} />
+        </>
       ) : run && seq ? (
         <DuelBoard
           item={seq(n)}
@@ -199,17 +247,20 @@ function DuelSurvival({ game, pool }: { game: GameDef; pool: ReturnType<typeof v
           myTurn={!feedback}
           steal={false}
           deadline={deadline}
-          seconds={duelSeconds(correct)}
+          seconds={duelSeconds(correct, run.level)}
           correct={correct}
           players={[{ name: t('You'), lives }]}
           moverName={t('You')}
           feedback={feedback}
-          onSubmit={(typed) => answer(typed, n, correct)}
+          moveKey={n}
+          penalty={penalty}
+          onSubmit={guess}
         />
       ) : (
         <div className="card center">
           <p>{lang === 'zh' ? t('Type the pinyin for each word before time runs out. Tones are optional.') : t('Spell the English word for each meaning before time runs out.')}</p>
-          <p className="small muted">{t('Practice on your own: 4 lives, and the clock gets faster with every right answer. Play friends with Vs.')}</p>
+          <p className="small muted">{t('Practice on your own: 4 lives. A wrong guess costs a little time; running out of time costs a life. The clock gets faster with every right answer.')}</p>
+          <DuelLevelPicker value={level} onChange={setLevel} />
           {best !== null && <p className="small muted">{t('Best: {n}', { n: best })}</p>}
           <button className="btn accent block" onClick={start}>{t('Start')}</button>
         </div>

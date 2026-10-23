@@ -50,8 +50,10 @@ Before calling any feature done, check it in both modes.
   Word card ids start with `w:` so they never collide with sentence ids.
 - Vocabulary games (`kind: 'speed' | 'duel'` in the registry) use words and characters together,
   multi-character words included. Vs versions share a seed and levels; "My words" stay out of vs.
-- Duel rules live in two places that must agree: `src/lib/vocabGame.ts` (clock, lives) and the
-  database function `private.duel_apply`. Pinyin answers ignore tones.
+- Duel rules live in two places that must agree: `src/lib/vocabGame.ts` (clocks per difficulty,
+  lives, the wrong-guess time penalty) and the database functions `private.duel_seconds`,
+  `private.duel_apply` and `public.duel_wrong`. Pinyin answers ignore tones and accept every
+  reading of a word (`content.readings`). Only the player who missed sees the right answer.
 
 ## XP and badges
 
@@ -80,6 +82,12 @@ Before calling any feature done, check it in both modes.
 Since 2026-10-22 the app is used only as the website and the iPhone home-screen web app. The
 Android project (`android/`) is no longer maintained: don't build or ship APKs, and don't spend
 effort keeping native Android code in step. Test on phone-width browsers (Safari on iPhone matters most).
+
+## Changelog
+
+Every update that changes something people can see adds a few very short lines to
+`src/lib/changelog.ts` (newest date first, one line per change, wrapped in `msg()` and translated
+in `src/i18n/zh.ts`). They appear under Settings → What's new.
 
 ## Checks before committing
 

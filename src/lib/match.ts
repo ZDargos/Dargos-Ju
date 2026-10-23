@@ -49,7 +49,7 @@ export interface DuelState {
   lives_b: number;
   correct: number;
   deadline: string;
-  last: { by: 'a' | 'b'; ok: boolean; n: number; typed: string; timeout: boolean } | null;
+  last: { by: 'a' | 'b'; ok: boolean; n: number; typed: string; timeout: boolean; steal?: boolean } | null;
 }
 
 /** Sentences that suit the game in both languages, so an opponent in either mode can play them. */
@@ -209,5 +209,12 @@ export async function duelAnswer(id: string, turn: number, correct: boolean, typ
 
 export async function duelTimeout(id: string, turn: number): Promise<Match | null> {
   const { data } = await supabase.rpc('duel_timeout', { match_id: id, turn });
+  return asMatch(data);
+}
+
+/** A wrong duel guess: takes 20% of the move's time off the clock (the player keeps trying). */
+export async function duelWrong(id: string, turn: number): Promise<Match | null> {
+  const { data, error } = await supabase.rpc('duel_wrong', { match_id: id, turn });
+  if (error) throw error;
   return asMatch(data);
 }

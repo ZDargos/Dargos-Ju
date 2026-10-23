@@ -23,7 +23,7 @@ interface Props {
   showPy: boolean;
   /** When the clock starts (ms since epoch); vs matches start both players together. */
   startAt: number;
-  onAnswer?: (ok: boolean, ms: number, score: number, answered: number) => void;
+  onAnswer?: (ok: boolean, ms: number, score: number, answered: number, item: VocabItem) => void;
   onDone: (r: SpeedResult) => void;
 }
 
@@ -60,7 +60,7 @@ export default function SpeedRound({ pool, seed, direction, answer, lang, showPy
     const ok = v.id === q.item.id;
     const next = { score: result.score + (ok ? 1 : -1), right: result.right + (ok ? 1 : 0), wrong: result.wrong + (ok ? 0 : 1) };
     setResult(next);
-    onAnswer?.(ok, Date.now() - shownAt.current, next.score, next.right + next.wrong);
+    onAnswer?.(ok, Date.now() - shownAt.current, next.score, next.right + next.wrong, q.item);
     setFlash({ picked: v.id, ok });
     setTimeout(() => {
       setFlash(null);

@@ -2,17 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { useSettings } from '../lib/store';
-import { cancelMatch, decideWinner, duelAnswer, duelTimeout, getMatch, joinLive, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
+import { cancelMatch, decideWinner, duelAnswer, duelTimeout, duelWrong, getMatch, joinLive, submitResult, watchMyMatches, type LiveChannel, type Match, type ProgressEvent } from '../lib/match';
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
 import { gameById, gameName } from '../games/registry';
 import { vocabFor } from '../lib/vocab';
-import { duelAnswerOk, duelSeconds, wordSequence } from '../lib/vocabGame';
+import { asDuelLevel, duelAnswerOk, duelSeconds, readingsOf, WRONG_GUESS_PENALTY, wordSequence } from '../lib/vocabGame';
+import VocabSummary, { type WordResult } from '../components/VocabSummary';
 import { recordRound } from '../lib/gameStats';
 import { langName, useT } from '../i18n';
 import { IconClose } from '../components/Icons';
 import SpeedRound, { answerLabel, SPEED_MS, type SpeedResult } from '../games/SpeedRound';
-import DuelBoard from '../games/DuelBoard';
+import DuelBoard, { duelLevelName } from '../games/DuelBoard';
 import type { LearnLang } from '../lib/learn';
 
 /** Loads a match, both names, and keeps the match row live. */
@@ -85,6 +86,7 @@ export function SpeedVs({ id }: { id: string }) {
   const [theirs, setTheirs] = useState<ProgressEvent>({ round: 0, score: 0, results: [], done: false });
   const [mine, setMine] = useState<SpeedResult | null>(null);
   const [live, setLive] = useState(0);
+  const [words, setWords] = useState<WordResult[]>([]);
   const channel = useRef<LiveChannel | null>(null);
   const pool = useMemo(() => (match ? vocabFor(content, myLang, match.levels ?? []) : []), [match?.id, content, myLang]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -130,12 +132,18 @@ export function SpeedVs({ id }: { id: string }) {
       {match.status === 'cancelled' ? (
         <div className="card center"><p>{t('Your opponent left the match.')}</p></div>
       ) : finished ? (
-        <Verdict match={match} iAmA={iAmA} them={names.them} lines={[`${names.me}: ${iAmA ? match.score_a : match.score_b} · ${names.them}: ${iAmA ? match.score_b : match.score_a}`]} />
+        <>
+          <Verdict match={match} iAmA={iAmA} them={names.them} lines={[`${names.me}: ${iAmA ? match.score_a : match.score_b} · ${names.them}: ${iAmA ? match.score_b : match.score_a}`]} />
+          <VocabSummary results={words} />
+        </>
       ) : mine ? (
-        <div className="card center" style={{ padding: 24 }}>
-          <p style={{ fontWeight: 600 }}>{t('You scored {n}.', { n: mine.score })}</p>
-          <p className="muted small">{t('Waiting for {name} to finish…', { name: names.them })}</p>
-        </div>
+        <>
+          <div className="card center" style={{ padding: 24 }}>
+            <p style={{ fontWeight: 600 }}>{t('You scored {n}.', { n: mine.score })}</p>
+            <p className="muted small">{t('Waiting for {name} to finish…', { name: names.them })}</p>
+          </div>
+          <VocabSummary results={words} />
+        </>
       ) : (
         <SpeedRound
           pool={pool}
@@ -145,7 +153,8 @@ export function SpeedVs({ id }: { id: string }) {
           lang={myLang}
           showPy={false}
           startAt={startAt}
-          onAnswer={(ok, ms, score, answered) => {
+          onAnswer={(ok, ms, score, answered, item) => {
+            setWords((w) => [...w, { item, ok }]);
             recordRound(match.game, 'vs', ok, ms, id, myLang);
             setLive(score);
             channel.current?.send({ round: answered, score, results: [], done: false });
@@ -166,11 +175,14 @@ export function DuelVs({ id }: { id: string }) {
   useSettings();
   const { me, match, setMatch, names, error, iAmA, myLang, theirLang } = useMatch(id);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
+  const [penalty, setPenalty] = useState<{ text: string; key: number } | null>(null);
+  const [results, setResults] = useState<WordResult[]>([]);
   const [now, setNow] = useState(Date.now());
   const lastSeen = useRef(-1);
   const shownAt = useRef(Date.now());
   const sent = useRef(-1);
   const levels = match?.levels ?? [];
+  const level = asDuelLevel(match?.variant);
   // Each player's words come from their own learning language, drawn with the shared seed.
   const mySeq = useMemo(() => (match ? wordSequence(vocabFor(content, myLang, levels), match.seed ?? 1) : null), [match?.id, content, myLang]); // eslint-disable-line react-hooks/exhaustive-deps
   const theirSeq = useMemo(() => (match ? wordSequence(vocabFor(content, theirLang, levels), match.seed ?? 1) : null), [match?.id, content, theirLang]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -181,21 +193,23 @@ export function DuelVs({ id }: { id: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Show what just happened (a right answer, a miss, a timeout) for a moment.
+  // Show what just happened for a moment. The right answer is only shown to the player who missed.
   useEffect(() => {
     if (!d?.last || d.turn === lastSeen.current) return;
     lastSeen.current = d.turn;
     shownAt.current = Date.now();
+    setPenalty(null);
     const byMe = (d.last.by === 'a') === iAmA;
-    const who = byMe ? t('You') : names.them;
     const seq = byMe ? mySeq : theirSeq;
     const lang = byMe ? myLang : theirLang;
     const item = seq?.(d.last.n);
-    const answer = item ? (lang === 'zh' ? item.py : item.text) : '';
+    if (item) setResults((r) => [...r, { item, ok: d.last!.ok, by: byMe ? t('You') : names.them, steal: d.last!.steal }]);
+    if (byMe && !d.last.ok) recordRound(match!.game, 'vs', false, 0, id, myLang);
+    const answer = item ? (lang === 'zh' ? readingsOf(item) : item.text) : '';
     setFeedback(
       d.last.ok
-        ? { ok: true, text: t('{name} got it!', { name: who }) }
-        : { ok: false, text: d.last.timeout ? t("{name} ran out of time. It was {answer}", { name: who, answer }) : t('{name} missed. It was {answer}', { name: who, answer }) },
+        ? { ok: true, text: byMe ? t('You got it!') : t('{name} got it!', { name: names.them }) }
+        : { ok: false, text: byMe ? t("Time's up! It was {answer}", { answer }) : t('{name} ran out of time.', { name: names.them }) },
     );
     const timer = setTimeout(() => setFeedback(null), 1600);
     return () => clearTimeout(timer);
@@ -210,7 +224,7 @@ export function DuelVs({ id }: { id: string }) {
   if (error) return <div className="card empty">{error}</div>;
   if (!match || !me) return <div className="center-screen">{t('Joining match…')}</div>;
   const game = gameById(match.game);
-  const title = `${gameName(game, myLang)} · ${t('Vs')}`;
+  const title = `${gameName(game, myLang)} · ${duelLevelName(level, t)} · ${t('Vs')}`;
   const finished = match.status === 'finished';
   const leave = async () => {
     if (!finished && confirm(t('Leave the match? It counts as a forfeit.'))) await cancelMatch(id);
@@ -220,6 +234,7 @@ export function DuelVs({ id }: { id: string }) {
     return (
       <Shell title={title} onLeave={() => navigate('/games')}>
         <div className="card center"><p>{t('Your opponent left the match.')}</p></div>
+        <VocabSummary results={results} />
       </Shell>
     );
   if (!d || !mySeq || !theirSeq) return <div className="center-screen">{t('Joining match…')}</div>;
@@ -229,14 +244,22 @@ export function DuelVs({ id }: { id: string }) {
   const myLives = iAmA ? d.lives_a : d.lives_b;
   const theirLives = iAmA ? d.lives_b : d.lives_a;
 
+  // A right answer ends the move; a wrong guess takes time off the clock and the player tries again.
   const submit = async (typed: string) => {
     if (sent.current === d.turn) return;
-    sent.current = d.turn;
     const ok = duelAnswerOk(typed, mySeq(d.n), myLang);
-    recordRound(match.game, 'vs', ok, Date.now() - shownAt.current, id, myLang);
     try {
-      const m = await duelAnswer(id, d.turn, ok, typed);
-      if (m) setMatch((cur) => ({ ...cur!, ...m }));
+      if (ok) {
+        sent.current = d.turn;
+        recordRound(match.game, 'vs', true, Date.now() - shownAt.current, id, myLang);
+        const m = await duelAnswer(id, d.turn, true, typed);
+        if (m) setMatch((cur) => ({ ...cur!, ...m }));
+      } else {
+        const cut = WRONG_GUESS_PENALTY * duelSeconds(d.correct, level);
+        setPenalty({ text: t('Wrong: −{s}s', { s: Number(cut.toFixed(1)) }), key: Date.now() });
+        const m = await duelWrong(id, d.turn);
+        if (m) setMatch((cur) => ({ ...cur!, ...m }));
+      }
     } catch {
       sent.current = -1;
     }
@@ -245,7 +268,10 @@ export function DuelVs({ id }: { id: string }) {
   return (
     <Shell title={title} onLeave={leave}>
       {finished ? (
-        <Verdict match={match} iAmA={iAmA} them={names.them} lines={[t('Lives left: {me} – {them}', { me: myLives, them: theirLives }), t('{n} right answers in total', { n: d.correct })]} />
+        <>
+          <Verdict match={match} iAmA={iAmA} them={names.them} lines={[t('Lives left: {me} – {them}', { me: myLives, them: theirLives }), t('{n} right answers in total', { n: d.correct })]} />
+          <VocabSummary results={results} />
+        </>
       ) : (
         <DuelBoard
           item={item}
@@ -253,11 +279,13 @@ export function DuelVs({ id }: { id: string }) {
           myTurn={myTurn}
           steal={d.phase === 'steal'}
           deadline={deadline}
-          seconds={duelSeconds(d.correct)}
+          seconds={duelSeconds(d.correct, level)}
           correct={d.correct}
           players={[{ name: names.me, lives: myLives }, { name: names.them, lives: theirLives }]}
           moverName={myTurn ? names.me : names.them}
           feedback={feedback}
+          moveKey={d.turn}
+          penalty={myTurn ? penalty : null}
           onSubmit={submit}
         />
       )}

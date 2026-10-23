@@ -109,12 +109,33 @@ export function choiceQuestions(pool: VocabItem[], seed: number, answer: SpeedAn
  */
 export function duelAnswerOk(typed: string, item: VocabItem, lang: LearnLang): boolean {
   if (!typed.trim()) return false;
-  if (lang === 'zh') return pinyinLettersMatch(typed, item.py);
+  // Any reading counts: 胖 is pàng or pán.
+  if (lang === 'zh') return [item.py, ...(item.pys ?? [])].some((py) => pinyinLettersMatch(typed, py));
   return normalizeEnglish(typed).replace(/\s+/g, '') === normalizeEnglish(item.text).replace(/\s+/g, '');
 }
 
-/** Duel clock: 15 seconds, 0.75 s faster per correct answer, never under 6 (same as the server). */
-export const duelSeconds = (correct: number) => Math.max(6, 15 - 0.75 * correct);
+/** Duel difficulty: where the clock starts and its minimum (same as private.duel_seconds on the server). */
+export type DuelLevel = 'easy' | 'medium' | 'hard';
+export const DUEL_LEVELS: Record<DuelLevel, { start: number; min: number }> = {
+  easy: { start: 25, min: 10 },
+  medium: { start: 20, min: 6 },
+  hard: { start: 15, min: 6 },
+};
+/** Right answers it takes for the clock to reach its minimum. */
+const DUEL_STEPS = 12;
+export const asDuelLevel = (v: string | null | undefined): DuelLevel => (v === 'easy' || v === 'medium' ? v : 'hard');
+
+/** Seconds for a move: starts at the level's start and shrinks with every right answer down to its minimum. */
+export function duelSeconds(correct: number, level: DuelLevel = 'hard'): number {
+  const { start, min } = DUEL_LEVELS[level];
+  return Math.max(min, start - ((start - min) / DUEL_STEPS) * correct);
+}
+
+/** A wrong guess takes this share of the move's time off the clock (the player keeps trying). */
+export const WRONG_GUESS_PENALTY = 0.2;
+
+/** All accepted readings of a word, for showing the answer. */
+export const readingsOf = (item: VocabItem) => [...new Set([item.py, ...(item.pys ?? [])])].join(' / ');
 export const DUEL_LIVES = 4;
 /** 0..1, how heated the duel is: drives the shaking, pulsing and colour. */
 export const duelIntensity = (correct: number) => Math.min(1, correct / 12);

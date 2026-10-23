@@ -31,6 +31,8 @@ export interface VocabItem {
   isChar: boolean;
   /** A sentence that uses it, for context. */
   exampleId?: string;
+  /** All accepted readings (Chinese words with more than one), including `py`. */
+  pys?: string[];
 }
 
 export const WORD_PREFIX = 'w:';
@@ -52,7 +54,7 @@ function allItems(content: Content, lang: LearnLang): VocabItem[] {
       items.set(id, { ...cur, isWord: cur.isWord || isWord, ...(level < cur.level ? { level, exampleId: s.id } : {}) });
       return;
     }
-    items.set(id, { id, text, lang, level, py, gloss, isWord, isChar: lang === 'zh' && [...text].length === 1, exampleId: s.id });
+    items.set(id, { id, text, lang, level, py, gloss, isWord, isChar: lang === 'zh' && [...text].length === 1, exampleId: s.id, ...(lang === 'zh' && content.readings[text] ? { pys: content.readings[text] } : {}) });
   };
   for (const s of content.sentences) {
     if (lang === 'zh') {

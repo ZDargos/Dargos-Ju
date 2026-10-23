@@ -101,7 +101,7 @@ export const GAMES: GameDef[] = [
     title: msg('Pinyin duel'),
     titleEn: msg('Spelling duel'),
     icon: '斗',
-    description: msg('Take turns typing the answer before the clock runs out; it gets faster as you go. Miss and you lose a life, and your opponent gets one chance at the same word. 4 lives each.'),
+    description: msg('Take turns typing the answer before the clock runs out; it gets faster as you go. Wrong guesses cost time; running out costs a life, and your opponent gets one chance at the same word. 4 lives each.'),
   },
 ];
 

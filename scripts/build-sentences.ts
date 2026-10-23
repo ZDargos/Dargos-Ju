@@ -98,13 +98,21 @@ for (const s of sentences) {
 }
 const enProper = [...properNouns(sentences.map((s) => s.enTokens))];
 
-mkdirSync(dirname(outPath), { recursive: true });
-writeFileSync(outPath, JSON.stringify({ levels, sentences, lexicon, enLexicon, enLemma, enProper }));
-writeFileSync(join(dirname(outPath), 'en-dictionary.json'), JSON.stringify(enFull));
-
 // Full dictionary entries (all readings and meanings) for the tap-a-word panel; loaded on demand.
 const preferred = Object.fromEntries(Object.entries(lexicon).map(([w, e]) => [w, e.py]));
-writeFileSync(join(dirname(outPath), 'dictionary.json'), JSON.stringify(fullEntries(dictText, new Set(Object.keys(lexicon)), preferred)));
+const full = fullEntries(dictText, new Set(Object.keys(lexicon)), preferred);
+// Every reading of words that have several (胖: pàng, pán), so the duel accepts any of them.
+const readings: Record<string, string[]> = {};
+for (const [w, entries] of Object.entries(full)) {
+  const pys = [...new Set(entries.map((e) => e.py))];
+  if (pys.length > 1) readings[w] = pys;
+}
+
+mkdirSync(dirname(outPath), { recursive: true });
+writeFileSync(outPath, JSON.stringify({ levels, sentences, lexicon, readings, enLexicon, enLemma, enProper }));
+writeFileSync(join(dirname(outPath), 'en-dictionary.json'), JSON.stringify(enFull));
+
+writeFileSync(join(dirname(outPath), 'dictionary.json'), JSON.stringify(full));
 
 // Sorted, one entry per line, so manual edits and diffs stay readable.
 const sortedKeys = Object.keys(cache).sort();

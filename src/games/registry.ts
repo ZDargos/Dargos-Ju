@@ -2,7 +2,6 @@ import type { ComponentType } from 'react';
 import type { Content } from '../lib/content';
 import { project, tilesFor, type LearnLang, type LearnSentence } from '../lib/learn';
 import type { Settings } from '../types';
-import WordOrder from './WordOrder';
 import SentenceBuilder from './SentenceBuilder';
 import SpotError from './SpotError';
 import CloseCall from './CloseCall';
@@ -39,15 +38,6 @@ export interface GameDef {
 }
 
 export const GAMES: GameDef[] = [
-  {
-    id: 'word-order',
-    title: msg('Word order'),
-    icon: '序',
-    description: msg('Rebuild the {target} sentence from shuffled word tiles.'),
-    hint: msg('A button that places the next word'),
-    component: WordOrder,
-    minTiles: 3,
-  },
   {
     id: 'sentence-builder',
     title: msg('Sentence builder'),
@@ -93,7 +83,10 @@ export const GAMES: GameDef[] = [
   },
 ];
 
-export const gameById = (id: string) => GAMES.find((g) => g.id === id);
+/** Games that were removed: kept only so old stats and vs history still show their names. */
+const RETIRED_GAMES: GameDef[] = [{ id: 'word-order', title: msg('Word order'), icon: '序', description: '', comingSoon: true }];
+
+export const gameById = (id: string) => GAMES.find((g) => g.id === id) ?? RETIRED_GAMES.find((g) => g.id === id);
 
 /** The game's sentences for the selected levels, seen from the given learning language. */
 export function poolFor(game: GameDef, content: Content, settings: Settings, lang: LearnLang): LearnSentence[] {

@@ -133,6 +133,7 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
         <NumberField label={t('Cards per session')} value={settings.sessionSize} min={5} max={200} onChange={(sessionSize) => updateSettings({ sessionSize })} />
         <NumberField label={t('New cards per day')} help={t('Across all levels')} value={settings.newPerDay} min={0} max={200} onChange={(newPerDay) => updateSettings({ newPerDay })} />
+        <NumberField label={t('New word cards per day')} value={settings.wordsNewPerDay ?? 15} min={0} max={200} onChange={(wordsNewPerDay) => updateSettings({ wordsNewPerDay })} />
         <NumberField
           label={t('Target recall')}
           help={t('Higher means more frequent reviews (FSRS)')}

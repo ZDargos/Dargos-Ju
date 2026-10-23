@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getContent, useContent } from '../lib/content';
 import { getState, useStore } from '../lib/store';
-import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_WINDOW_MS, type SessionItem } from '../lib/srs';
+import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_WINDOW_MS, sentenceUnits, type SessionItem } from '../lib/srs';
+import { vocabFor, vocabItem, type VocabItem } from '../lib/vocab';
+import DictPanel from '../components/DictPanel';
 import { lexiconFor, project } from '../lib/learn';
 import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
 import { langName, useT } from '../i18n';
@@ -22,6 +24,8 @@ export default function Review() {
   const t = useT();
   const [params] = useSearchParams();
   const extra = params.get('mode') === 'extra';
+  const words = params.get('deck') === 'words';
+  const [dict, setDict] = useState<string | null>(null);
   const navigate = useNavigate();
   const content = useContent();
   const settings = useStore((s) => s.settings);
@@ -34,7 +38,10 @@ export default function Review() {
   const [queue, setQueue] = useState<QueueItem[]>(() => {
     const s = getState().settings;
     const c = getContent();
-    const items = extra ? buildExtraPractice(c, s.studyLevels, s) : buildSession(c, s.studyLevels, s);
+    const units = words
+      ? vocabFor(c, s.learning, s.studyLevels, s.wordKind ?? 'both').map((v) => ({ id: v.id, level: v.level }))
+      : sentenceUnits(c, s.studyLevels);
+    const items = extra ? buildExtraPractice(units, s) : buildSession(units, s);
     return items.map((i) => ({ ...i, shown: 0 }));
   });
   const [revealed, setRevealed] = useState(false);
@@ -42,8 +49,9 @@ export default function Review() {
   const [finished, setFinished] = useState(new Set<string>());
 
   const current = queue[0];
-  const source = current ? content.byId.get(current.sid) : undefined;
+  const source = current && !words ? content.byId.get(current.sid) : undefined;
   const sentence = source ? project(source, lang) : undefined;
+  const word: VocabItem | undefined = current && words ? vocabItem(content, lang, current.sid) : undefined;
   const lexicon = lexiconFor(content, lang);
   const intervals = useMemo(
     () => (current && revealed ? previewIntervals(current.sid, current.dir, { ...settings, learning: lang }) : null),
@@ -82,7 +90,7 @@ export default function Review() {
     return () => window.removeEventListener('keydown', onKey);
   }, [current, revealed, grade]);
 
-  if (!current || !sentence) {
+  if (!current || (!sentence && !word)) {
     const reviewed = tally[1] + tally[2] + tally[3];
     return (
       <div className="center-screen">
@@ -115,11 +123,19 @@ export default function Review() {
   const progress = answers / (answers + queue.length);
   const left = new Set(queue.map((q) => `${q.sid}|${q.dir}`)).size;
   const targetIsZh = lang === 'zh';
-  const target = (
-    <PinyinText tokens={sentence.tokens} text={sentence.target} lexicon={lexicon} show={pinyin} lang={lang} />
-  );
-  const native = <span lang={targetIsZh ? 'en' : 'zh-CN'}>{sentence.native}</span>;
   const names = { target: langName(lang), native: langName(targetIsZh ? 'en' : 'zh') };
+  const spoken = word ? word.text : sentence!.target;
+  const example = word?.exampleId ? content.byId.get(word.exampleId) : undefined;
+  const exampleView = example ? project(example, lang) : undefined;
+  const target = word ? (
+    <span className={`word-prompt${targetIsZh ? ' zh' : ''}`} lang={targetIsZh ? 'zh-CN' : 'en'}>
+      {pinyin && reading && <span className="word-py">{word.py}</span>}
+      {word.text}
+    </span>
+  ) : (
+    <PinyinText tokens={sentence!.tokens} text={sentence!.target} lexicon={lexicon} show={pinyin} lang={lang} />
+  );
+  const native = <span lang={targetIsZh ? 'en' : 'zh-CN'}>{word ? word.gloss : sentence!.native}</span>;
 
   return (
     <>
@@ -138,7 +154,13 @@ export default function Review() {
       <div className="card flash" onClick={() => !revealed && setRevealed(true)} style={{ cursor: revealed ? 'default' : 'pointer' }}>
         <div className="row" style={{ gap: 6 }}>
           <span className="dir-label">
-            {reading ? t('Read · translate to {native}', names) : t('Produce · say it in {target}', names)}
+            {word
+              ? reading
+                ? t('Word · what does it mean?')
+                : t('Word · say it in {target}', names)
+              : reading
+                ? t('Read · translate to {native}', names)
+                : t('Produce · say it in {target}', names)}
           </span>
           {current.kind === 'new' && current.shown === 0 && <span className="tag new">{t('New')}</span>}
           {current.kind === 'extra' && <span className="tag">{t('Extra')}</span>}
@@ -149,14 +171,27 @@ export default function Review() {
         {revealed && (
           <div className="answer" aria-live="polite">
             <div className={reading === targetIsZh ? 'answer-en' : 'answer-zh'}>{reading ? native : target}</div>
-            <WordBreakdown sentence={sentence} lexicon={lexicon} />
+            {word ? (
+              <div className="word-answer">
+                <div className="word-answer-py">{word.py}</div>
+                {exampleView && (
+                  <div className="word-example">
+                    <div className={targetIsZh ? 'zh' : ''} lang={targetIsZh ? 'zh-CN' : 'en'}>{exampleView.target}</div>
+                    <div className="small muted" lang={targetIsZh ? 'en' : 'zh-CN'}>{exampleView.native}</div>
+                  </div>
+                )}
+                <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); setDict(word.text); }}>{t('Dictionary')}</button>
+              </div>
+            ) : (
+              <WordBreakdown sentence={sentence!} lexicon={lexicon} />
+            )}
             {ttsAvailable() && (
               <button
                 className="btn ghost sm"
                 style={{ marginTop: 10 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  speak(sentence.target, settings.speechRate, lang).catch(reportSpeechError);
+                  speak(spoken, settings.speechRate, lang).catch(reportSpeechError);
                 }}
               >
                 <IconSpeaker /> {t('Listen')}
@@ -184,6 +219,7 @@ export default function Review() {
         </button>
       )}
       <PinyinToggle section="study" />
+      {dict && <DictPanel word={dict} lang={lang} onClose={() => setDict(null)} />}
     </>
   );
 }

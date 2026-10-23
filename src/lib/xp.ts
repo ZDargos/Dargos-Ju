@@ -168,7 +168,13 @@ export interface Challenge {
   game?: string;
 }
 
-const CHALLENGE_GAMES = ['word-order', 'sentence-builder', 'spot-error', 'close-call', 'dictation'];
+// Games used by daily challenges. Past days keep the list they had, so their XP and streaks never
+// change when games are added or removed: add a new entry with the first day it applies.
+const CHALLENGE_GAMES: [string, string[]][] = [
+  ['0000-00-00', ['word-order', 'sentence-builder', 'spot-error', 'close-call', 'dictation']],
+  ['2026-10-23', ['sentence-builder', 'spot-error', 'close-call', 'dictation']],
+];
+const challengeGamesOn = (day: string) => CHALLENGE_GAMES.filter(([from]) => from <= day).at(-1)![1];
 const TARGETS: Record<ChallengeKind, number[]> = {
   cards: [15, 25, 40],
   new: [3, 5, 8],
@@ -198,7 +204,7 @@ export function challengesFor(day: string): Challenge[] {
   const first = pick(cardKinds);
   const second = pick(gameKinds);
   const third = pick([...cardKinds, ...gameKinds].filter((k) => k !== first && k !== second));
-  return [first, second, third].map((kind) => ({ kind, target: pick(TARGETS[kind]), ...(kind === 'game' ? { game: pick(CHALLENGE_GAMES) } : {}) }));
+  return [first, second, third].map((kind) => ({ kind, target: pick(TARGETS[kind]), ...(kind === 'game' ? { game: pick(challengeGamesOn(day)) } : {}) }));
 }
 
 export function challengeProgress(c: Challenge, d: DayStats | undefined): number {

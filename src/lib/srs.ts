@@ -7,6 +7,7 @@ import { getState, setState } from './store';
 import { scheduleSync } from './sync';
 import { t } from '../i18n';
 import type { Content } from './content';
+import { isWordId } from './vocab';
 import type { CardRecord, Dir, Grade, LearnLang, ReviewLog, ReviewMode, Sentence, Settings, StoredCard } from '../types';
 
 /** Card ids: "<sentence>|r" when learning Chinese, "en:<sentence>|r" when learning English. */
@@ -137,10 +138,25 @@ const startOfToday = () => {
   return d;
 };
 
-export function newIntroducedToday(lang: LearnLang = getState().settings.learning): number {
+/** New cards started today in a language, counted separately for sentences and words. */
+export function newIntroducedToday(lang: LearnLang = getState().settings.learning, words = false): number {
   const since = startOfToday().toISOString();
-  return getState().logs.filter((l) => l.mode === 'new' && l.at >= since && logLang(l) === lang).length;
+  return getState().logs.filter((l) => l.mode === 'new' && l.at >= since && logLang(l) === lang && isWordId(l.sid) === words).length;
 }
+
+/** Something with two cards (reading and producing): a sentence, or a word ("w:" ids). */
+export interface StudyUnit {
+  id: string;
+  level: number;
+}
+
+export const sentenceUnits = (content: Content, levels: number[]): StudyUnit[] => {
+  const set = new Set(levels);
+  return content.sentences.filter((s) => set.has(s.level)).map((s) => ({ id: s.id, level: s.level }));
+};
+
+const isWordDeck = (units: StudyUnit[]) => units.length > 0 && isWordId(units[0].id);
+const newLimit = (settings: Settings, words: boolean) => (words ? settings.wordsNewPerDay ?? 15 : settings.newPerDay);
 
 function allowedDirs(settings: Settings): Dir[] {
   return settings.directions === 'both' ? ['r', 'p'] : [settings.directions];
@@ -159,16 +175,14 @@ interface Candidates {
   seen: { sid: string; dir: Dir; rec: CardRecord }[];
 }
 
-function collect(content: Content, levels: number[], settings: Settings, now: Date): Candidates {
+function collect(units: StudyUnit[], settings: Settings, now: Date): Candidates {
   const cards = getState().cards;
   const dirs = allowedDirs(settings);
-  const levelSet = new Set(levels);
   const due: Candidates['due'] = [];
   const fresh: SessionItem[] = [];
   const seen: Candidates['seen'] = [];
 
-  for (const s of content.sentences) {
-    if (!levelSet.has(s.level)) continue;
+  for (const s of units) {
     // One direction per sentence: the most overdue due card wins, otherwise a new card.
     let best: { item: SessionItem; r: number } | undefined;
     let newDir: Dir | undefined;
@@ -193,15 +207,17 @@ function collect(content: Content, levels: number[], settings: Settings, now: Da
   return { due, fresh, seen };
 }
 
-export function studyCounts(content: Content, levels: number[], settings: Settings): StudyCounts {
-  const c = collect(content, levels, settings, new Date());
-  return { due: c.due.length, newAvailable: c.fresh.length, newToday: newIntroducedToday(settings.learning), seen: c.seen.length };
+export function studyCounts(units: StudyUnit[], settings: Settings): StudyCounts {
+  const c = collect(units, settings, new Date());
+  return { due: c.due.length, newAvailable: c.fresh.length, newToday: newIntroducedToday(settings.learning, isWordDeck(units)), seen: c.seen.length };
 }
 
 /** Builds a study session: due cards first (weakest first if there are too many), plus new cards, shuffled. */
-export function buildSession(content: Content, levels: number[], settings: Settings): SessionItem[] {
+export function buildSession(units: StudyUnit[], settings: Settings): SessionItem[] {
   const now = new Date();
-  const { due, fresh } = collect(content, levels, settings, now);
+  const { due, fresh } = collect(units, settings, now);
+  const words = isWordDeck(units);
+  const levelOf = new Map(units.map((u) => [u.id, u.level]));
   const size = settings.sessionSize;
   // When more cards are due than fit, keep the ones most likely forgotten, with a little randomness.
   const dueSorted = due
@@ -209,10 +225,10 @@ export function buildSession(content: Content, levels: number[], settings: Setti
     .sort((a, b) => a.key - b.key)
     .slice(0, size)
     .map((d) => d.item);
-  const newBudget = Math.max(0, Math.min(settings.newPerDay - newIntroducedToday(settings.learning), size - dueSorted.length));
+  const newBudget = Math.max(0, Math.min(newLimit(settings, words) - newIntroducedToday(settings.learning, words), size - dueSorted.length));
   // New cards: lower levels first, random order within a level.
   const newPicked = shuffle(fresh)
-    .sort((a, b) => content.byId.get(a.sid)!.level - content.byId.get(b.sid)!.level)
+    .sort((a, b) => levelOf.get(a.sid)! - levelOf.get(b.sid)!)
     .slice(0, newBudget);
   return shuffle([...dueSorted, ...newPicked]);
 }
@@ -226,9 +242,9 @@ export function weakness(rec: CardRecord, settings: Settings, now = new Date()):
 }
 
 /** Extra practice: weighted random sample of already-seen cards, favouring weak ones. */
-export function buildExtraPractice(content: Content, levels: number[], settings: Settings): SessionItem[] {
+export function buildExtraPractice(units: StudyUnit[], settings: Settings): SessionItem[] {
   const now = new Date();
-  const { seen } = collect(content, levels, settings, now);
+  const { seen } = collect(units, settings, now);
   const pool = seen.map((c) => ({ c, w: 0.05 + Math.pow(weakness(c.rec, settings, now), 1.5) }));
   const picked: SessionItem[] = [];
   const usedSentences = new Set<string>();

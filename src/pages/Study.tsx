@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { updateSettings, useStore } from '../lib/store';
-import { studyCounts } from '../lib/srs';
+import { sentenceUnits, studyCounts } from '../lib/srs';
+import { vocabFor } from '../lib/vocab';
 import { langParams, useT } from '../i18n';
 import LevelPicker from '../components/LevelPicker';
 import InstallHint from '../components/InstallHint';
@@ -22,8 +23,16 @@ export default function Study() {
 
   const levels = settings.studyLevels.filter((l) => content.levels.some((x) => x.level === l));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const counts = useMemo(() => studyCounts(content, levels, settings), [content, levels.join(','), settings, cards]);
-  const newLeft = Math.max(0, settings.newPerDay - counts.newToday);
+  const words = settings.studyDeck === 'words';
+  const wordKind = settings.learning === 'zh' ? settings.wordKind ?? 'both' : 'words';
+  const units = useMemo(
+    () => (words ? vocabFor(content, settings.learning, levels, wordKind).map((v) => ({ id: v.id, level: v.level })) : sentenceUnits(content, levels)),
+    [content, words, settings.learning, levels.join(','), wordKind], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const counts = useMemo(() => studyCounts(units, settings), [units, settings, cards]);
+  const newLimit = words ? settings.wordsNewPerDay ?? 15 : settings.newPerDay;
+  const newLeft = Math.max(0, newLimit - counts.newToday);
   const newInSession = Math.min(newLeft, counts.newAvailable, Math.max(0, settings.sessionSize - counts.due));
   const canStudy = levels.length > 0 && (counts.due > 0 || newInSession > 0);
   useVoices();
@@ -66,6 +75,34 @@ export default function Study() {
 
       <div className="section-title">{t('Cards')}</div>
       <div className="card">
+        <div className="segmented" role="group" aria-label={t('What to study')} style={{ marginBottom: 10 }}>
+          {(
+            [
+              ['sentences', t('Sentences')],
+              ['words', t('Words')],
+            ] as const
+          ).map(([v, label]) => (
+            <button key={v} className={(settings.studyDeck ?? 'sentences') === v ? 'on' : ''} aria-pressed={(settings.studyDeck ?? 'sentences') === v} onClick={() => updateSettings({ studyDeck: v })}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {words && settings.learning === 'zh' && (
+          <div className="segmented" role="group" aria-label={t('Words or characters')} style={{ marginBottom: 10 }}>
+            {(
+              [
+                ['words', t('Words')],
+                ['chars', t('Characters')],
+                ['both', t('Both')],
+              ] as const
+            ).map(([v, label]) => (
+              <button key={v} className={wordKind === v ? 'on' : ''} aria-pressed={wordKind === v} onClick={() => updateSettings({ wordKind: v })}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        {words && levels.length > 0 && <p className="small muted" style={{ margin: '0 2px 10px' }}>{t('{n} different words in the selected levels.', { n: units.length })}</p>}
         <div className="segmented" role="group" aria-label={t('Card direction')}>
           {(
             [
@@ -80,7 +117,9 @@ export default function Study() {
           ))}
         </div>
         <p className="small muted" style={{ margin: '10px 2px 0' }}>
-          {t('Reading shows {target} and you translate it. Producing shows {native} and you say or write the {target}.', names)}
+          {words
+            ? t('Reading shows a {target} word and you give its meaning. Producing shows the meaning and you say the {target} word.', names)
+            : t('Reading shows {target} and you translate it. Producing shows {native} and you say or write the {target}.', names)}
         </p>
       </div>
 
@@ -100,14 +139,14 @@ export default function Study() {
       </div>
 
       <div className="stack" style={{ marginTop: 16 }}>
-        <button className="btn accent block" disabled={!canStudy} onClick={() => navigate('/review?mode=study')}>
+        <button className="btn accent block" disabled={!canStudy} onClick={() => navigate(words ? '/review?mode=study&deck=words' : '/review?mode=study')}>
           {canStudy ? t('Start session') : levels.length ? t('All caught up') : t('Pick a level to start')}
         </button>
-        <button className="btn block" disabled={!levels.length || counts.seen === 0} onClick={() => navigate('/review?mode=extra')}>
+        <button className="btn block" disabled={!levels.length || counts.seen === 0} onClick={() => navigate(words ? '/review?mode=extra&deck=words' : '/review?mode=extra')}>
           {t('Extra practice on weak cards')}
         </button>
         {levels.length > 0 && counts.due === 0 && newLeft === 0 && counts.newAvailable > 0 && (
-          <p className="small muted center">{t("You've reached today's limit of {n} new cards. You can raise it in Settings.", { n: settings.newPerDay })}</p>
+          <p className="small muted center">{t("You've reached today's limit of {n} new cards. You can raise it in Settings.", { n: newLimit })}</p>
         )}
       </div>
 

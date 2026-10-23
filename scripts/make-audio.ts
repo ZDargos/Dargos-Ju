@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { audioKey, SAMPLE_SENTENCES, type AudioLang } from '../src/lib/audioKey.ts';
+import { toSapi } from '../src/lib/pinyin.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = join(root, 'data', 'audio-manifest.json');
@@ -41,18 +42,33 @@ const key = process.env.AZURE_SPEECH_KEY;
 const region = process.env.AZURE_SPEECH_REGION;
 
 const manifest: Record<string, ManifestEntry> = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : {};
-const { sentences } = JSON.parse(readFileSync(join(root, 'src', 'generated', 'sentences.json'), 'utf8')) as {
-  sentences: { zh: string; enClean: string }[];
+const { sentences, lexicon, enLexicon, enLemma, enProper } = JSON.parse(readFileSync(join(root, 'src', 'generated', 'sentences.json'), 'utf8')) as {
+  sentences: { zh: string; enClean: string; enTokens: string[] }[];
+  lexicon: Record<string, { py: string; en: string }>;
+  enLexicon: Record<string, { py: string; en: string }>;
+  enLemma: Record<string, string>;
+  enProper: string[];
 };
 
 // Everything the app speaks: each sentence in both languages, plus the samples.
-const wanted = new Map<string, { lang: AudioLang; text: string }>();
-const want = (lang: AudioLang, text: string) => wanted.set(audioKey(lang, text), { lang, text: text.trim() });
+const wanted = new Map<string, { lang: AudioLang; text: string; py?: string }>();
+const want = (lang: AudioLang, text: string, py?: string) => wanted.set(audioKey(lang, text), { lang, text: text.trim(), py });
 for (const s of sentences) {
   want('zh', s.zh);
   want('en', s.enClean);
 }
 for (const [lang, text] of Object.entries(SAMPLE_SENTENCES) as [AudioLang, string][]) want(lang, text);
+// Words and characters for word study (src/lib/vocab.ts): every Chinese word and character in the
+// sentences, said with its dictionary reading, and every English dictionary form.
+for (const [w, e] of Object.entries(lexicon)) want('zh', w, e.py);
+const proper = new Set(enProper);
+for (const s of sentences)
+  for (const tok of s.enTokens) {
+    if (!/^[A-Za-z][A-Za-z\d]*(?:['’-][A-Za-z\d]+)*$/.test(tok) || (proper.has(tok) && tok !== 'I') || /^[A-Z]{2,}$/.test(tok)) continue;
+    const w = tok.toLowerCase();
+    const lemma = enLemma[w] ?? w;
+    if ((enLexicon[lemma] ?? enLexicon[w])?.en) want('en', lemma);
+  }
 
 const voiceLabel = (lang: AudioLang) => `${VOICES[lang].a}+${VOICES[lang].b}`;
 const fileOf = (lang: AudioLang, k: string) => join(root, 'public', 'audio', lang, `${k}.mp3`);
@@ -66,8 +82,11 @@ const todo = [...wanted].filter(([k, w]) => {
 const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
 /** SSML for a sentence; dialogue lines get alternating voices and the "A:" labels aren't read. */
-function ssml(lang: AudioLang, text: string): string {
+function ssml(lang: AudioLang, text: string, py?: string): string {
   const v = VOICES[lang];
+  // A single word is said with its dictionary reading, so characters with several readings come out right.
+  const sapi = py && lang === 'zh' ? toSapi(py) : null;
+  if (sapi) return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${v.locale}"><voice name="${v.a}"><phoneme alphabet="sapi" ph="${sapi}">${escapeXml(text)}</phoneme></voice></speak>`;
   const labels = [...text.matchAll(/(?:^|(?<=[.!?。！？…"”]))\s*([A-Z])\s*[:：]\s*/g)];
   const lines: { voice: string; text: string }[] =
     labels.length && labels[0].index === 0
@@ -85,7 +104,7 @@ function ssml(lang: AudioLang, text: string): string {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function synthesize(lang: AudioLang, text: string): Promise<Buffer> {
+async function synthesize(lang: AudioLang, text: string, py?: string): Promise<Buffer> {
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: 'POST',
@@ -95,9 +114,11 @@ async function synthesize(lang: AudioLang, text: string): Promise<Buffer> {
         'X-Microsoft-OutputFormat': FORMAT,
         'User-Agent': 'dargos-ju-audio',
       },
-      body: ssml(lang, text),
+      body: ssml(lang, text, py),
     });
     if (res.ok) return Buffer.from(await res.arrayBuffer());
+    // If the engine rejects a reading, say the word without it.
+    if (res.status === 400 && py) return synthesize(lang, text);
     if ((res.status === 429 || res.status >= 500) && attempt < 6) {
       await sleep(Number(res.headers.get('retry-after') ?? 0) * 1000 || 15000);
       continue;
@@ -124,7 +145,7 @@ if (todo.length && (!key || !region)) {
 let made = 0;
 for (const [k, w] of todo) {
   if (made >= limit) break;
-  const audio = await synthesize(w.lang, w.text);
+  const audio = await synthesize(w.lang, w.text, w.py);
   mkdirSync(dirname(fileOf(w.lang, k)), { recursive: true });
   writeFileSync(fileOf(w.lang, k), audio);
   manifest[k] = { lang: w.lang, text: w.text, source: 'neural', voice: voiceLabel(w.lang) };

@@ -2,13 +2,15 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { parseSentenceCsv } from './csv';
 import { getContent } from './content';
 import { setState, getState } from './store';
-import { buildExtraPractice, buildSession, cardKey, gradeCard } from './srs';
+import { buildExtraPractice, buildSession, cardKey, gradeCard, sentenceUnits } from './srs';
 import { termDifficulty } from './stats';
 import { mutate, vocabOf } from '../games/common';
 import { opsFor, project, tilesFor, wordsFor } from './learn';
 import { cleanEnglish, normalizeEnglish, tokenizeEnglish } from './english';
 import { DEFAULT_SETTINGS } from '../types';
 import { drawSentence } from './deck';
+import { vocabFor } from './vocab';
+import { pinyinLettersMatch, pinyinMatches, toSapi } from './pinyin';
 import { BADGES, XP_RULES, badgeStatus, challengesFor, computeXp, dayKey, levelFor, xpForLevel } from './xp';
 
 describe('csv', () => {
@@ -43,15 +45,15 @@ describe('sessions', () => {
     setState((st) => ({
       cards: Object.fromEntries(Object.entries(st.cards).map(([k, v]) => [k, { ...v, card: { ...v.card, due: new Date(Date.now() - 1000).toISOString() } }])),
     }));
-    const session = buildSession(content, levels, { ...s, newPerDay: 0 });
+    const session = buildSession(sentenceUnits(content, levels), { ...s, newPerDay: 0 });
     expect(session.length).toBe(30);
     expect(new Set(session.map((i) => i.sid)).size).toBe(session.length);
-    const extra = buildExtraPractice(content, levels, s);
+    const extra = buildExtraPractice(sentenceUnits(content, levels), s);
     expect(new Set(extra.map((i) => i.sid)).size).toBe(extra.length);
   });
 
   it('introduces reading before producing in both mode and respects the daily new limit', () => {
-    const session = buildSession(content, levels, { ...getState().settings, newPerDay: 10 });
+    const session = buildSession(sentenceUnits(content, levels), { ...getState().settings, newPerDay: 10 });
     expect(session.length).toBe(10);
     expect(session.every((i) => i.dir === 'r' && i.kind === 'new')).toBe(true);
   });
@@ -143,7 +145,7 @@ describe('English mode', () => {
     expect(getState().logs.at(-1)?.lang).toBe('en');
     // English sessions only count English cards.
     const levels = content.levels.map((l) => l.level);
-    const session = buildSession(content, levels, { ...getState().settings, learning: 'en' });
+    const session = buildSession(sentenceUnits(content, levels), { ...getState().settings, learning: 'en' });
     expect(session.some((i) => i.sid === sid && i.kind !== 'new')).toBe(false);
   });
 
@@ -193,9 +195,9 @@ describe('game sentence deck', () => {
   it('deals every sentence once, at random, before any repeats', () => {
     localStorage.clear();
     const pool = Array.from({ length: 50 }, (_, i) => ({ id: `s${i}` }));
-    const first = Array.from({ length: 50 }, () => drawSentence('word-order', 'zh', pool)!.id);
+    const first = Array.from({ length: 50 }, () => drawSentence('close-call', 'zh', pool)!.id);
     expect(new Set(first).size).toBe(50);
-    const second = Array.from({ length: 50 }, () => drawSentence('word-order', 'zh', pool)!.id);
+    const second = Array.from({ length: 50 }, () => drawSentence('close-call', 'zh', pool)!.id);
     expect(new Set(second).size).toBe(50);
     expect(second.join()).not.toBe(first.join());
     // The new pass doesn't open with the sentences that ended the last one.
@@ -265,5 +267,60 @@ describe('XP', () => {
       expect(cs).toHaveLength(3);
       expect(new Set(cs.map((c) => c.kind)).size).toBe(3);
     }
+  });
+});
+
+describe('word study', () => {
+  const content = getContent();
+  const levels = content.levels.map((l) => l.level);
+
+  it('takes words from the sentence splits, without duplicates across levels', () => {
+    const one = vocabFor(content, 'zh', [levels[0]], 'words');
+    const all = vocabFor(content, 'zh', levels, 'words');
+    expect(new Set(all.map((v) => v.id)).size).toBe(all.length);
+    expect(all.length).toBeGreaterThan(one.length);
+    const tokenWords = new Set(content.sentences.filter((s) => s.level === levels[0]).flatMap((s) => s.tokens));
+    for (const v of one) expect(tokenWords.has(v.text)).toBe(true);
+    expect(one.every((v) => v.py && v.gloss)).toBe(true);
+  });
+
+  it('has single characters in Chinese mode and dictionary forms in English mode', () => {
+    const chars = vocabFor(content, 'zh', levels, 'chars');
+    expect(chars.every((v) => [...v.text].length === 1)).toBe(true);
+    const en = vocabFor(content, 'en', levels);
+    expect(en.length).toBeGreaterThan(300);
+    expect(en.some((v) => v.text === 'went')).toBe(false);
+    expect(en.every((v) => v.text === v.text.toLowerCase() || v.text === 'I')).toBe(true);
+  });
+
+  it('schedules word cards separately from sentence cards', () => {
+    setState({ cards: {}, logs: [], settings: { ...DEFAULT_SETTINGS, newPerDay: 5, wordsNewPerDay: 7, sessionSize: 30 } });
+    const units = vocabFor(content, 'zh', levels, 'both').map((v) => ({ id: v.id, level: v.level }));
+    const session = buildSession(units, getState().settings);
+    expect(session).toHaveLength(7);
+    expect(session.every((i) => i.sid.startsWith('w:'))).toBe(true);
+    expect(buildSession(sentenceUnits(content, levels), getState().settings)).toHaveLength(5);
+  });
+});
+
+describe('pinyin', () => {
+  it('accepts tone numbers or marks, spaces optional, v for ü', () => {
+    expect(pinyinMatches('ni3hao3', 'nǐ hǎo')).toBe(true);
+    expect(pinyinMatches('nǐhǎo', 'nǐ hǎo')).toBe(true);
+    expect(pinyinMatches('Ni3 Hao3', 'nǐ hǎo')).toBe(true);
+    expect(pinyinMatches('lv4', 'lǜ')).toBe(true);
+    expect(pinyinMatches('ma', 'ma')).toBe(true);
+    expect(pinyinMatches('ma5', 'ma')).toBe(true);
+  });
+  it('requires the right tones', () => {
+    expect(pinyinMatches('ni hao', 'nǐ hǎo')).toBe(false);
+    expect(pinyinMatches('ni2hao3', 'nǐ hǎo')).toBe(false);
+    expect(pinyinLettersMatch('ni2hao3', 'nǐ hǎo')).toBe(true);
+    expect(pinyinMatches('', 'nǐ')).toBe(false);
+  });
+  it('makes Azure readings', () => {
+    expect(toSapi('nǐ hǎo')).toBe('ni 3 hao 3');
+    expect(toSapi('lǜ')).toBe('lv 4');
+    expect(toSapi('le')).toBe('le 5');
   });
 });

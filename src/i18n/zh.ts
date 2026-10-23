@@ -231,7 +231,6 @@ const zh: Record<string, string> = {
   "Close call": "辨一辨",
   "Dictation": "听写",
   "Speed round": "快速赛",
-  "Rebuild the {target} sentence from shuffled word tiles.": "用打乱的词块重新拼出{target}句子。",
   "Translate with a word bank that has extra words, or build your own sentence.": "用带有多余词的词库翻译，或自己造句。",
   "One word is wrong, missing or extra. Tap where the mistake is.": "有一个词错了、少了或多了。点出错误的位置。",
   "Pick the right {target} for the {native}. The options differ by one detail.": "为{native}选出正确的{target}。选项之间只差一个细节。",
@@ -250,7 +249,6 @@ const zh: Record<string, string> = {
   "Correct!": "正确！",
   "Not quite.": "不太对。",
   "You answered:": "你的答案：",
-  "Put the words in order:": "把词按顺序排好：",
   "Tap the words below": "点下面的词",
   "Translate": "翻译",
   "Free build": "自由造句",
@@ -629,6 +627,16 @@ const zh: Record<string, string> = {
   "Days with every daily challenge cleared": "完成全部每日挑战的天数",
   "Cards reviewed in each learning mode": "在每种学习模式中复习的卡片",
   "Each recording earns {n} XP while it stays live.": "每条录音在使用中可获得{n} XP。",
+  // Word study
+  "Dictionary": "词典",
+  "New word cards per day": "每天新词卡片数",
+  "Reading shows a {target} word and you give its meaning. Producing shows the meaning and you say the {target} word.": "阅读：显示一个{target}词，你说出它的意思。表达：显示意思，你说出这个{target}词。",
+  "Sentences": "句子",
+  "What to study": "学习内容",
+  "Word · say it in {target}": "词语 · 用{target}说出来",
+  "Word · what does it mean?": "词语 · 是什么意思？",
+  "Words or characters": "词语或汉字",
+  "{n} different words in the selected levels.": "所选级别中有{n}个不同的词。",
 };
 
 export default zh;

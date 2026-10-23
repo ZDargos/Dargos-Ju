@@ -85,7 +85,7 @@ export interface GameRound {
   lang?: LearnLang;
 }
 
-export type GameId = 'word-order' | 'sentence-builder' | 'spot-error' | 'close-call' | 'dictation';
+export type GameId = 'sentence-builder' | 'spot-error' | 'close-call' | 'dictation';
 
 export interface Settings {
   studyLevels: number[];
@@ -109,6 +109,12 @@ export interface Settings {
   textSize: 'normal' | 'large' | 'xl';
   /** Set once the user has picked a learning mode (new accounts are asked first). */
   onboarded?: boolean;
+  /** What the Study page studies: sentence cards or word cards. */
+  studyDeck?: 'sentences' | 'words';
+  /** Word study in Chinese mode: words, single characters, or both. */
+  wordKind?: 'words' | 'chars' | 'both';
+  /** New word cards per day (sentences use newPerDay). */
+  wordsNewPerDay?: number;
   /** Daily XP goal changes (lib/xp.ts); each applies from its day on, so past days keep their goal. */
   goalHistory?: { from: string; xp: number }[];
 }
@@ -123,7 +129,6 @@ export const DEFAULT_SETTINGS: Settings = {
   speechRate: 0.85,
   theme: 'system',
   hints: {
-    'word-order': true,
     'sentence-builder': true,
     'spot-error': true,
     'close-call': true,

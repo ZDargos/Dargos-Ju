@@ -344,6 +344,14 @@ describe('vocabulary games', () => {
     }
   });
 
+  it('pinyin mode never offers two options that sound the same', () => {
+    const q = choiceQuestions(zh, 11, 'sound');
+    for (let i = 0; i < 60; i++) {
+      const pys = q(i).options.map((o) => o.py.toLowerCase());
+      expect(new Set(pys).size).toBe(4);
+    }
+  });
+
   it('deals every word once before repeating', () => {
     const small = zh.slice(0, 20);
     const seq = wordSequence(small, 3);

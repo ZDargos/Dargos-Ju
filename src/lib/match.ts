@@ -34,6 +34,8 @@ export interface Match {
   /** Vocabulary games: both players draw words with this seed from these levels. */
   seed?: number | null;
   levels?: number[] | null;
+  /** Options the creator picked, e.g. Speed round answers ('meaning' or 'sound'). */
+  variant?: string | null;
   /** Word duel state (see private.duel_apply). */
   duel?: DuelState | null;
 }
@@ -103,7 +105,7 @@ export async function findMatch(game: string, lang: LearnLang, olderThan?: strin
   return asMatch(data);
 }
 
-export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string, vocab?: { seed: number; levels: number[] }): Promise<Match> {
+export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string, vocab?: { seed: number; levels: number[]; variant?: string }): Promise<Match> {
   const { data, error } = await supabase
     .from('matches')
     .insert({ game, sentence_ids: sentenceIds, is_public: !opponent, player_b: opponent ?? null, lang, lang_a: lang, ...(vocab ?? {}) })

@@ -686,6 +686,10 @@ const zh: Record<string, string> = {
   "{n} right answers in total": "共答对{n}题",
   "{n} words": "{n}个词",
   "{s} seconds left": "还剩{s}秒",
+  "Definitions": "释义",
+  "Phonetics": "音标",
+  "Game mode": "游戏模式",
+  "Find an opponent joins whoever is waiting, in the mode they picked.": "“寻找对手”会加入正在等待的玩家，使用对方选择的模式。",
 };
 
 export default zh;

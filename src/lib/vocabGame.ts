@@ -67,20 +67,32 @@ export interface ChoiceQuestion {
  * answer's meaning or text, and in Chinese prefer words of the same length so the answer doesn't
  * stand out.
  */
-export function choiceQuestions(pool: VocabItem[], seed: number) {
+/** What Speed round answers are: meanings, or the sound (pinyin when learning Chinese, phonetics when learning English). */
+export type SpeedAnswer = 'meaning' | 'sound';
+
+/** The text shown for an item as an answer or prompt. */
+export const answerText = (v: VocabItem, answer: SpeedAnswer) => (answer === 'sound' ? v.py.trim() : shortGloss(v.gloss));
+
+/** Items usable for the answer type (every item has a meaning; a few English words lack phonetics). */
+export const usableFor = (pool: VocabItem[], answer: SpeedAnswer) => (answer === 'sound' ? pool.filter((v) => v.py.trim()) : pool);
+
+export function choiceQuestions(pool: VocabItem[], seed: number, answer: SpeedAnswer = 'meaning') {
+  pool = usableFor(pool, answer);
   const seq = wordSequence(pool, seed);
   const base = stable(pool);
   return (i: number): ChoiceQuestion => {
     const item = seq(i);
     const random = rng(seed ^ ((i + 1) * 2654435761));
-    const same = (v: VocabItem) => v.id === item.id || shortGloss(v.gloss) === shortGloss(item.gloss) || v.text.toLowerCase() === item.text.toLowerCase();
+    // Never two options that read the same (same meaning, or homophones in pinyin mode).
+    const key = (v: VocabItem) => answerText(v, answer).toLowerCase();
+    const same = (v: VocabItem) => v.id === item.id || key(v) === key(item) || v.text.toLowerCase() === item.text.toLowerCase();
     const len = [...item.text].length;
     const close = base.filter((v) => !same(v) && Math.abs([...v.text].length - len) <= (item.lang === 'zh' ? 0 : 3));
     const pickFrom = close.length >= 3 ? close : base.filter((v) => !same(v));
     const wrong: VocabItem[] = [];
     while (wrong.length < 3 && wrong.length < pickFrom.length) {
       const v = pickFrom[Math.floor(random() * pickFrom.length)];
-      if (!wrong.some((w) => w.id === v.id || shortGloss(w.gloss) === shortGloss(v.gloss))) wrong.push(v);
+      if (!wrong.some((w) => w.id === v.id || key(w) === key(v))) wrong.push(v);
     }
     const options = [item, ...wrong];
     for (let k = options.length - 1; k > 0; k--) {

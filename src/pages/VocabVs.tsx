@@ -11,7 +11,7 @@ import { duelAnswerOk, duelSeconds, wordSequence } from '../lib/vocabGame';
 import { recordRound } from '../lib/gameStats';
 import { langName, useT } from '../i18n';
 import { IconClose } from '../components/Icons';
-import SpeedRound, { SPEED_MS, type SpeedResult } from '../games/SpeedRound';
+import SpeedRound, { answerLabel, SPEED_MS, type SpeedResult } from '../games/SpeedRound';
 import DuelBoard from '../games/DuelBoard';
 import type { LearnLang } from '../lib/learn';
 
@@ -97,7 +97,8 @@ export function SpeedVs({ id }: { id: string }) {
   if (error) return <div className="card empty">{error}</div>;
   if (!match || !me) return <div className="center-screen">{t('Joining match…')}</div>;
   const game = gameById(match.game);
-  const title = `${gameName(game, myLang)} · ${t('Vs')}`;
+  const answer = match.variant === 'sound' ? 'sound' : 'meaning';
+  const title = `${gameName(game, myLang)} · ${answerLabel(answer, myLang, t)} · ${t('Vs')}`;
   const startAt = Date.parse(match.started_at ?? match.created_at) + 4000;
   const finished = match.status === 'finished';
   const leave = async () => {
@@ -140,6 +141,7 @@ export function SpeedVs({ id }: { id: string }) {
           pool={pool}
           seed={match.seed ?? 1}
           direction={match.game === 'speed-word' ? 'word' : 'meaning'}
+          answer={answer}
           lang={myLang}
           showPy={false}
           startAt={startAt}

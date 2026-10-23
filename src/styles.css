@@ -478,3 +478,5 @@ html[data-text-size='xl'] body { zoom: 1.25; }
 @media (prefers-reduced-motion: reduce) { .duel-word, .duel-stage::before, .duel-stage.low .duel-card { animation: none !important; } }
 .my-words { margin-top: 12px; }
 .my-words-head { width: 100%; background: none; border: none; padding: 0; color: inherit; cursor: pointer; text-align: left; font: inherit; }
+.speed-option.sound { font-size: 19px; font-family: system-ui, sans-serif; }
+.speed-meaning.sound { font-size: 30px; font-family: system-ui, sans-serif; }

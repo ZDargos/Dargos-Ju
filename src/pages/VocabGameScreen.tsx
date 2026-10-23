@@ -8,7 +8,7 @@ import { DUEL_LIVES, duelAnswerOk, duelSeconds, newSeed, wordSequence } from '..
 import { useT } from '../i18n';
 import { IconClose } from '../components/Icons';
 import { PinyinToggle, usePinyin } from '../components/Pinyin';
-import SpeedRound, { type SpeedResult } from '../games/SpeedRound';
+import SpeedRound, { SpeedAnswerPicker, useSpeedAnswer, type SpeedResult } from '../games/SpeedRound';
 import DuelBoard from '../games/DuelBoard';
 
 const bestKey = (game: string, lang: string) => `dj:best:${game}:${lang}`;
@@ -67,7 +67,10 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
   const pinyin = usePinyin(game.id);
   const [run, setRun] = useState<{ seed: number; startAt: number } | null>(null);
   const [result, setResult] = useState<(SpeedResult & { record: boolean }) | null>(null);
-  const best = readBest(game.id, lang);
+  const [answer, setAnswer] = useSpeedAnswer(game.id, lang);
+  // Best scores are kept per mode (definitions or pinyin/phonetics).
+  const bestId = `${game.id}:${answer}`;
+  const best = readBest(bestId, lang);
 
   const start = () => {
     setResult(null);
@@ -83,6 +86,7 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
           <div className="speed-final">{result.score}</div>
           <p className="muted">{t('{right} right, {wrong} wrong', { right: result.right, wrong: result.wrong })}</p>
           {result.record ? <p className="xp-earned">{t('New best!')}</p> : best !== null && <p className="small muted">{t('Best: {n}', { n: best })}</p>}
+          <SpeedAnswerPicker value={answer} onChange={setAnswer} lang={lang} />
           <button className="btn accent block" onClick={start}>{t('Play again')}</button>
         </div>
       ) : run ? (
@@ -91,18 +95,20 @@ function SpeedPractice({ game, pool }: { game: GameDef; pool: ReturnType<typeof 
           pool={pool}
           seed={run.seed}
           direction={game.id === 'speed-word' ? 'word' : 'meaning'}
+          answer={answer}
           lang={lang}
           showPy={pinyin}
           startAt={run.startAt}
           onAnswer={(ok, ms) => recordRound(game.id, 'solo', ok, ms, undefined, lang)}
           onDone={(r) => {
-            setResult({ ...r, record: saveBest(game.id, lang, r.score) });
+            setResult({ ...r, record: saveBest(bestId, lang, r.score) });
             setRun(null);
           }}
         />
       ) : (
         <div className="card center">
           <p>{t(game.description, { target: t(lang === 'zh' ? 'Chinese' : 'English') })}</p>
+          <SpeedAnswerPicker value={answer} onChange={setAnswer} lang={lang} />
           {best !== null && <p className="small muted">{t('Best: {n}', { n: best })}</p>}
           <button className="btn accent block" onClick={start}>{t('Start')}</button>
         </div>

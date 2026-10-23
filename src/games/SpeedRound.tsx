@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { choiceQuestions, shortGloss } from '../lib/vocabGame';
+import { answerText, choiceQuestions, type SpeedAnswer } from '../lib/vocabGame';
 import { useT } from '../i18n';
 import type { LearnLang } from '../lib/learn';
 import type { VocabItem } from '../lib/vocab';
@@ -17,6 +17,8 @@ interface Props {
   seed: number;
   /** 'meaning': see the word, tap its meaning. 'word': see the meaning, tap the word. */
   direction: 'meaning' | 'word';
+  /** Whether the answers (or prompts) are meanings or pinyin/phonetics. */
+  answer: SpeedAnswer;
   lang: LearnLang;
   showPy: boolean;
   /** When the clock starts (ms since epoch); vs matches start both players together. */
@@ -26,9 +28,11 @@ interface Props {
 }
 
 /** 30 seconds of four-option vocabulary questions. Right +1, wrong −1. */
-export default function SpeedRound({ pool, seed, direction, lang, showPy, startAt, onAnswer, onDone }: Props) {
+export default function SpeedRound({ pool, seed, direction, answer, lang, showPy, startAt, onAnswer, onDone }: Props) {
   const t = useT();
-  const questions = useMemo(() => choiceQuestions(pool, seed), [pool, seed]);
+  const questions = useMemo(() => choiceQuestions(pool, seed, answer), [pool, seed, answer]);
+  // Pinyin above the word would give the answer away when the answers are pinyin.
+  const hint = showPy && answer === 'meaning';
   const [i, setI] = useState(0);
   const [result, setResult] = useState<SpeedResult>({ score: 0, right: 0, wrong: 0 });
   const [flash, setFlash] = useState<{ picked: string; ok: boolean } | null>(null);
@@ -95,23 +99,63 @@ export default function SpeedRound({ pool, seed, direction, lang, showPy, startA
       <div className={`speed-prompt${flash ? (flash.ok ? ' ok' : ' bad') : ''}`}>
         {direction === 'meaning' ? (
           <span className={`speed-word${lang === 'zh' ? ' zh' : ''}`} lang={target}>
-            {showPy && <span className="word-py">{q.item.py}</span>}
+            {hint && <span className="word-py">{q.item.py}</span>}
             {q.item.text}
           </span>
         ) : (
-          <span className="speed-meaning" lang={native}>{shortGloss(q.item.gloss)}</span>
+          <span className={`speed-meaning${answer === 'sound' ? ' sound' : ''}`} lang={answer === 'sound' ? undefined : native}>{answerText(q.item, answer)}</span>
         )}
       </div>
       <div className="speed-options">
         {q.options.map((o, k) => {
           const state = flash && (o.id === q.item.id ? ' ok' : o.id === flash.picked ? ' bad' : '');
           return (
-            <button key={o.id + k} className={`speed-option${state || ''}${direction === 'word' && lang === 'zh' ? ' zh' : ''}`} onClick={() => pick(o)} lang={direction === 'meaning' ? native : target}>
-              {direction === 'meaning' ? shortGloss(o.gloss) : o.text}
+            <button key={o.id + k} className={`speed-option${state || ''}${direction === 'word' && lang === 'zh' ? ' zh' : ''}${direction === 'meaning' && answer === 'sound' ? ' sound' : ''}`} onClick={() => pick(o)} lang={direction === 'meaning' ? (answer === 'sound' ? undefined : native) : target}>
+              {direction === 'meaning' ? answerText(o, answer) : o.text}
             </button>
           );
         })}
       </div>
     </div>
   );
+}
+
+/** Label for an answer type: "Definitions", or "Pinyin" / "Phonetics" for the sound. */
+export const answerLabel = (answer: SpeedAnswer, lang: LearnLang, t: (k: string) => string) =>
+  answer === 'meaning' ? t('Definitions') : lang === 'zh' ? t('Pinyin') : t('Phonetics');
+
+/** Picks what Speed round answers are, before starting. */
+export function SpeedAnswerPicker({ value, onChange, lang }: { value: SpeedAnswer; onChange: (a: SpeedAnswer) => void; lang: LearnLang }) {
+  const t = useT();
+  return (
+    <div className="segmented" role="group" aria-label={t('Game mode')} style={{ margin: '0 0 14px' }}>
+      {(['meaning', 'sound'] as SpeedAnswer[]).map((a) => (
+        <button key={a} className={value === a ? 'on' : ''} aria-pressed={value === a} onClick={() => onChange(a)}>
+          {answerLabel(a, lang, t)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const answerKey = (game: string, lang: LearnLang) => `dj:speed-answer:${game}:${lang}`;
+
+/** The answer type last used for a game, remembered on this device. */
+export function useSpeedAnswer(game: string, lang: LearnLang): [SpeedAnswer, (a: SpeedAnswer) => void] {
+  const [answer, setAnswer] = useState<SpeedAnswer>(() => {
+    try {
+      return localStorage.getItem(answerKey(game, lang)) === 'sound' ? 'sound' : 'meaning';
+    } catch {
+      return 'meaning';
+    }
+  });
+  const set = (a: SpeedAnswer) => {
+    setAnswer(a);
+    try {
+      localStorage.setItem(answerKey(game, lang), a);
+    } catch {
+      /* this visit only */
+    }
+  };
+  return [answer, set];
 }

@@ -4,7 +4,7 @@ import { acceptMatch, cancelMatch, getMatch, ROUNDS, type Match } from '../lib/m
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
 import { getState } from '../lib/store';
-import { gameById } from '../games/registry';
+import { gameById, gameName } from '../games/registry';
 import { useT } from '../i18n';
 
 /** Opened from a challenge notification: accept or decline. */
@@ -42,7 +42,7 @@ export default function ChallengePage() {
           <>
             <h2 style={{ marginTop: 0 }}>{t('{name} challenged you!', { name })}</h2>
             <p className="muted">
-              {game ? t(game.title) : t('A game')} · {t('{n} rounds, same sentences for both of you.', { n: ROUNDS })}
+              {game ? gameName(game, getState().settings.learning) : t('A game')}{game?.kind ? '' : ` · ${t('{n} rounds, same sentences for both of you.', { n: ROUNDS })}`}
             </p>
             <div className="row" style={{ justifyContent: 'center', marginTop: 16 }}>
               <button className="btn" disabled={busy} onClick={async () => { await cancelMatch(id); navigate('/games'); }}>

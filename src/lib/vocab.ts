@@ -112,3 +112,10 @@ export function vocabFor(content: Content, lang: LearnLang, levels: number[], ki
 export function vocabItem(content: Content, lang: LearnLang, id: string): VocabItem | undefined {
   return allItems(content, lang).find((v) => v.id === id);
 }
+
+/** The built-in word list entry for a text, if there is one (English looks up the dictionary form). */
+export function findVocab(content: Content, lang: LearnLang, text: string): VocabItem | undefined {
+  const w = lang === 'en' ? text.trim().toLowerCase() : text.trim();
+  const key = WORD_PREFIX + (lang === 'en' ? content.enLemma[w] ?? w : w);
+  return allItems(content, lang).find((v) => v.id === key);
+}

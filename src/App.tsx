@@ -27,6 +27,7 @@ import Progress from './pages/Progress';
 import { XpWatcher } from './components/XpBits';
 import RecordingVote from './components/RecordingVote';
 import { loadVoices } from './lib/voices';
+import { loadMyWords } from './lib/myWords';
 import { msg } from './i18n/msg';
 
 /** Theme, text size and the page language (for screen readers) follow the settings. */
@@ -68,7 +69,11 @@ export default function App() {
   const signedIn = auth.status === 'signed-in';
   useEffect(() => {
     if (!signedIn) return;
-    const refresh = () => document.visibilityState === 'visible' && loadVoices().catch(() => undefined);
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      loadVoices().catch(() => undefined);
+      loadMyWords().catch(() => undefined);
+    };
     refresh();
     document.addEventListener('visibilitychange', refresh);
     return () => document.removeEventListener('visibilitychange', refresh);

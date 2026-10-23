@@ -4,7 +4,9 @@ import { getContent } from '../lib/content';
 import { getState } from '../lib/store';
 import { cancelMatch, createMatch, findMatch, pickSentences, ROUNDS, watchMyMatches, type Match } from '../lib/match';
 import { currentUserId, listFriends, useMyProfile, type Friend } from '../lib/social';
-import { gameById, poolFor } from '../games/registry';
+import { gameById, gameName, isVocabGame, MIN_VOCAB, poolFor } from '../games/registry';
+import { vocabFor } from '../lib/vocab';
+import { newSeed } from '../lib/vocabGame';
 import { useT } from '../i18n';
 import NamePrompt from '../components/NamePrompt';
 import { notifyChallenge } from '../lib/push';
@@ -45,8 +47,9 @@ export default function VsLobby() {
     }
   }); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!game?.component) return <Navigate to="/games" replace />;
-  const title = `${t(game.title)} · ${t('Vs')}`;
+  if (!game || (!game.component && !isVocabGame(game))) return <Navigate to="/games" replace />;
+  const vocab = isVocabGame(game);
+  const title = `${gameName(game, getState().settings.learning)} · ${t('Vs')}`;
   if (profile === null) return <div className="center-screen">{t('Loading…')}</div>;
   if (profile === false)
     return (
@@ -58,9 +61,15 @@ export default function VsLobby() {
 
   const settings = getState().settings;
   const lang = settings.learning;
-  const sentenceIds = () => pickSentences(game.id, getContent(), settings);
-  const poolSize = poolFor(game, getContent(), settings, lang).length;
-  const needMore = t('Pick more levels on the Games page: this game needs at least {n} sentences.', { n: ROUNDS });
+  const sentenceIds = () => (vocab ? [] : pickSentences(game.id, getContent(), settings));
+  // Vocabulary games: both players draw from the same levels with a shared seed ("My words" stay out).
+  const vocabMatch = () => (vocab ? { seed: newSeed(), levels: settings.gameLevels } : undefined);
+  const needed = vocab ? MIN_VOCAB : ROUNDS;
+  const poolSize = vocab ? vocabFor(getContent(), lang, settings.gameLevels, 'both').length : poolFor(game, getContent(), settings, lang).length;
+  const needMore = vocab
+    ? t('Pick more levels on the Games page: this game needs at least {n} words.', { n: MIN_VOCAB })
+    : t('Pick more levels on the Games page: this game needs at least {n} sentences.', { n: ROUNDS });
+  const enough = (ids: string[]) => (vocab ? poolSize >= MIN_VOCAB : ids.length >= ROUNDS);
 
   /** Waits for the match to become active, then opens it. */
   const waitFor = async (match: Match, label: string, matchmaking: boolean) => {
@@ -112,8 +121,8 @@ export default function VsLobby() {
       const found = await findMatch(game.id, lang);
       if (found) return navigate(`/vs/match/${found.id}`, { replace: true });
       const ids = sentenceIds();
-      if (ids.length < ROUNDS) return setError(needMore);
-      const m = await createMatch(game.id, ids, lang);
+      if (!enough(ids)) return setError(needMore);
+      const m = await createMatch(game.id, ids, lang, undefined, vocabMatch());
       waitFor(m, t('Looking for an opponent…'), true);
     } catch (e) {
       setError((e as Error).message);
@@ -124,8 +133,8 @@ export default function VsLobby() {
     setError('');
     try {
       const ids = sentenceIds();
-      if (ids.length < ROUNDS) return setError(needMore);
-      const m = await createMatch(game!.id, ids, lang, f.user_id);
+      if (!enough(ids)) return setError(needMore);
+      const m = await createMatch(game!.id, ids, lang, f.user_id, vocabMatch());
       notifyChallenge(m.id);
       waitFor(m, t('Waiting for {name} to accept…', { name: f.display_name }), false);
     } catch (e) {
@@ -152,11 +161,15 @@ export default function VsLobby() {
       ) : (
         <>
           <p className="muted small" style={{ marginTop: 0 }}>
-            {t("{n} rounds, same sentences for both players, no hints. Most correct answers wins; if it's a tie, the faster player wins. You can play people learning either language: each of you answers in the language you're learning.", { n: ROUNDS })}
+            {game.kind === 'speed'
+              ? t("30 seconds each, at the same time, no hints. Right answers +1, wrong −1; the higher score wins. You can play people learning either language: each of you gets words in the language you're learning.")
+              : game.kind === 'duel'
+                ? t("Take turns answering. Miss (or run out of time) and you lose a life, then your opponent gets one chance at it. The clock speeds up from 15 to 6 seconds. 4 lives each; last one standing wins.")
+                : t("{n} rounds, same sentences for both players, no hints. Most correct answers wins; if it's a tie, the faster player wins. You can play people learning either language: each of you answers in the language you're learning.", { n: ROUNDS })}
           </p>
           {error && <div className="banner">{error}</div>}
-          <button className="btn accent block" disabled={poolSize < ROUNDS} onClick={quickMatch}>{t('Find an opponent')}</button>
-          {poolSize < ROUNDS && <p className="small muted center">{t('Select more levels on the Games page first.')}</p>}
+          <button className="btn accent block" disabled={poolSize < needed} onClick={quickMatch}>{t('Find an opponent')}</button>
+          {poolSize < needed && <p className="small muted center">{t('Select more levels on the Games page first.')}</p>}
           <div className="section-title">{t('Challenge a friend')}</div>
           <div className="card">
             {friends.length === 0 ? (
@@ -166,7 +179,7 @@ export default function VsLobby() {
                 {friends.map((f) => (
                   <li key={f.user_id} className="spread">
                     <strong>{f.display_name}</strong>
-                    <button className="btn primary sm" disabled={poolSize < ROUNDS} onClick={() => challenge(f)}>{t('Challenge')}</button>
+                    <button className="btn primary sm" disabled={poolSize < needed} onClick={() => challenge(f)}>{t('Challenge')}</button>
                   </li>
                 ))}
               </ul>

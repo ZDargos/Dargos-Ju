@@ -197,3 +197,9 @@ create policy "admins manage blocklist" on public.blocked_emails for all to auth
 
 -- XP (migration profile_xp): profiles.xp holds each player's total XP as reported by their app,
 -- so friends and leaderboards can show levels. XP itself is computed in the app from history.
+
+-- Vocabulary games (migration vocab_games): matches.seed and matches.levels let both players draw
+-- words the same way (Speed round 'speed-meaning'/'speed-word', duel 'word-duel'); these games are
+-- never ended early by finish_if_decided. matches.duel holds the duel state, started by the
+-- duel_init trigger and advanced only by duel_answer() / duel_timeout() (rules in private.duel_apply).
+-- user_words(user_id, lang, text, py, gloss): "My words", own rows only.

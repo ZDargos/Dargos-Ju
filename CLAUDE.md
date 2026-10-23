@@ -43,6 +43,16 @@ Before calling any feature done, check it in both modes.
 - Mark text in each language with `lang="zh-CN"` / `lang="en"` and the `zh` class for Chinese, so
   screen readers and fonts are right.
 
+## Words and vocabulary games
+
+- Word study items come from `src/lib/vocab.ts` (the sentences' word splits; in Chinese mode words
+  and single characters, in English mode dictionary forms) plus "My words" (`src/lib/myWords.ts`).
+  Word card ids start with `w:` so they never collide with sentence ids.
+- Vocabulary games (`kind: 'speed' | 'duel'` in the registry) use words and characters together,
+  multi-character words included. Vs versions share a seed and levels; "My words" stay out of vs.
+- Duel rules live in two places that must agree: `src/lib/vocabGame.ts` (clock, lives) and the
+  database function `private.duel_apply`. Pinyin answers ignore tones.
+
 ## XP and badges
 
 - XP, levels, daily goal, streak bonus, daily challenges and badges live in `src/lib/xp.ts` and are

@@ -19,7 +19,12 @@ const GAME_TITLES: Record<string, { en: string; zh: string }> = {
   'spot-error': { en: 'Spot the error', zh: '找错误' },
   'close-call': { en: 'Close call', zh: '辨一辨' },
   dictation: { en: 'Dictation', zh: '听写' },
+  'speed-meaning': { en: 'Speed round', zh: '快速赛' },
+  'speed-word': { en: 'Reverse speed round', zh: '反向快速赛' },
+  'word-duel': { en: 'Pinyin duel', zh: '拼音对决' },
 };
+// The duel is a spelling duel for people learning English.
+const SPELLING_DUEL = { en: 'Spelling duel', zh: '拼写对决' };
 
 /** The recipient's interface language: their choice, else Chinese when they learn English. */
 function uiLang(settings: { uiLang?: string; learning?: string } | null | undefined): 'en' | 'zh' {
@@ -60,7 +65,9 @@ Deno.serve(async (req) => {
     const cfg = Object.fromEntries((config ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
     const lang = uiLang(recipientSettings?.settings);
     const from = profile?.display_name ?? (lang === 'zh' ? '一位好友' : 'A friend');
-    const game = GAME_TITLES[match.game]?.[lang] ?? (lang === 'zh' ? '一个游戏' : 'a game');
+    const learning = recipientSettings?.settings?.learning === 'en' ? 'en' : 'zh';
+    const titles = match.game === 'word-duel' && learning === 'en' ? SPELLING_DUEL : GAME_TITLES[match.game];
+    const game = titles?.[lang] ?? (lang === 'zh' ? '一个游戏' : 'a game');
     const message = {
       title: lang === 'zh' ? `${from}向你发起了挑战！` : `${from} challenged you!`,
       body: lang === 'zh' ? `点一下，和${from}玩${game}。` : `Tap to play ${game} against ${from}.`,

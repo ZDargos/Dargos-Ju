@@ -7,6 +7,9 @@ import SpotError from './SpotError';
 import CloseCall from './CloseCall';
 import Dictation from './Dictation';
 import { msg } from '../i18n/msg';
+import { t } from '../i18n';
+import { vocabFor, type VocabItem } from '../lib/vocab';
+import { myVocab } from '../lib/myWords';
 
 export interface GameProps {
   /** The sentence for this round, from the player's side (target = language being learned). */
@@ -26,7 +29,11 @@ export interface GameProps {
 /** Texts are English source strings for t(); {target} and {native} become the language names. */
 export interface GameDef {
   id: string;
+  /** 'sentence' games play one sentence per round; vocabulary games ('speed', 'duel') use words. */
+  kind?: 'sentence' | 'speed' | 'duel';
   title: string;
+  /** Title in English-learning mode, when it differs. */
+  titleEn?: string;
   icon: string;
   description: string;
   /** What the hint does; games without one have no hint switch. */
@@ -75,21 +82,51 @@ export const GAMES: GameDef[] = [
     minTiles: 2,
   },
   {
-    id: 'speed-round',
+    id: 'speed-meaning',
+    kind: 'speed',
     title: msg('Speed round'),
     icon: '快',
-    description: msg('Vocabulary against the clock. Coming later.'),
-    comingSoon: true,
+    description: msg('Tap the right meaning for as many {target} words as you can in 30 seconds. A wrong answer costs a point.'),
+  },
+  {
+    id: 'speed-word',
+    kind: 'speed',
+    title: msg('Reverse speed round'),
+    icon: '反',
+    description: msg('See the meaning and tap the right {target} word, as many as you can in 30 seconds. A wrong answer costs a point.'),
+  },
+  {
+    id: 'word-duel',
+    kind: 'duel',
+    title: msg('Pinyin duel'),
+    titleEn: msg('Spelling duel'),
+    icon: '斗',
+    description: msg('Take turns typing the answer before the clock runs out; it gets faster as you go. Miss and you lose a life, and your opponent gets one chance at the same word. 4 lives each.'),
   },
 ];
 
 /** Games that were removed: kept only so old stats and vs history still show their names. */
 const RETIRED_GAMES: GameDef[] = [{ id: 'word-order', title: msg('Word order'), icon: '序', description: '', comingSoon: true }];
 
+/** A game's name in the interface language, for the given learning mode. */
+export const gameName = (g: GameDef | undefined, lang: LearnLang) => (g ? t(lang === 'en' && g.titleEn ? g.titleEn : g.title) : '');
+
+export const isVocabGame = (g: GameDef | undefined) => !!g && (g.kind === 'speed' || g.kind === 'duel');
+
+/** Fewest words a vocabulary game needs. */
+export const MIN_VOCAB = 12;
+
+/** Words for the vocabulary games: words and characters of the selected levels, plus "My words". */
+export function vocabPoolFor(content: Content, settings: Settings, lang: LearnLang, levels: number[] = settings.gameLevels): VocabItem[] {
+  const seen = new Set<string>();
+  return [...vocabFor(content, lang, levels, 'both'), ...myVocab(lang)].filter((v) => v.gloss && (lang === 'en' || v.py) && !seen.has(v.id) && seen.add(v.id));
+}
+
 export const gameById = (id: string) => GAMES.find((g) => g.id === id) ?? RETIRED_GAMES.find((g) => g.id === id);
 
 /** The game's sentences for the selected levels, seen from the given learning language. */
 export function poolFor(game: GameDef, content: Content, settings: Settings, lang: LearnLang): LearnSentence[] {
+  if (isVocabGame(game)) return [];
   const levels = new Set(settings.gameLevels);
   const out: LearnSentence[] = [];
   for (const s of content.sentences) {

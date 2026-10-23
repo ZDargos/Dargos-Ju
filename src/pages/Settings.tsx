@@ -5,7 +5,7 @@ import { signOut } from '../lib/auth';
 import { pullRemote, pushPending } from '../lib/sync';
 import { speak, ttsAvailable } from '../lib/tts';
 import { SAMPLE_SENTENCES as SAMPLE } from '../lib/audioKey';
-import { GAMES } from '../games/registry';
+import { GAMES, gameName } from '../games/registry';
 import { langParams, useT } from '../i18n';
 import { IconShield } from '../components/Icons';
 import { VoiceStatusPanel } from '../components/VoiceCheck';
@@ -149,11 +149,11 @@ export default function SettingsPage({ isAdmin, email }: { isAdmin: boolean; ema
         {GAMES.filter((g) => g.hint).map((g) => (
           <div key={g.id} className="toggle-row">
             <div>
-              <div style={{ fontWeight: 600 }}>{t('{game} hints', { game: t(g.title) })}</div>
+              <div style={{ fontWeight: 600 }}>{t('{game} hints', { game: gameName(g, settings.learning) })}</div>
               <div className="small muted">{t(g.hint!, names)}</div>
             </div>
             <Switch
-              label={t('{game} hints', { game: t(g.title) })}
+              label={t('{game} hints', { game: gameName(g, settings.learning) })}
               checked={settings.hints[g.id as keyof Settings['hints']]}
               onChange={(v) => updateSettings({ hints: { ...settings.hints, [g.id]: v } })}
             />

@@ -17,12 +17,13 @@ import {
 } from '../lib/match';
 import { currentUserId } from '../lib/social';
 import { supabase } from '../lib/supabase';
-import { gameById } from '../games/registry';
+import { gameById, gameName } from '../games/registry';
 import { LearnContext, project, type LearnLang } from '../lib/learn';
 import { langName, useT } from '../i18n';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
 import MatchSummary, { type AnswerRecord } from '../components/MatchSummary';
+import { DuelVs, SpeedVs } from './VocabVs';
 
 const empty: ProgressEvent = { round: 0, score: 0, results: [], done: false };
 
@@ -44,7 +45,26 @@ function Dots({ results, total }: { results: boolean[]; total: number }) {
   );
 }
 
-export default function VsMatch() {
+/** Opens the right screen for the match's game: sentence games, Speed round or the duel. */
+export default function VsMatchRoute() {
+  const { id = '' } = useParams();
+  const [game, setGame] = useState<string | null>(null);
+  useEffect(() => {
+    getMatch(id).then((m) => setGame(m?.game ?? ''));
+  }, [id]);
+  const def = game ? gameById(game) : undefined;
+  if (game === null) return <VsLoading />;
+  if (def?.kind === 'speed') return <SpeedVs id={id} />;
+  if (def?.kind === 'duel') return <DuelVs id={id} />;
+  return <VsMatch />;
+}
+
+function VsLoading() {
+  const t = useT();
+  return <div className="center-screen">{t('Joining match…')}</div>;
+}
+
+function VsMatch() {
   const t = useT();
   const { id = '' } = useParams();
   const navigate = useNavigate();
@@ -179,7 +199,7 @@ export default function VsMatch() {
         <button className="icon-btn" onClick={leave} aria-label={t('Leave match')}>
           <IconClose />
         </button>
-        <strong className="grow">{t(game.title)} · {t('Vs')}</strong>
+        <strong className="grow">{gameName(game, myLang)} · {t('Vs')}</strong>
       </div>
 
       <div className="card" style={{ marginBottom: 14, padding: 12 }}>

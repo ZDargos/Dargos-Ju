@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { useSettings } from '../lib/store';
-import { gameById, poolFor } from '../games/registry';
+import { gameById, gameName, isVocabGame, poolFor } from '../games/registry';
+import VocabGameScreen from './VocabGameScreen';
 import { IconClose } from '../components/Icons';
 import { recordRound } from '../lib/gameStats';
 import { LearnContext, type LearnSentence } from '../lib/learn';
@@ -13,7 +14,8 @@ import { PinyinContext, PinyinToggle, usePinyin } from '../components/Pinyin';
 /** Remounts per game, so score and round never carry over when going straight from one game to another. */
 export default function GameScreenRoute() {
   const { id = '' } = useParams();
-  return <GameScreen key={id} />;
+  const game = gameById(id);
+  return isVocabGame(game) ? <VocabGameScreen key={id} game={game!} /> : <GameScreen key={id} />;
 }
 
 function GameScreen() {
@@ -52,7 +54,7 @@ function GameScreen() {
         <button className="icon-btn" onClick={() => navigate('/games')} aria-label={t('Back to games')}>
           <IconClose />
         </button>
-        <strong className="grow">{t(game.title)}</strong>
+        <strong className="grow">{gameName(game, lang)}</strong>
         <div className="score-bar" aria-label={t('{right} right out of {total}', score)}>
           <span>{score.right}/{score.total}</span>
           {score.streak > 1 && <span>🔥 {score.streak}</span>}

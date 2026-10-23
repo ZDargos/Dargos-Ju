@@ -4,6 +4,8 @@ import { useContent } from '../lib/content';
 import { updateSettings, useStore } from '../lib/store';
 import { sentenceUnits, studyCounts } from '../lib/srs';
 import { vocabFor } from '../lib/vocab';
+import { myVocab, useMyWords } from '../lib/myWords';
+import MyWords from '../components/MyWords';
 import { langParams, useT } from '../i18n';
 import LevelPicker from '../components/LevelPicker';
 import InstallHint from '../components/InstallHint';
@@ -25,16 +27,22 @@ export default function Study() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const words = settings.studyDeck === 'words';
   const wordKind = settings.learning === 'zh' ? settings.wordKind ?? 'both' : 'words';
+  const myWords = useMyWords();
   const units = useMemo(
-    () => (words ? vocabFor(content, settings.learning, levels, wordKind).map((v) => ({ id: v.id, level: v.level })) : sentenceUnits(content, levels)),
-    [content, words, settings.learning, levels.join(','), wordKind], // eslint-disable-line react-hooks/exhaustive-deps
+    () =>
+      words
+        ? [...myVocab(settings.learning), ...vocabFor(content, settings.learning, levels, wordKind)]
+            .filter((v, i, all) => all.findIndex((x) => x.id === v.id) === i)
+            .map((v) => ({ id: v.id, level: v.level }))
+        : sentenceUnits(content, levels),
+    [content, words, settings.learning, levels.join(','), wordKind, myWords], // eslint-disable-line react-hooks/exhaustive-deps
   );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const counts = useMemo(() => studyCounts(units, settings), [units, settings, cards]);
   const newLimit = words ? settings.wordsNewPerDay ?? 15 : settings.newPerDay;
   const newLeft = Math.max(0, newLimit - counts.newToday);
   const newInSession = Math.min(newLeft, counts.newAvailable, Math.max(0, settings.sessionSize - counts.due));
-  const canStudy = levels.length > 0 && (counts.due > 0 || newInSession > 0);
+  const canStudy = units.length > 0 && (counts.due > 0 || newInSession > 0);
   useVoices();
   const xp = useXp();
   // Most people can lend their voice in the language they aren't learning.
@@ -102,7 +110,7 @@ export default function Study() {
             ))}
           </div>
         )}
-        {words && levels.length > 0 && <p className="small muted" style={{ margin: '0 2px 10px' }}>{t('{n} different words in the selected levels.', { n: units.length })}</p>}
+        {words && <p className="small muted" style={{ margin: '0 2px 10px' }}>{t('{n} different words in the selected levels.', { n: units.length })}</p>}
         <div className="segmented" role="group" aria-label={t('Card direction')}>
           {(
             [
@@ -122,6 +130,8 @@ export default function Study() {
             : t('Reading shows {target} and you translate it. Producing shows {native} and you say or write the {target}.', names)}
         </p>
       </div>
+
+      {words && <MyWords />}
 
       <div className="stat-grid" style={{ marginTop: 12, gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="stat">

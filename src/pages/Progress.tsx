@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useContent } from '../lib/content';
-import { updateSettings, useStore } from '../lib/store';
+import { getState, updateSettings, useStore } from '../lib/store';
 import { useXp } from '../lib/useXp';
 import { levelProgress } from '../lib/stats';
 import { BADGES, GOALS, TIER_NAMES, XP_RULES, badgeStatus, dayKey, goalChange, goalFor, titleFor, type Challenge } from '../lib/xp';
-import { gameById } from '../games/registry';
+import { gameById, gameName } from '../games/registry';
 import { langParams, levelName, t, useT } from '../i18n';
 import { msg } from '../i18n/msg';
 import { IconBack } from '../components/Icons';
@@ -27,7 +27,7 @@ function challengeText(c: Challenge): string {
     case 'run':
       return t('Get {n} right in a row in one game', { n: c.target });
     case 'game':
-      return t('Get {n} right in {game}', { n: c.target, game: t(gameById(c.game!)?.title ?? '') });
+      return t('Get {n} right in {game}', { n: c.target, game: gameName(gameById(c.game!), getState().settings.learning) });
   }
 }
 
@@ -190,6 +190,7 @@ export default function Progress() {
         <ul className="small">
           <li>{t('Flashcard: {n} XP, whatever grade you give. Grade honestly; it only helps your schedule.', { n: XP_RULES.card })}</li>
           <li>{t('Extra practice card: {n} XP. Correct game answer: {m} XP.', { n: XP_RULES.extraCard, m: XP_RULES.gameRight })}</li>
+          <li>{t('Speed rounds: {n} XP per point of your net score for the day (wrong answers count against it).', { n: XP_RULES.speedPoint })}</li>
           <li>{t('Vs match: {n} XP, plus {m} for a win.', { n: XP_RULES.vsMatch, m: XP_RULES.vsWin })}</li>
           <li>{t('Voice line: {n} XP while it stays live. If it gets voted down, the XP goes with it.', { n: XP_RULES.voice })}</li>
           <li>{t('Streak bonus: +10% XP for each day in a row you reach your goal, up to +60% on day 7. Missing a day resets it.')}</li>

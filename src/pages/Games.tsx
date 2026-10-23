@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useContent } from '../lib/content';
 import { updateSettings, useSettings } from '../lib/store';
 import { ROUNDS } from '../lib/match';
-import { GAMES, poolFor } from '../games/registry';
+import { GAMES, gameName, isVocabGame, MIN_VOCAB, poolFor, vocabPoolFor } from '../games/registry';
 import { langParams, useT } from '../i18n';
 import LevelPicker from '../components/LevelPicker';
 import GameStatsButton, { GameStatsOverview } from '../components/GameStats';
@@ -30,15 +30,16 @@ export default function Games() {
       <div className="section-title">{t('Pick a game')}</div>
       <div className="game-grid">
         {GAMES.map((g) => {
-          const count = g.comingSoon ? 0 : poolFor(g, content, settings, settings.learning).length;
-          const playable = !g.comingSoon && levels.length > 0 && count > 0;
+          const vocab = isVocabGame(g);
+          const count = g.comingSoon ? 0 : vocab ? vocabPoolFor(content, settings, settings.learning).length : poolFor(g, content, settings, settings.learning).length;
+          const playable = !g.comingSoon && levels.length > 0 && count >= (vocab ? MIN_VOCAB : 1);
           return (
             <div key={g.id} className={`card game-tile${g.comingSoon ? ' soon' : ''}`} style={{ cursor: 'default', opacity: g.comingSoon ? 0.55 : playable ? 1 : 0.75 }}>
               <div className="game-icon" aria-hidden>{g.icon}</div>
               <div className="grow">
-                <h3>{t(g.title)}</h3>
+                <h3>{gameName(g, settings.learning)}</h3>
                 <p>{t(g.description, names)}</p>
-                {!g.comingSoon && levels.length > 0 && <p className="small" style={{ marginTop: 4 }}>{t('{n} sentences', { n: count })}</p>}
+                {!g.comingSoon && levels.length > 0 && <p className="small" style={{ marginTop: 4 }}>{vocab ? t('{n} words', { n: count }) : t('{n} sentences', { n: count })}</p>}
                 {!g.comingSoon && (
                   <div className="row" style={{ marginTop: 10 }}>
                     {!challengeFriend && (
@@ -46,7 +47,7 @@ export default function Games() {
                     )}
                     <button
                       className="btn primary sm"
-                      disabled={!playable || count < ROUNDS}
+                      disabled={!playable || (!vocab && count < ROUNDS)}
                       onClick={() => navigate(challengeFriend ? `/vs/${g.id}?friend=${challengeFriend}` : `/vs/${g.id}`)}
                     >
                       {challengeFriend ? t('Challenge') : t('Vs')}

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useStore } from '../lib/store';
+import { getState, useStore } from '../lib/store';
 import { byOpponent, fetchMatchHistory, matchesFor, pct, practiceStats, roundsFor, seconds, vsSummary, type MatchRecord } from '../lib/gameStats';
-import { GAMES, gameById } from '../games/registry';
+import { GAMES, gameById, gameName } from '../games/registry';
 import { useT, useUiLang } from '../i18n';
 import { BarChart } from './Charts';
 import { IconClose, IconStats } from './Icons';
@@ -107,7 +107,7 @@ function GameStatsPanel({ gameId, onClose }: { gameId: string; onClose: () => vo
   const recent = useMemo(() => rounds.filter((r) => r.game === gameId && r.mode === 'solo').slice(-40), [rounds, gameId]);
   const gameMatches = (matches ?? []).filter((m) => m.game === gameId);
   const vs = vsSummary(gameMatches);
-  const title = game ? t(game.title) : '';
+  const title = gameName(game, getState().settings.learning);
 
   return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
@@ -191,7 +191,7 @@ export default function GameStatsButton({ gameId }: { gameId: string }) {
   const game = gameById(gameId);
   return (
     <>
-      <button className="btn ghost sm" onClick={() => setOpen(true)} aria-label={t('{game} stats', { game: game ? t(game.title) : '' })}>
+      <button className="btn ghost sm" onClick={() => setOpen(true)} aria-label={t('{game} stats', { game: gameName(game, getState().settings.learning) })}>
         <IconStats /> {t('Stats')}
       </button>
       {open && <GameStatsPanel gameId={gameId} onClose={() => setOpen(false)} />}
@@ -250,7 +250,7 @@ export function GameStatsOverview() {
           return (
             <MeterRow
               key={g.id}
-              label={t(g.title)}
+              label={gameName(g, getState().settings.learning)}
               value={s.accuracy}
               detail={s.rounds ? t('{p} of {n} · {time} each', { p: pct(s.accuracy), n: s.rounds, time: seconds(s.avgMs) }) : t('not played')}
             />
@@ -267,7 +267,7 @@ export function GameStatsOverview() {
               if (!s.played) return null;
               return (
                 <div key={g.id} style={{ marginTop: 10 }}>
-                  <div className="small" style={{ fontWeight: 600, marginBottom: 4 }}>{t(g.title)}</div>
+                  <div className="small" style={{ fontWeight: 600, marginBottom: 4 }}>{gameName(g, getState().settings.learning)}</div>
                   <RecordBar wins={s.wins} ties={s.ties} losses={s.losses} />
                 </div>
               );

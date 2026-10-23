@@ -31,6 +31,23 @@ export interface Match {
   /** Each player's learning language; players in different modes can play each other. */
   lang_a: LearnLang;
   lang_b: LearnLang | null;
+  /** Vocabulary games: both players draw words with this seed from these levels. */
+  seed?: number | null;
+  levels?: number[] | null;
+  /** Word duel state (see private.duel_apply). */
+  duel?: DuelState | null;
+}
+
+export interface DuelState {
+  turn: number;
+  mover: 'a' | 'b';
+  phase: 'play' | 'steal';
+  n: number;
+  lives_a: number;
+  lives_b: number;
+  correct: number;
+  deadline: string;
+  last: { by: 'a' | 'b'; ok: boolean; n: number; typed: string; timeout: boolean } | null;
 }
 
 /** Sentences that suit the game in both languages, so an opponent in either mode can play them. */
@@ -62,6 +79,8 @@ export function decideWinner(m: Match, content: Content): 'a' | 'b' | 'tie' {
   const sa = m.score_a ?? 0;
   const sb = m.score_b ?? 0;
   if (sa !== sb) return sa > sb ? 'a' : 'b';
+  // Speed rounds are timed and duels end on lives, so time never breaks a tie there.
+  if (m.seed != null) return 'tie';
   const la = m.lang_a ?? 'zh';
   const lb = m.lang_b ?? la;
   let ta = m.time_a ?? 0;
@@ -84,10 +103,10 @@ export async function findMatch(game: string, lang: LearnLang, olderThan?: strin
   return asMatch(data);
 }
 
-export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string): Promise<Match> {
+export async function createMatch(game: string, sentenceIds: string[], lang: LearnLang, opponent?: string, vocab?: { seed: number; levels: number[] }): Promise<Match> {
   const { data, error } = await supabase
     .from('matches')
-    .insert({ game, sentence_ids: sentenceIds, is_public: !opponent, player_b: opponent ?? null, lang, lang_a: lang })
+    .insert({ game, sentence_ids: sentenceIds, is_public: !opponent, player_b: opponent ?? null, lang, lang_a: lang, ...(vocab ?? {}) })
     .select()
     .single();
   if (error) throw error;
@@ -178,4 +197,15 @@ export function joinLive(
       supabase.removeChannel(channel);
     },
   };
+}
+
+export async function duelAnswer(id: string, turn: number, correct: boolean, typed: string): Promise<Match | null> {
+  const { data, error } = await supabase.rpc('duel_answer', { match_id: id, turn, correct, typed });
+  if (error) throw error;
+  return asMatch(data);
+}
+
+export async function duelTimeout(id: string, turn: number): Promise<Match | null> {
+  const { data } = await supabase.rpc('duel_timeout', { match_id: id, turn });
+  return asMatch(data);
 }

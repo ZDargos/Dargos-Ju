@@ -4,6 +4,7 @@ import { getContent, useContent } from '../lib/content';
 import { getState, useStore } from '../lib/store';
 import { buildExtraPractice, buildSession, gradeCard, previewIntervals, REQUEUE_WINDOW_MS, sentenceUnits, type SessionItem } from '../lib/srs';
 import { vocabFor, vocabItem, type VocabItem } from '../lib/vocab';
+import { myVocab } from '../lib/myWords';
 import DictPanel from '../components/DictPanel';
 import { lexiconFor, project } from '../lib/learn';
 import { reportSpeechError, speak, ttsAvailable } from '../lib/tts';
@@ -39,7 +40,9 @@ export default function Review() {
     const s = getState().settings;
     const c = getContent();
     const units = words
-      ? vocabFor(c, s.learning, s.studyLevels, s.wordKind ?? 'both').map((v) => ({ id: v.id, level: v.level }))
+      ? [...myVocab(s.learning), ...vocabFor(c, s.learning, s.studyLevels, s.learning === 'zh' ? s.wordKind ?? 'both' : 'words')]
+          .filter((v, i, all) => all.findIndex((x) => x.id === v.id) === i)
+          .map((v) => ({ id: v.id, level: v.level }))
       : sentenceUnits(c, s.studyLevels);
     const items = extra ? buildExtraPractice(units, s) : buildSession(units, s);
     return items.map((i) => ({ ...i, shown: 0 }));
@@ -51,7 +54,7 @@ export default function Review() {
   const current = queue[0];
   const source = current && !words ? content.byId.get(current.sid) : undefined;
   const sentence = source ? project(source, lang) : undefined;
-  const word: VocabItem | undefined = current && words ? vocabItem(content, lang, current.sid) : undefined;
+  const word: VocabItem | undefined = current && words ? vocabItem(content, lang, current.sid) ?? myVocab(lang).find((v) => v.id === current.sid) : undefined;
   const lexicon = lexiconFor(content, lang);
   const intervals = useMemo(
     () => (current && revealed ? previewIntervals(current.sid, current.dir, { ...settings, learning: lang }) : null),

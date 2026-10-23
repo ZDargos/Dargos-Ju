@@ -19,6 +19,8 @@ export const XP_RULES = {
   card: 10,
   extraCard: 5,
   gameRight: 6,
+  /** Speed rounds: per point of the day's net score (right minus wrong), so random tapping earns nothing. */
+  speedPoint: 3,
   vsMatch: 20,
   vsWin: 30,
   voice: 10,
@@ -29,6 +31,8 @@ export const XP_RULES = {
 export const GOALS = [50, 100, 200, 300];
 export const DEFAULT_GOAL = 50;
 const MIN_CARD_GAP_MS = 2000;
+/** Timed multiple-choice games; scored by net points instead of per answer. */
+const SPEED_GAMES = new Set(['speed-meaning', 'speed-word']);
 const MIN_ROUND_MS = 1500;
 const STREAK_STEP = 0.1;
 const STREAK_MAX_DAYS = 6;
@@ -103,9 +107,11 @@ export interface DayStats {
   bestRun: number;
   vsMatches: number;
   vsWins: number;
+  /** Speed round answers: right minus wrong. */
+  speedNet: number;
 }
 
-const emptyDay = (): DayStats => ({ cards: 0, newCards: 0, extraCards: 0, gameRight: 0, rightByGame: {}, gamesPlayed: new Set(), bestRun: 0, vsMatches: 0, vsWins: 0 });
+const emptyDay = (): DayStats => ({ cards: 0, newCards: 0, extraCards: 0, gameRight: 0, rightByGame: {}, gamesPlayed: new Set(), bestRun: 0, vsMatches: 0, vsWins: 0, speedNet: 0 });
 
 /** A finished vs match, for XP. */
 export interface VsResult {
@@ -138,6 +144,10 @@ function dailyStats(logs: ReviewLog[], rounds: GameRound[], vs: VsResult[]): Map
   for (const r of [...rounds].sort((a, b) => a.at.localeCompare(b.at))) {
     const d = get(dayKey(r.at));
     d.gamesPlayed.add(r.game);
+    if (SPEED_GAMES.has(r.game)) {
+      d.speedNet += r.correct ? 1 : -1;
+      continue;
+    }
     const key = `${dayKey(r.at)}|${r.game}`;
     if (r.correct && r.ms >= MIN_ROUND_MS) {
       d.gameRight++;
@@ -155,6 +165,7 @@ function dailyStats(logs: ReviewLog[], rounds: GameRound[], vs: VsResult[]): Map
 }
 
 const activityXp = (d: DayStats) =>
+  Math.max(0, d.speedNet) * XP_RULES.speedPoint +
   d.cards * XP_RULES.card + d.extraCards * XP_RULES.extraCard + d.gameRight * XP_RULES.gameRight + d.vsMatches * XP_RULES.vsMatch + d.vsWins * XP_RULES.vsWin;
 
 // ---------- Daily challenges ----------
@@ -173,6 +184,7 @@ export interface Challenge {
 const CHALLENGE_GAMES: [string, string[]][] = [
   ['0000-00-00', ['word-order', 'sentence-builder', 'spot-error', 'close-call', 'dictation']],
   ['2026-10-23', ['sentence-builder', 'spot-error', 'close-call', 'dictation']],
+  ['2026-10-24', ['sentence-builder', 'spot-error', 'close-call', 'dictation', 'word-duel']],
 ];
 const challengeGamesOn = (day: string) => CHALLENGE_GAMES.filter(([from]) => from <= day).at(-1)![1];
 const TARGETS: Record<ChallengeKind, number[]> = {

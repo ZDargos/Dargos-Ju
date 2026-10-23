@@ -10,6 +10,7 @@ import { cleanEnglish, normalizeEnglish, tokenizeEnglish } from './english';
 import { DEFAULT_SETTINGS } from '../types';
 import { drawSentence } from './deck';
 import { vocabFor } from './vocab';
+import { choiceQuestions, duelAnswerOk, duelSeconds, wordSequence } from './vocabGame';
 import { pinyinLettersMatch, pinyinMatches, toSapi } from './pinyin';
 import { BADGES, XP_RULES, badgeStatus, challengesFor, computeXp, dayKey, levelFor, xpForLevel } from './xp';
 
@@ -322,5 +323,55 @@ describe('pinyin', () => {
     expect(toSapi('nǐ hǎo')).toBe('ni 3 hao 3');
     expect(toSapi('lǜ')).toBe('lv 4');
     expect(toSapi('le')).toBe('le 5');
+  });
+});
+
+describe('vocabulary games', () => {
+  const content = getContent();
+  const levels = content.levels.map((l) => l.level);
+  const zh = vocabFor(content, 'zh', levels);
+  const en = vocabFor(content, 'en', levels);
+
+  it('speed questions have four different options including the answer, the same for the same seed', () => {
+    const a = choiceQuestions(zh, 7);
+    const b = choiceQuestions([...zh].reverse(), 7);
+    for (let i = 0; i < 40; i++) {
+      const q = a(i);
+      expect(q.options).toHaveLength(4);
+      expect(new Set(q.options.map((o) => o.id)).size).toBe(4);
+      expect(q.options.some((o) => o.id === q.item.id)).toBe(true);
+      expect(b(i).item.id).toBe(q.item.id);
+    }
+  });
+
+  it('deals every word once before repeating', () => {
+    const small = zh.slice(0, 20);
+    const seq = wordSequence(small, 3);
+    expect(new Set(Array.from({ length: 20 }, (_, i) => seq(i).id)).size).toBe(20);
+  });
+
+  it('duel answers: pinyin without tones is fine, English must be spelled right', () => {
+    const word = zh.find((v) => v.text === '电话') ?? zh.find((v) => v.py.includes(' '))!;
+    const letters = word.py.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s/g, '');
+    expect(duelAnswerOk(letters, word, 'zh')).toBe(true);
+    expect(duelAnswerOk(word.py, word, 'zh')).toBe(true);
+    expect(duelAnswerOk('xyz', word, 'zh')).toBe(false);
+    const go = en.find((v) => v.text === 'go')!;
+    expect(duelAnswerOk('Go', go, 'en')).toBe(true);
+    expect(duelAnswerOk('goo', go, 'en')).toBe(false);
+  });
+
+  it('duel clock runs from 15 seconds down to 6', () => {
+    expect(duelSeconds(0)).toBe(15);
+    expect(duelSeconds(4)).toBe(12);
+    expect(duelSeconds(100)).toBe(6);
+  });
+
+  it('speed round XP comes from the net score, so random tapping earns nothing', () => {
+    const at = (i: number) => new Date(2026, 9, 25, 12, 0, i).toISOString();
+    const rounds = Array.from({ length: 20 }, (_, i) => ({ id: `s${i}`, game: 'speed-meaning', mode: 'solo' as const, correct: i % 4 === 0, ms: 600, at: at(i) }));
+    const s = computeXp({ logs: [], rounds, vs: [], liveVoices: 0, goalHistory: [], now: Date.parse(at(30)) });
+    const challenge = s.today.challengesDone * XP_RULES.challenge + (s.today.challengesDone === 3 ? XP_RULES.sweep : 0);
+    expect(s.today.xp - challenge).toBe(0);
   });
 });
